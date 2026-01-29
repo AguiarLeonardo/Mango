@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'register.dart';
-import 'theme.dart';
+import 'package:get/get.dart';
+import 'core/theme/app_theme.dart';
+import 'modules/auth/register_user/register_user_screen.dart';
+import 'modules/auth/register_business/register_business_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,52 +13,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Registro Venezuela',
+      title: 'Mango App',
       theme: ThemeData(
         useMaterial3: true,
         primaryColor: AppColors.darkOlive,
-        // Configuración global para Inputs y Dropdowns para asegurar consistencia
+        scaffoldBackgroundColor: AppColors.darkOlive,
+        // Tema global de Inputs para asegurar consistencia
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppColors.sageGreen.withOpacity(0.25),
           labelStyle: TextStyle(color: AppColors.darkOlive.withOpacity(0.6)),
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-             borderRadius: BorderRadius.circular(12),
-             borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.orange, width: 2),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.orange, width: 2)),
         ),
       ),
-      home: const AuthWrapper(),
+      home: const WelcomeScreen(),
     );
-  }
-}
-
-// Bloque lógico para verificar registro
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Lógica simulada: false = no registrado
-    bool isRegistered = false;
-
-    if (isRegistered) {
-      // Placeholder para cuando esté registrado (ej: HomeScreen)
-      return const Scaffold(body: Center(child: Text("Bienvenido Usuario Registrado")));
-    } else {
-      return const WelcomeScreen();
-    }
   }
 }
 
@@ -69,35 +44,21 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.darkOlive,
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(30.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                "MANGO",
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.white,
-                  letterSpacing: 2,
-                ),
-              ),
+              const Icon(Icons.eco, size: 80, color: AppColors.brightYellow),
+              const SizedBox(height: 20),
+              const Text("MANGO", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppColors.white, letterSpacing: 2)),
               const SizedBox(height: 50),
-              _buildMenuButton(context, "Iniciar Sesión", () {
-                // Acción Iniciar Sesión
-              }),
+              
+              _buildMenuButton(context, "Iniciar Sesión", () => print("Ir a Login")),
               const SizedBox(height: 20),
-              _buildMenuButton(context, "Registrarse como Usuario", () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                );
-              }),
+              _buildMenuButton(context, "Registrarse como Usuario", () => Get.to(() => const RegisterUserScreen())),
               const SizedBox(height: 20),
-              _buildMenuButton(context, "Registrarse como Empresa", () {
-                // Acción Registrar Empresa
-              }),
+              _buildMenuButton(context, "Registrarse como Empresa", () => Get.to(() => const RegisterBusinessScreen())),
             ],
           ),
         ),
@@ -115,14 +76,9 @@ class WelcomeScreen extends StatelessWidget {
           backgroundColor: AppColors.orange,
           foregroundColor: Colors.white,
           elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        child: Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       ),
     );
   }
