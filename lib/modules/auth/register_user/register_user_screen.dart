@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../global_widgets/custom_inputs.dart';
 import 'register_user_controller.dart';
+import '../../../routes/app_routes.dart';
 
 class RegisterUserScreen extends StatelessWidget {
   const RegisterUserScreen({super.key});
@@ -38,11 +39,77 @@ class RegisterUserScreen extends StatelessWidget {
                         const SizedBox(height: 15),
                         CustomTextField(label: "Apellidos", icon: Icons.person_outline, controller: controller.surnamesController, onChanged: (val) => controller.user.update((u) => u?.surnames = val)),
                         const SizedBox(height: 15),
+
+                        // --- CAMPO DE DOCUMENTO DINÁMICO ---
+                        Row(children: [
+                          Container(
+                            width: 80,
+                            margin: const EdgeInsets.only(right: 10), 
+                            child: Obx(() => SimpleDropdown(
+                              // CORRECCIÓN: '??' para evitar errores de nulidad
+                              value: controller.user.value.documentType ?? 'V-',
+                              items: controller.documentTypes, 
+                              // Usamos el método específico para limpiar el campo
+                              onChanged: controller.onDocumentTypeChanged
+                            ))
+                          ),
+                          Expanded(
+                            // Envolvemos en Obx para reaccionar al cambio (P- vs V-)
+                            child: Obx(() {
+                              final isPassport = controller.user.value.documentType == 'P-';
+                              
+                              return CustomTextField(
+                                label: isPassport ? "Pasaporte" : "Cédula", 
+                                icon: Icons.badge_outlined, 
+                                
+                                // Si es pasaporte: texto. Si es cédula: numérico.
+                                inputType: isPassport ? TextInputType.text : TextInputType.number, 
+                                
+                                // Pasaporte: 9 caracteres. Cédula: 8 caracteres.
+                                maxLength: isPassport ? 9 : 8,
+
+                                inputFormatters: [
+                                  if (isPassport)
+                                    // Pasaporte: Alfanumérico
+                                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))
+                                  else
+                                    // Cédula: Solo dígitos
+                                    FilteringTextInputFormatter.digitsOnly
+                                ],
+
+                                controller: controller.documentNumberController, 
+                                onChanged: (val) {
+                                  // Si es pasaporte, forzamos mayúsculas
+                                  if (isPassport) {
+                                    val = val.toUpperCase();
+                                    controller.documentNumberController.value = controller.documentNumberController.value.copyWith(
+                                      text: val,
+                                      selection: TextSelection.collapsed(offset: val.length),
+                                    );
+                                  }
+                                  controller.user.update((u) => u?.documentNumber = val);
+                                }
+                              );
+                            }),
+                          ),
+                        ]),
+                        // --------------------------------
+
+                        const SizedBox(height: 15),
                         Obx(() => CustomTextField(label: "Correo Electrónico", icon: Icons.email_outlined, inputType: TextInputType.emailAddress, controller: controller.emailController, onChanged: controller.validateEmail, errorText: controller.emailError.value)),
                         const SizedBox(height: 15),
 
                         Row(children: [
-                          Container(width: 100, margin: const EdgeInsets.only(right: 10), child: Obx(() => SimpleDropdown(value: controller.user.value.phonePrefix, items: controller.phoneCodes, onChanged: (val) => controller.user.update((u) => u?.phonePrefix = val!)))),
+                          Container(
+                            width: 100, 
+                            margin: const EdgeInsets.only(right: 10), 
+                            child: Obx(() => SimpleDropdown(
+                              // CORRECCIÓN: '??' para valor por defecto
+                              value: controller.user.value.phonePrefix ?? '0412', 
+                              items: controller.phoneCodes, 
+                              onChanged: (val) => controller.user.update((u) => u?.phonePrefix = val!)
+                            ))
+                          ),
                           Expanded(child: CustomTextField(label: "Número", icon: Icons.phone_outlined, inputType: TextInputType.number, maxLength: 7, inputFormatters: [FilteringTextInputFormatter.digitsOnly], controller: controller.phoneController, onChanged: (val) => controller.user.update((u) => u?.phoneNumber = val))),
                         ]),
                         const SizedBox(height: 15),
@@ -73,8 +140,28 @@ class RegisterUserScreen extends StatelessWidget {
 
                         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                             OutlinedButton(onPressed: () => Get.back(), style: OutlinedButton.styleFrom(foregroundColor: AppColors.darkOlive, side: const BorderSide(color: AppColors.sageGreen), padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), child: const Text("Atrás")),
-                            ElevatedButton(onPressed: controller.register, style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), child: const Text("Registrar", style: TextStyle(fontWeight: FontWeight.bold))),
-                        ])
+                            Obx(() => ElevatedButton(
+                              onPressed: controller.isLoading.value ? null : controller.register, 
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), 
+                              child: controller.isLoading.value 
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text("Registrar", style: TextStyle(fontWeight: FontWeight.bold))
+                            )),
+                        ]),
+
+                        const SizedBox(height: 30),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("¿Tienes un negocio? ", style: TextStyle(color: AppColors.darkOlive.withOpacity(0.7))),
+                            GestureDetector(
+                              onTap: () {
+                                Get.offNamed(Routes.registerBusiness); 
+                              },
+                              child: const Text("Regístralo aquí", style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold, decoration: TextDecoration.underline, decorationColor: AppColors.orange)),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
