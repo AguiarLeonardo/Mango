@@ -1,176 +1,187 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../global_widgets/custom_inputs.dart';
 import 'register_user_controller.dart';
-import '../../../routes/app_routes.dart';
 
-class RegisterUserScreen extends StatelessWidget {
-  const RegisterUserScreen({super.key});
-
+// ✅ CORRECCIÓN: Cambiamos de GetView a StatelessWidget
+class RegisterUserScreen extends StatelessWidget { 
+  const RegisterUserScreen({Key? key}) : super(key: key);
+  
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(RegisterUserController());
+    // ✅ CORRECCIÓN CLAVE: Inyectamos el controlador aquí para que exista al abrir la pantalla
+    final RegisterUserController controller = Get.put(RegisterUserController());
 
     return Scaffold(
-      backgroundColor: AppColors.darkOlive,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Stack(
-              alignment: Alignment.topRight,
+      appBar: AppBar(
+        title: const Text("Crear Cuenta"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- FOTO DE PERFIL ---
+            Center(
+              child: GestureDetector(
+                onTap: controller.pickProfileImage,
+                child: Obx(() {
+                  return CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: controller.profileImagePath.value != null
+                        ? FileImage(File(controller.profileImagePath.value!))
+                        : null,
+                    child: controller.profileImagePath.value == null
+                        ? const Icon(Icons.camera_alt, size: 40, color: Colors.grey)
+                        : null,
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // --- NOMBRES Y APELLIDOS ---
+            _buildTextField("Nombres", controller.firstNameController, Icons.person),
+            const SizedBox(height: 15),
+            _buildTextField("Apellidos", controller.lastNameController, Icons.person_outline),
+            
+            const SizedBox(height: 15),
+
+            // --- CÉDULA ---
+            const Text("Documento de Identidad", style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 5),
+            Row(
               children: [
-                Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  color: AppColors.white.withOpacity(0.95),
-                  margin: const EdgeInsets.only(top: 10, right: 10),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text("REGISTRO", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkOlive, letterSpacing: 1.5)),
-                        const SizedBox(height: 30),
-
-                        CustomTextField(label: "Nombres", icon: Icons.person_outline, controller: controller.namesController, onChanged: (val) => controller.user.update((u) => u?.names = val)),
-                        const SizedBox(height: 15),
-                        CustomTextField(label: "Apellidos", icon: Icons.person_outline, controller: controller.surnamesController, onChanged: (val) => controller.user.update((u) => u?.surnames = val)),
-                        const SizedBox(height: 15),
-
-                        // --- CAMPO DE DOCUMENTO DINÁMICO ---
-                        Row(children: [
-                          Container(
-                            width: 80,
-                            margin: const EdgeInsets.only(right: 10), 
-                            child: Obx(() => SimpleDropdown(
-                              // CORRECCIÓN: '??' para evitar errores de nulidad
-                              value: controller.user.value.documentType ?? 'V-',
-                              items: controller.documentTypes, 
-                              // Usamos el método específico para limpiar el campo
-                              onChanged: controller.onDocumentTypeChanged
-                            ))
-                          ),
-                          Expanded(
-                            // Envolvemos en Obx para reaccionar al cambio (P- vs V-)
-                            child: Obx(() {
-                              final isPassport = controller.user.value.documentType == 'P-';
-                              
-                              return CustomTextField(
-                                label: isPassport ? "Pasaporte" : "Cédula", 
-                                icon: Icons.badge_outlined, 
-                                
-                                // Si es pasaporte: texto. Si es cédula: numérico.
-                                inputType: isPassport ? TextInputType.text : TextInputType.number, 
-                                
-                                // Pasaporte: 9 caracteres. Cédula: 8 caracteres.
-                                maxLength: isPassport ? 9 : 8,
-
-                                inputFormatters: [
-                                  if (isPassport)
-                                    // Pasaporte: Alfanumérico
-                                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))
-                                  else
-                                    // Cédula: Solo dígitos
-                                    FilteringTextInputFormatter.digitsOnly
-                                ],
-
-                                controller: controller.documentNumberController, 
-                                onChanged: (val) {
-                                  // Si es pasaporte, forzamos mayúsculas
-                                  if (isPassport) {
-                                    val = val.toUpperCase();
-                                    controller.documentNumberController.value = controller.documentNumberController.value.copyWith(
-                                      text: val,
-                                      selection: TextSelection.collapsed(offset: val.length),
-                                    );
-                                  }
-                                  controller.user.update((u) => u?.documentNumber = val);
-                                }
-                              );
-                            }),
-                          ),
-                        ]),
-                        // --------------------------------
-
-                        const SizedBox(height: 15),
-                        Obx(() => CustomTextField(label: "Correo Electrónico", icon: Icons.email_outlined, inputType: TextInputType.emailAddress, controller: controller.emailController, onChanged: controller.validateEmail, errorText: controller.emailError.value)),
-                        const SizedBox(height: 15),
-
-                        Row(children: [
-                          Container(
-                            width: 100, 
-                            margin: const EdgeInsets.only(right: 10), 
-                            child: Obx(() => SimpleDropdown(
-                              // CORRECCIÓN: '??' para valor por defecto
-                              value: controller.user.value.phonePrefix ?? '0412', 
-                              items: controller.phoneCodes, 
-                              onChanged: (val) => controller.user.update((u) => u?.phonePrefix = val!)
-                            ))
-                          ),
-                          Expanded(child: CustomTextField(label: "Número", icon: Icons.phone_outlined, inputType: TextInputType.number, maxLength: 7, inputFormatters: [FilteringTextInputFormatter.digitsOnly], controller: controller.phoneController, onChanged: (val) => controller.user.update((u) => u?.phoneNumber = val))),
-                        ]),
-                        const SizedBox(height: 15),
-
-                        const Align(alignment: Alignment.centerLeft, child: Text("Ubicación", style: TextStyle(color: AppColors.darkOlive, fontWeight: FontWeight.bold))),
-                        const SizedBox(height: 10),
-                        Obx(() => CustomDropdown(label: "Estado", icon: Icons.map, value: controller.selectedState.value, items: controller.stateNames.toList(), onChanged: controller.onStateChanged)),
-                        const SizedBox(height: 15),
-                        Obx(() => CustomDropdown(label: "Ciudad", icon: Icons.location_city, value: controller.selectedCity.value, isDisabled: controller.selectedState.value == null, items: controller.availableCities.map((e) => e['nombre'] as String).toList(), onChanged: controller.onCityChanged)),
-                        const SizedBox(height: 15),
-                        Obx(() => CustomDropdown(label: "Municipio", icon: Icons.location_on_outlined, value: controller.selectedMunicipality.value, isDisabled: controller.selectedCity.value == null, items: controller.availableMunicipalities.toList(), onChanged: (val) { controller.selectedMunicipality.value = val; controller.user.update((u) => u?.municipality = val); })),
-
-                        const SizedBox(height: 25),
-                        const Divider(),
-                        
-                        CustomTextField(label: "Nombre de Usuario", icon: Icons.account_circle_outlined, controller: controller.usernameController, onChanged: (val) => controller.user.update((u) => u?.username = val)),
-                        const SizedBox(height: 15),
-                        Obx(() => CustomTextField(label: "Contraseña", icon: Icons.lock_outline, isPassword: true, controller: controller.passwordController, onChanged: (_) => controller.validatePasswords(), errorText: controller.passwordError.value)),
-                        const SizedBox(height: 15),
-                        Obx(() => CustomTextField(label: "Confirmar Contraseña", icon: Icons.lock_outline, isPassword: true, controller: controller.confirmPasswordController, onChanged: (_) => controller.validatePasswords(), errorText: controller.confirmPasswordError.value)),
-
-                        const SizedBox(height: 20),
-                        Row(children: [
-                            Obx(() => Checkbox(value: controller.user.value.acceptedTerms, activeColor: AppColors.orange, onChanged: (val) => controller.user.update((u) => u?.acceptedTerms = val ?? false))),
-                            Expanded(child: Text("Acepto los términos y condiciones.", style: TextStyle(color: AppColors.darkOlive.withOpacity(0.7), fontSize: 12))),
-                        ]),
-                        const SizedBox(height: 30),
-
-                        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                            OutlinedButton(onPressed: () => Get.back(), style: OutlinedButton.styleFrom(foregroundColor: AppColors.darkOlive, side: const BorderSide(color: AppColors.sageGreen), padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), child: const Text("Atrás")),
-                            Obx(() => ElevatedButton(
-                              onPressed: controller.isLoading.value ? null : controller.register, 
-                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), 
-                              child: controller.isLoading.value 
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Text("Registrar", style: TextStyle(fontWeight: FontWeight.bold))
-                            )),
-                        ]),
-
-                        const SizedBox(height: 30),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text("¿Tienes un negocio? ", style: TextStyle(color: AppColors.darkOlive.withOpacity(0.7))),
-                            GestureDetector(
-                              onTap: () {
-                                Get.offNamed(Routes.registerBusiness); 
-                              },
-                              child: const Text("Regístralo aquí", style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold, decoration: TextDecoration.underline, decorationColor: AppColors.orange)),
-                            ),
-                          ],
-                        ),
-                      ],
+                // Dropdown V/E/J
+                Obx(() => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8)
+                  ),
+                  child: DropdownButton<String>(
+                    value: controller.selectedDocType.value,
+                    underline: Container(),
+                    items: controller.docTypes.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (val) => controller.selectedDocType.value = val!,
+                  ),
+                )),
+                const SizedBox(width: 10),
+                // Input Numérico
+                Expanded(
+                  child: TextField(
+                    controller: controller.cedulaController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: "12345678",
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10)
                     ),
                   ),
                 ),
-                Positioned(top: 0, right: 0, child: GestureDetector(onTap: () => Get.back(), child: const CircleAvatar(backgroundColor: AppColors.darkOlive, radius: 18, child: Icon(Icons.close, color: Colors.white, size: 20)))),
               ],
             ),
-          ),
+
+            const SizedBox(height: 15),
+
+            // --- TELÉFONO ---
+            const Text("Teléfono Celular", style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                Obx(() => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8)
+                  ),
+                  child: DropdownButton<String>(
+                    value: controller.selectedPhoneCode.value,
+                    underline: Container(),
+                    items: controller.phoneCodes.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (val) => controller.selectedPhoneCode.value = val!,
+                  ),
+                )),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: controller.phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      hintText: "1234567",
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10)
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 15),
+
+            // --- USERNAME ---
+            _buildTextField("Nombre de Usuario (Opcional)", controller.usernameController, Icons.alternate_email),
+            
+            const SizedBox(height: 15),
+
+            // --- CORREO ---
+            _buildTextField("Correo Electrónico", controller.emailController, Icons.email, isEmail: true),
+
+            const SizedBox(height: 15),
+
+            // --- CONTRASEÑAS ---
+            _buildTextField("Contraseña", controller.passwordController, Icons.lock, isPassword: true),
+            const SizedBox(height: 15),
+            _buildTextField("Confirmar Contraseña", controller.confirmPasswordController, Icons.lock_outline, isPassword: true),
+
+            const SizedBox(height: 30),
+
+            // --- BOTÓN REGISTRAR ---
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: Obx(() => ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, 
+                ),
+                onPressed: controller.isLoading.value 
+                    ? null 
+                    : controller.registerUser, 
+                child: controller.isLoading.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("REGISTRARME", style: TextStyle(color: Colors.white, fontSize: 16)),
+              )),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  // Helper para hacer los TextFields rápido
+  Widget _buildTextField(String label, TextEditingController ctrl, IconData icon, {bool isPassword = false, bool isEmail = false}) {
+    return TextField(
+      controller: ctrl,
+      obscureText: isPassword,
+      keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
