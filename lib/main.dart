@@ -10,8 +10,8 @@ Future<void> main() async {
 
   // INICIALIZACIÓN DE SUPABASE
   await Supabase.initialize(
-    url: 'AQUÍ_TU_PROYECTO_URL_DE_SUPABASE',
-    anonKey: 'AQUÍ_TU_ANON_KEY_DE_SUPABASE',
+    url: 'https://wssqfdvfcydbxncfrtmy.supabase.co',
+    anonKey: 'sb_publishable_lps63HVdjyCRknnoADey7Q_jNIaBPqQ',
   );
 
   runApp(const MyApp());
