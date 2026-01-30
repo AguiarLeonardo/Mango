@@ -7,12 +7,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/business_model.dart';
 import '../../../data/venezuela_data.dart';
+<<<<<<< Updated upstream
+=======
+// Importamos el servicio
+import '../../../data/services/supabase_service.dart';
+// Importamos rutas para navegar al terminar
+>>>>>>> Stashed changes
 import '../../../routes/app_routes.dart';
 
 class RegisterBusinessController extends GetxController {
   
+<<<<<<< Updated upstream
   // Instancia directa de Supabase
   final SupabaseClient _supabase = Supabase.instance.client;
+=======
+  // Instancia del servicio
+  final SupabaseService _supabaseService = SupabaseService();
+>>>>>>> Stashed changes
 
   // Estado de carga visual
   final isLoading = false.obs;
@@ -28,7 +39,11 @@ class RegisterBusinessController extends GetxController {
 
   // --- Controladores de Texto ---
   final commercialNameController = TextEditingController();
+<<<<<<< Updated upstream
   final shortDescController = TextEditingController(); 
+=======
+  final shortDescController = TextEditingController(); // Descripción corta
+>>>>>>> Stashed changes
   final addressController = TextEditingController();
   final phoneController = TextEditingController();
   final legalNameController = TextEditingController();
@@ -58,10 +73,18 @@ class RegisterBusinessController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+<<<<<<< Updated upstream
     stateNames.value = venezuelaData.map((e) => e['estado'] as String).toList();
   }
 
   // --- Lógica de Cascada Geográfica ---
+=======
+    // Cargar estados de Venezuela al iniciar
+    stateNames.value = venezuelaData.map((e) => e['estado'] as String).toList();
+  }
+
+  // --- Lógica de Cascada Geográfica (Igual que en User) ---
+>>>>>>> Stashed changes
   void onStateChanged(String? val) {
     selectedState.value = val;
     business.update((b) => b?.state = val);
@@ -119,7 +142,11 @@ class RegisterBusinessController extends GetxController {
     business.update((val) => val?.rifImagePath = null);
   }
 
+<<<<<<< Updated upstream
   // --- REGISTRO PRINCIPAL (MODO PRUEBA) ---
+=======
+  // --- REGISTRO PRINCIPAL ---
+>>>>>>> Stashed changes
   Future<void> register() async {
     // 1. Validaciones Locales
     if (!business.value.acceptedTerms) {
@@ -127,6 +154,7 @@ class RegisterBusinessController extends GetxController {
       return;
     }
     
+<<<<<<< Updated upstream
     // ⚠️ COMENTADO: Validaciones estrictas de RIF e Imagen desactivadas para pruebas
     if (commercialNameController.text.isEmpty || 
         // rifController.text.isEmpty ||  <--- DESACTIVADO
@@ -135,6 +163,14 @@ class RegisterBusinessController extends GetxController {
         // || _rawImageFile == null       <--- DESACTIVADO
        ) { 
         Get.snackbar("Faltan datos", "Por favor llena Email, Contraseña y Nombre Comercial.", backgroundColor: Colors.red, colorText: Colors.white);
+=======
+    if (commercialNameController.text.isEmpty || 
+        rifController.text.isEmpty || 
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        business.value.rifImagePath == null) {
+        Get.snackbar("Faltan datos", "Por favor llena todos los campos obligatorios y sube el RIF.", backgroundColor: Colors.red, colorText: Colors.white);
+>>>>>>> Stashed changes
         return;
     }
 
@@ -144,9 +180,15 @@ class RegisterBusinessController extends GetxController {
     }
 
     try {
+<<<<<<< Updated upstream
       isLoading.value = true;
 
       // Actualizamos el modelo con los datos
+=======
+      isLoading.value = true; // Activar spinner (si lo pones en la UI)
+
+      // Actualizamos el modelo con los datos de los TextControllers
+>>>>>>> Stashed changes
       business.update((b) {
         b?.commercialName = commercialNameController.text;
         b?.legalName = legalNameController.text;
@@ -157,6 +199,7 @@ class RegisterBusinessController extends GetxController {
         b?.shortDesc = shortDescController.text;
       });
 
+<<<<<<< Updated upstream
       // ⚠️ COMENTADO: Bloque de subida de imagen (Paso A)
       /* final bytes = await _rawImageFile!.readAsBytes();
       final fileExt = _rawImageFile!.path.split('.').last;
@@ -199,22 +242,48 @@ class RegisterBusinessController extends GetxController {
       Get.snackbar(
         "¡Registro Exitoso!", 
         "Empresa creada (Sin imagen RIF por ahora).", 
+=======
+      // 2. Llamada al Servicio (Backend)
+      await _supabaseService.registerBusiness(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        rifImageFile: File(business.value.rifImagePath!), // Convertimos path a File
+        businessDataBuilder: (String userId, String? rifPath) {
+          // Inyectamos el ID del usuario creado y la ruta del archivo subido
+          business.value.rifUrl = rifPath; 
+          return business.value.toSupabaseMap(userId);
+        },
+      );
+
+      // 3. Éxito
+      Get.snackbar(
+        "¡Registro Exitoso!", 
+        "Tu solicitud ha sido enviada. Un administrador verificará tu RIF pronto.", 
+>>>>>>> Stashed changes
         backgroundColor: AppColors.darkOlive, 
         colorText: Colors.white,
         duration: const Duration(seconds: 4)
       );
 
+<<<<<<< Updated upstream
       // Redirigir
       Get.offAllNamed(Routes.home);
+=======
+      // Redirigir al Login o Home
+      // Get.offAllNamed(Routes.login); 
+>>>>>>> Stashed changes
 
     } catch (e) {
       // 4. Manejo de Errores
       String msg = e.toString().replaceAll("Exception:", "").trim();
+<<<<<<< Updated upstream
       
       if (msg.contains("User already registered")) {
         msg = "Este correo ya está registrado.";
       }
 
+=======
+>>>>>>> Stashed changes
       Get.snackbar("Error de Registro", msg, backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false;
