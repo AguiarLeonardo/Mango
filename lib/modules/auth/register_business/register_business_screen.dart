@@ -7,7 +7,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../global_widgets/custom_inputs.dart';
 import 'register_business_controller.dart';
 
-
 class RegisterBusinessScreen extends StatelessWidget {
   const RegisterBusinessScreen({super.key});
 
@@ -67,7 +66,7 @@ class RegisterBusinessScreen extends StatelessWidget {
                         _buildSecuritySection(controller),
                         const SizedBox(height: 30),
 
-                        // Términos y Botones
+                        // Términos y Botones (AQUÍ ESTÁ EL CAMBIO CLAVE)
                         _buildTermsAndActions(controller),
                       ],
                     ),
@@ -91,7 +90,7 @@ class RegisterBusinessScreen extends StatelessWidget {
   }
 
   // ===========================================================================
-  // WIDGETS DE SECCIÓN (Para mantener el código ordenado)
+  // WIDGETS DE SECCIÓN
   // ===========================================================================
 
   Widget _buildSectionTitle(String title) {
@@ -290,28 +289,26 @@ class RegisterBusinessScreen extends StatelessWidget {
           icon: Icons.email_outlined,
           inputType: TextInputType.emailAddress,
           controller: controller.emailController,
-          // Aquí no hay validación visual en tiempo real en el ejemplo, 
-          // pero el controller ya guarda el texto para validarlo al final.
         ),
         const SizedBox(height: 15),
         CustomTextField(
           label: "Contraseña",
           icon: Icons.lock_outline,
-          isPassword: true, // Importante: Oculta texto
+          isPassword: true, 
           controller: controller.passwordController,
         ),
         const SizedBox(height: 15),
         CustomTextField(
           label: "Confirmar Contraseña",
           icon: Icons.lock_outline,
-          isPassword: true, // Importante: Oculta texto
+          isPassword: true, 
           controller: controller.confirmPasswordController,
         ),
       ],
     );
   }
 
-  // --- TÉRMINOS Y BOTONES ---
+  // --- TÉRMINOS Y BOTONES (MODIFICADO PARA MANEJO DE ESTADO) ---
   Widget _buildTermsAndActions(RegisterBusinessController controller) {
     return Column(
       children: [
@@ -344,16 +341,29 @@ class RegisterBusinessScreen extends StatelessWidget {
               ), 
               child: const Text("Atrás")
             ),
-            ElevatedButton(
-              onPressed: controller.register, 
+            
+            // --- BOTÓN REGISTRAR CON ESTADO DE CARGA ---
+            Obx(() => ElevatedButton(
+              onPressed: controller.isLoading.value 
+                  ? null // Deshabilitar si carga
+                  : controller.register, 
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange, 
+                disabledBackgroundColor: AppColors.orange.withOpacity(0.6), // Color cuando está desactivado
                 foregroundColor: Colors.white, 
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15), 
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
               ), 
-              child: const Text("Registrar", style: TextStyle(fontWeight: FontWeight.bold))
-            ),
+              child: controller.isLoading.value
+                  ? const SizedBox(
+                      width: 20, height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white, 
+                        strokeWidth: 2
+                      )
+                    )
+                  : const Text("Registrar", style: TextStyle(fontWeight: FontWeight.bold))
+            )),
           ]
         ),
       ],

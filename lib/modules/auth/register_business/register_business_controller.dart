@@ -4,29 +4,38 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/business_model.dart';
-// Importamos la data centralizada
 import '../../../data/venezuela_data.dart';
+// Importamos el servicio
+import '../../../data/services/supabase_service.dart';
+// Importamos rutas para navegar al terminar
+import '../../../routes/app_routes.dart';
 
 class RegisterBusinessController extends GetxController {
   
+  // Instancia del servicio
+  final SupabaseService _supabaseService = SupabaseService();
+
+  // Estado de carga visual
+  final isLoading = false.obs;
+
   final business = BusinessModel().obs;
   final ImagePicker _picker = ImagePicker();
 
   // --- Controladores de Texto ---
   final commercialNameController = TextEditingController();
-  final shortDescController = TextEditingController();
+  final shortDescController = TextEditingController(); // Descripción corta
   final addressController = TextEditingController();
   final phoneController = TextEditingController();
   final legalNameController = TextEditingController();
   final rifController = TextEditingController();
   final repNameController = TextEditingController();
 
-  // Nuevos controladores para Email/Password de la cuenta del negocio
+  // Auth
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  // --- Variables Geografía (NUEVO) ---
+  // --- Variables Geografía ---
   final selectedState = RxnString();
   final selectedCity = RxnString();
   final selectedMunicipality = RxnString();
@@ -37,39 +46,21 @@ class RegisterBusinessController extends GetxController {
   // Lista de nombres de estados para la vista
   final stateNames = <String>[].obs;
 
-  // --- Listas Fijas ---
-  final categories = ['Panadería', 'Pizzería', 'Restaurante', 'Supermercado', 'Frutería', 'Farmacia', 'Bodegón', 'Otro'];
-  final phoneCodes = ['0412', '0424', '0416', '0414', '0426', '0212'];
+  // Para el Dropdown de Categorías
+  final selectedCategory = RxnString();
+  final categories = ['Panadería', 'Restaurante', 'Pastelería', 'Supermercado', 'Cafetería'];
 
   @override
   void onInit() {
     super.onInit();
-    // Ordenamos la data importada
-    venezuelaData.sort((a, b) => (a['estado'] as String).compareTo(b['estado'] as String));
-    // Preparamos la lista de nombres de estados para el dropdown
+    // Cargar estados de Venezuela al iniciar
     stateNames.value = venezuelaData.map((e) => e['estado'] as String).toList();
   }
 
-  @override
-  void onClose() {
-    commercialNameController.dispose();
-    shortDescController.dispose();
-    addressController.dispose();
-    phoneController.dispose();
-    legalNameController.dispose();
-    rifController.dispose();
-    repNameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    super.onClose();
-  }
-
-  // --- Lógica Geografía (Cascada) ---
+  // --- Lógica de Cascada Geográfica (Igual que en User) ---
   void onStateChanged(String? val) {
     selectedState.value = val;
-    // Aquí podrías guardar el estado en tu BusinessModel si le agregas el campo
-    // business.update((b) => b.state = val);
+    business.update((b) => b?.state = val);
     
     selectedCity.value = null;
     selectedMunicipality.value = null;
@@ -85,13 +76,25 @@ class RegisterBusinessController extends GetxController {
 
   void onCityChanged(String? val) {
     selectedCity.value = val;
+    business.update((b) => b?.city = val);
     selectedMunicipality.value = null;
+    
     if (val != null) {
       var ciudadData = availableCities.firstWhere((e) => e['nombre'] == val);
       availableMunicipalities.value = List<String>.from(ciudadData['municipios']);
     } else {
       availableMunicipalities.clear();
     }
+  }
+
+  void onMunicipalityChanged(String? val) {
+    selectedMunicipality.value = val;
+    business.update((b) => b?.municipality = val);
+  }
+
+  void onCategoryChanged(String? val) {
+    selectedCategory.value = val;
+    business.update((b) => b?.category = val);
   }
 
   // --- Lógica Imágenes ---
@@ -110,32 +113,72 @@ class RegisterBusinessController extends GetxController {
     business.update((val) => val?.rifImagePath = null);
   }
 
-  // --- Registro ---
-  void register() {
+  // --- REGISTRO PRINCIPAL ---
+  Future<void> register() async {
+    // 1. Validaciones Locales
     if (!business.value.acceptedTerms) {
-      _showError("Debes aceptar los términos.");
+      Get.snackbar("Atención", "Debes aceptar los términos.", backgroundColor: AppColors.orange, colorText: Colors.white);
       return;
     }
     
-    // Validaciones básicas
     if (commercialNameController.text.isEmpty || 
         rifController.text.isEmpty || 
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
         business.value.rifImagePath == null) {
-        _showError("Faltan campos obligatorios o la foto del RIF.");
+        Get.snackbar("Faltan datos", "Por favor llena todos los campos obligatorios y sube el RIF.", backgroundColor: Colors.red, colorText: Colors.white);
         return;
     }
 
-    // Validación Geográfica (Opcional pero recomendada)
-    if (selectedState.value == null || selectedCity.value == null) {
-       _showError("Por favor selecciona la ubicación (Estado y Ciudad).");
+    if (passwordController.text != confirmPasswordController.text) {
+       Get.snackbar("Error", "Las contraseñas no coinciden", backgroundColor: Colors.red, colorText: Colors.white);
        return;
     }
 
-    print("Registrando Empresa en: ${selectedCity.value}, ${selectedState.value}");
-    Get.snackbar("Éxito", "Solicitud enviada.", backgroundColor: AppColors.orange, colorText: Colors.white);
-  }
+    try {
+      isLoading.value = true; // Activar spinner (si lo pones en la UI)
 
-  void _showError(String msg) {
-    Get.snackbar("Atención", msg, backgroundColor: Colors.red, colorText: Colors.white);
+      // Actualizamos el modelo con los datos de los TextControllers
+      business.update((b) {
+        b?.commercialName = commercialNameController.text;
+        b?.legalName = legalNameController.text;
+        b?.rif = rifController.text;
+        b?.phoneNumber = phoneController.text;
+        b?.address = addressController.text;
+        b?.repName = repNameController.text;
+        b?.shortDesc = shortDescController.text;
+      });
+
+      // 2. Llamada al Servicio (Backend)
+      await _supabaseService.registerBusiness(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        rifImageFile: File(business.value.rifImagePath!), // Convertimos path a File
+        businessDataBuilder: (String userId, String? rifPath) {
+          // Inyectamos el ID del usuario creado y la ruta del archivo subido
+          business.value.rifUrl = rifPath; 
+          return business.value.toSupabaseMap(userId);
+        },
+      );
+
+      // 3. Éxito
+      Get.snackbar(
+        "¡Registro Exitoso!", 
+        "Tu solicitud ha sido enviada. Un administrador verificará tu RIF pronto.", 
+        backgroundColor: AppColors.darkOlive, 
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4)
+      );
+
+      // Redirigir al Login o Home
+      // Get.offAllNamed(Routes.login); 
+
+    } catch (e) {
+      // 4. Manejo de Errores
+      String msg = e.toString().replaceAll("Exception:", "").trim();
+      Get.snackbar("Error de Registro", msg, backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

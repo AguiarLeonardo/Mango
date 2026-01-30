@@ -1,48 +1,79 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  // Obtenemos el cliente global de Supabase
   final SupabaseClient _client = Supabase.instance.client;
 
-  /// Registra un nuevo usuario en 2 pasos:
-  /// 1. Crea la cuenta en Supabase Auth (Email y Password).
-  /// 2. Guarda los datos personales en la tabla pública 'profiles'.
+  // --- REGISTRO DE USUARIO (Ya lo tenías) ---
   Future<void> registerUser({
     required String email,
     required String password,
     required Map<String, dynamic> profileData,
   }) async {
     try {
-      // --- PASO 1: Registro en Auth ---
       final AuthResponse res = await _client.auth.signUp(
         email: email,
         password: password,
       );
-
       final User? user = res.user;
+      if (user == null) throw Exception('Error de Auth: No se creó el usuario.');
 
-      if (user == null) {
-        throw Exception('No se pudo crear el usuario (Auth Error).');
-      }
-
-      // --- PASO 2: Guardar datos en la tabla 'profiles' ---
-      // Usamos el ID que nos devolvió Auth para vincular los datos
       await _client.from('profiles').insert({
-        'id': user.id, // <--- CLAVE: El ID debe coincidir
-        ...profileData, // Insertamos nombres, cédula, estado, etc.
-        'role': 'user', // Definimos que es un usuario normal (no empresa)
+        'id': user.id,
+        ...profileData,
+        'role': 'user',
         'created_at': DateTime.now().toIso8601String(),
       });
+    } on AuthException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
+    }
+  }
+
+  // --- REGISTRO DE EMPRESA (Nuevo) ---
+  Future<void> registerBusiness({
+    required String email,
+    required String password,
+    required File rifImageFile, // Archivo físico de la imagen
+    required Map<String, dynamic> businessDataBuilder(String userId, String? rifUrl),
+  }) async {
+    try {
+      // 1. Crear Auth User
+      final AuthResponse res = await _client.auth.signUp(
+        email: email,
+        password: password,
+      );
+      final User? user = res.user;
+
+      if (user == null) throw Exception('Error creando cuenta de negocio.');
+
+      // 2. Subir imagen del RIF al Storage
+      // Nombre único para el archivo: ID_usuario + timestamp
+      final String filePath = '${user.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      
+      await _client.storage.from('business_documents').upload(
+        filePath,
+        rifImageFile,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+      );
+
+      // 3. Obtener la ruta pública (o privada si usas signedUrls, pero por ahora usaremos getPublicUrl para simplificar, 
+      // aunque lo ideal para docs legales es signedUrl. Si el bucket es privado, esto devolverá una ruta que requiere token).
+      // NOTA: Para documentos sensibles, guardamos el PATH, no la URL pública.
+      final String rifPath = filePath; 
+
+      // 4. Guardar datos en la tabla 'businesses'
+      final Map<String, dynamic> businessData = businessDataBuilder(user.id, rifPath);
+      
+      await _client.from('businesses').insert(businessData);
 
     } on AuthException catch (e) {
-      // Errores específicos de autenticación (ej: email ya existe)
-      throw Exception(e.message);
-    } on PostgrestException catch (e) {
-      // Errores de base de datos (ej: error al guardar perfil)
-      throw Exception('Error al guardar perfil: ${e.message}');
+      throw Exception('Auth Error: ${e.message}');
+    } on StorageException catch (e) {
+      throw Exception('Error subiendo RIF: ${e.message}');
     } catch (e) {
-      // Cualquier otro error
-      throw Exception('Error inesperado: $e');
+      throw Exception('Error registrando empresa: $e');
     }
   }
 }
