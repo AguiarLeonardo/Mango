@@ -5,12 +5,20 @@ import 'app_routes.dart';
 import '../modules/welcome/welcome_screen.dart';
 import '../modules/auth/register_user/register_user_screen.dart';
 import '../modules/auth/register_business/register_business_screen.dart';
-
+import '../modules/auth/login/login_screen.dart';
+import '../modules/auth/login/login_controller.dart';
+import '../modules/auth/update_password/update_password_screen.dart';
+import '../../home/home_screen.dart';
+import '../modules/start/start_screen.dart';
 class AppPages {
-  // Definimos cuál es la ruta inicial
-  static const initial = Routes.welcome;
+  // CAMBIO IMPORTANTE: La app arranca en START
+  static const initial = Routes.start; 
 
   static final routes = [
+    GetPage(
+      name: Routes.start,
+      page: () => const StartScreen(),
+    ),
     GetPage(
       name: Routes.welcome,
       page: () => const WelcomeScreen(),
@@ -24,7 +32,20 @@ class AppPages {
       name: Routes.registerBusiness,
       page: () => const RegisterBusinessScreen(),
     ),
-    // Más adelante agregarás:
-    // GetPage(name: Routes.LOGIN, page: () => LoginScreen()),
+    GetPage(
+      name: Routes.login,
+      page: () => const LoginScreen(), // <--- Debe decir LoginScreen
+      binding: BindingsBuilder(() {
+        Get.put(LoginController());
+      }),
+    ),
+    GetPage(
+      name: Routes.home,
+      page: () => const HomeScreen(),
+    ),
+    GetPage(
+      name: Routes.updatePassword,
+      page: () => const UpdatePasswordScreen(),
+    ),
   ];
 }

@@ -3,17 +3,19 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme/app_theme.dart';
-import 'routes/app_pages.dart'; // Importamos el mapa de páginas
+import 'routes/app_routes.dart'; 
+import 'routes/app_pages.dart'; 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // INICIALIZACIÓN DE SUPABASE
+  // 1. INICIALIZACIÓN DE SUPABASE
   await Supabase.initialize(
     url: 'https://wssqfdvfcydbxncfrtmy.supabase.co',
     anonKey: 'sb_publishable_lps63HVdjyCRknnoADey7Q_jNIaBPqQ',
   );
 
+  
   runApp(const MyApp());
 }
 
@@ -27,10 +29,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       
       // CONFIGURACIÓN DE RUTAS
-      initialRoute: AppPages.initial, // Arranca en /welcome
-      getPages: AppPages.routes,      // Carga el mapa de rutas
+      // Asegúrate que en app_pages.dart, 'initial' sea Routes.start
+      initialRoute: AppPages.initial, 
+      getPages: AppPages.routes,      
       
-      // TU TEMA PERSONALIZADO
+      // TEMA PERSONALIZADO
       theme: ThemeData(
         useMaterial3: true,
         primaryColor: AppColors.darkOlive,

@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../../routes/app_routes.dart';
+// Asegúrate de importar el controlador que acabamos de crear:
+import 'welcome_controller.dart'; 
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends GetView<WelcomeController> {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Esto asegura que el controlador se inicialice si no se hizo en el binding
+    Get.put(WelcomeController()); 
+
     return Scaffold(
       backgroundColor: AppColors.darkOlive,
       body: Center(
@@ -21,18 +26,14 @@ class WelcomeScreen extends StatelessWidget {
               const Text("MANGO", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppColors.white, letterSpacing: 2)),
               const SizedBox(height: 50),
               
-              // Botón 1: Login
               _buildMenuButton(context, "Iniciar Sesión", () {
                  Get.toNamed(Routes.login);
               }),
               const SizedBox(height: 20),
               
-              // Botón 2: Registro Usuario (Ahora es el principal)
-              _buildMenuButton(context, "Crear Cuenta", () { // Le cambié el texto a algo más corto y directo
+              _buildMenuButton(context, "Crear Cuenta", () {
                  Get.toNamed(Routes.registerUser);
               }),
-              
-              // --- AQUÍ ELIMINAMOS EL BOTÓN DE EMPRESA ---
             ],
           ),
         ),
