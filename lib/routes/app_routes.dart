@@ -8,4 +8,6 @@ abstract class Routes {
   static const home = '/home'; // Para cuando entren a la app
   static const forgotPassword = '/forgot-password';
   static const updatePassword = '/update-password';
+  static const packs = '/packs';
+  static const packDetail = '/pack-detail';
 }

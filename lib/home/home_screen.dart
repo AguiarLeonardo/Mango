@@ -25,12 +25,32 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Text(
-          "Bienvenido a Mango",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+  body: Center(
+  child: Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      const Text(
+        "Bienvenido a Mango",
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
+      const SizedBox(height: 24),
+      ElevatedButton(
+        onPressed: () {
+          Get.toNamed(Routes.packs);
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.brightYellow,
+          foregroundColor: Colors.black,
+        ),
+        child: const Text("Ver packs cercanos"),
+      ),
+    ],
+  ),
+),
     );
   }
 }
