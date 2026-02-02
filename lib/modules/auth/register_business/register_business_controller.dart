@@ -7,11 +7,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/business_model.dart';
 import '../../../data/venezuela_data.dart';
+<<<<<<< Updated upstream
+=======
+// Importamos el servicio
+import '../../../data/services/supabase_service.dart';
+// Importamos rutas para navegar al terminar
+>>>>>>> Stashed changes
 import '../../../routes/app_routes.dart';
 
 class RegisterBusinessController extends GetxController {
   
+  // Instancia directa de Supabase
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  // Estado de carga visual
   final isLoading = false.obs;
 
   // Modelo reactivo
@@ -27,7 +36,11 @@ class RegisterBusinessController extends GetxController {
 
   // --- Controladores de Texto ---
   final commercialNameController = TextEditingController();
+<<<<<<< Updated upstream
   final shortDescController = TextEditingController(); 
+=======
+  final shortDescController = TextEditingController(); // Descripción corta
+>>>>>>> Stashed changes
   final addressController = TextEditingController();
   final phoneController = TextEditingController();
   final legalNameController = TextEditingController();
@@ -54,17 +67,13 @@ class RegisterBusinessController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Cargar estados de venezuela_data
     stateNames.value = venezuelaData.map((e) => e['estado'] as String).toList();
     
     // Valor por defecto para el prefijo para evitar nulos
     business.update((b) => b?.phonePrefix = phoneCodes.first);
   }
 
-  // ===========================================================================
-  // LÓGICA DE UI (DROPDOWNS)
-  // ===========================================================================
-
+  // --- Lógica de Cascada Geográfica ---
   void onStateChanged(String? val) {
     if (val == null) return;
     selectedState.value = val;
@@ -129,59 +138,23 @@ class RegisterBusinessController extends GetxController {
     business.update((val) => val?.rifImagePath = null);
   }
 
-  // ===========================================================================
-  // VALIDACIONES
-  // ===========================================================================
-
-  bool _validateForm() {
-    // 1. Campos de Texto Simples
-    if (commercialNameController.text.trim().isEmpty) {
-      _showError("El Nombre Comercial es obligatorio.");
-      return false;
+  // --- REGISTRO PRINCIPAL (MODO PRUEBA) ---
+  Future<void> register() async {
+    // 1. Validaciones Locales
+    if (!business.value.acceptedTerms) {
+      Get.snackbar("Atención", "Debes aceptar los términos.", backgroundColor: AppColors.orange, colorText: Colors.white);
+      return;
     }
-    if (rifController.text.trim().isEmpty) {
-      _showError("El RIF es obligatorio.");
-      return false;
-    }
-    if (legalNameController.text.trim().isEmpty) {
-      _showError("La Razón Social es obligatoria.");
-      return false;
-    }
-    if (addressController.text.trim().isEmpty) {
-      _showError("La Dirección Fiscal es obligatoria.");
-      return false;
-    }
-    if (phoneController.text.trim().isEmpty || phoneController.text.length < 7) {
-      _showError("Ingresa un número de teléfono válido.");
-      return false;
-    }
-
-    // 2. Dropdowns (Validar que se haya seleccionado algo)
-    if (selectedCategory.value == null) {
-      _showError("Debes seleccionar una Categoría.");
-      return false;
-    }
-    if (selectedState.value == null) {
-      _showError("Selecciona el Estado.");
-      return false;
-    }
-    if (selectedCity.value == null) {
-      _showError("Selecciona la Ciudad.");
-      return false;
-    }
-    if (selectedMunicipality.value == null) {
-      _showError("Selecciona el Municipio.");
-      return false;
-    }
-
-    // 3. Auth
-    if (emailController.text.trim().isEmpty || !GetUtils.isEmail(emailController.text.trim())) {
-      _showError("Ingresa un correo electrónico válido.");
-      return false;
-    }
-    if (passwordController.text.isEmpty || passwordController.text.length < 6) {
-      _showError("La contraseña debe tener al menos 6 caracteres.");
-      return false;
+    
+    // ⚠️ COMENTADO: Validaciones estrictas de RIF e Imagen desactivadas para pruebas
+    if (commercialNameController.text.isEmpty || 
+        // rifController.text.isEmpty ||  <--- DESACTIVADO
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty 
+        // || _rawImageFile == null       <--- DESACTIVADO
+       ) { 
+        Get.snackbar("Faltan datos", "Por favor llena Email, Contraseña y Nombre Comercial.", backgroundColor: Colors.red, colorText: Colors.white);
+        return;
     }
     if (passwordController.text != confirmPasswordController.text) {
       _showError("Las contraseñas no coinciden.");
@@ -215,32 +188,39 @@ class RegisterBusinessController extends GetxController {
     if (!_validateForm()) return;
 
     try {
+<<<<<<< Updated upstream
       isLoading.value = true;
-      
-      // Limpiamos los textos para evitar espacios accidentales
-      final rif = rifController.text.trim();
-      final email = emailController.text.trim();
-      final password = passwordController.text;
 
-      // --- [CORRECCIÓN CRÍTICA: VALIDACIÓN PREVIA] ---
-      // Usamos comillas dobles (") rodeando las variables $rif y $email.
-      // Esto evita el Error 400 en PostgREST.
-      try {
-        final List<dynamic> existingData = await _supabase
-            .from('businesses')
-            .select('id')
-            .or('rif.eq."$rif",email.eq."$email"'); // <--- AQUI ESTÁ LA CLAVE
-        
-        if (existingData.isNotEmpty) {
-          throw "El RIF o el Correo ya están registrados.";
-        }
-      } on PostgrestException catch (pgError) {
-        // Capturamos errores específicos de base de datos para depurar
-        print("Error buscando duplicados: ${pgError.message} - ${pgError.details}");
-        throw "Error verificando datos: ${pgError.message}";
-      }
+      // Actualizamos el modelo con los datos
+      business.update((b) {
+        b?.commercialName = commercialNameController.text;
+        b?.legalName = legalNameController.text;
+        b?.rif = rifController.text;
+        b?.phoneNumber = phoneController.text;
+        b?.address = addressController.text;
+        b?.repName = repNameController.text;
+        b?.shortDesc = shortDescController.text;
+      });
 
-      // 2. Crear Usuario en Auth
+      // ⚠️ COMENTADO: Bloque de subida de imagen (Paso A)
+      /* final bytes = await _rawImageFile!.readAsBytes();
+      final fileExt = _rawImageFile!.path.split('.').last;
+      final fileName = 'rif_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
+      await _supabase.storage.from('logos').uploadBinary(
+        fileName,
+        bytes,
+        fileOptions: FileOptions(
+          contentType: 'image/$fileExt',
+          upsert: true,
+        ),
+      );
+
+      final imageUrl = _supabase.storage.from('logos').getPublicUrl(fileName);
+      business.update((b) => b?.rifUrl = imageUrl);
+      */
+
+      // --- PASO B: CREAR USUARIO EN AUTH ---
       final AuthResponse res = await _supabase.auth.signUp(
         email: email,
         password: password,
@@ -307,39 +287,29 @@ class RegisterBusinessController extends GetxController {
 
       // 6. Éxito
       Get.snackbar(
-        "¡Bienvenido!", 
-        "Tu empresa ha sido registrada exitosamente.", 
-        backgroundColor: Colors.green[800], // Asegúrate que AppColors exista o usa Colors
+        "¡Registro Exitoso!", 
+        "Empresa creada (Sin imagen RIF por ahora).", 
+        backgroundColor: AppColors.darkOlive, 
         colorText: Colors.white,
         duration: const Duration(seconds: 4)
       );
 
+      // Redirigir
       Get.offAllNamed(Routes.home);
+=======
+      // Redirigir al Login o Home
+      // Get.offAllNamed(Routes.login); 
+>>>>>>> Stashed changes
 
     } catch (e) {
-      String msg = e.toString();
+      // 4. Manejo de Errores
+      String msg = e.toString().replaceAll("Exception:", "").trim();
       
-      // Limpieza de mensajes de error
-      if (msg.startsWith("Exception: ")) {
-        msg = msg.replaceAll("Exception: ", "");
+      if (msg.contains("User already registered")) {
+        msg = "Este correo ya está registrado.";
       }
-      // Si sigue saliendo error 400, mostramos un mensaje amigable pero miramos la consola
-      if (msg.contains("400") || msg.contains("PostgrestException")) {
-        // Mira la consola para ver el error real gracias al print del catch arriba
-        if (!msg.contains("El RIF o el Correo")) {
-            msg = "Error de conexión o datos inválidos (400).";
-        }
-      }
-      
-      Get.snackbar(
-        "No se pudo registrar", 
-        msg, 
-        backgroundColor: Colors.red, 
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(10),
-        duration: const Duration(seconds: 5)
-      );
+
+      Get.snackbar("Error de Registro", msg, backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }
