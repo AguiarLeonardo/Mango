@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+// Importamos el controlador para poder usar la función de reservar
+import 'packs_controller.dart';
+
 class PackDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Recibimos los datos pasados desde la pantalla anterior
     final pack = Get.arguments as Map<String, dynamic>;
     final business = pack['businesses'] ?? {};
+
+    // Buscamos el controlador que ya está activo en memoria
+    final PacksController controller = Get.find<PacksController>();
 
     // Formateo seguro de fechas
     final start = DateTime.parse(pack['pickup_start']).toLocal();
@@ -103,20 +109,40 @@ class PackDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 30),
                   
-                  // Botón de Acción (Reservar)
+                  // --- BOTÓN DE RESERVA ACTUALIZADO ---
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Aquí pondremos la lógica de reserva luego
-                        Get.snackbar("Próximamente", "La función de reservar viene pronto.");
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-                      ),
-                      child: const Text("RESERVAR AHORA", style: TextStyle(fontSize: 18, color: Colors.white)),
+                    // Usamos Obx para escuchar cambios en isLoading
+                    child: Obx(() {
+                        // Si está cargando, mostramos la ruedita
+                        if (controller.isLoading.value) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        // Verificamos si hay stock
+                        final int stock = pack['quantity_available'];
+                        final bool isAvailable = stock > 0;
+
+                        return ElevatedButton(
+                          onPressed: isAvailable 
+                            ? () {
+                                // Aquí llamamos a la función real de reservar
+                                // Asegúrate de que los nombres de los campos coincidan con tu base de datos
+                                controller.reservePack(pack['id'], pack['business_id']);
+                              }
+                            : null, // Si no hay stock, el botón se deshabilita
+                          
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isAvailable ? Colors.green : Colors.grey,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                          ),
+                          child: Text(
+                            isAvailable ? "RESERVAR AHORA" : "AGOTADO",
+                            style: const TextStyle(fontSize: 18, color: Colors.white)
+                          ),
+                        );
+                      }
                     ),
                   ),
                   const SizedBox(height: 20),

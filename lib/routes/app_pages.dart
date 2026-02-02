@@ -71,9 +71,11 @@ class AppPages {
       name: Routes.packs,
       page: () => PacksScreen(), // Sin 'const' para evitar conflictos con el controlador
     ),
+
     GetPage(
       name: Routes.packDetail,
       page: () => PackDetailScreen(), // Sin 'const'
     ),
+
   ];
 }
