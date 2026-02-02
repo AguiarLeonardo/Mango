@@ -11,7 +11,10 @@ import '../../../routes/app_routes.dart';
 
 class RegisterBusinessController extends GetxController {
   
+  // Instancia directa de Supabase
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  // Estado de carga visual
   final isLoading = false.obs;
 
   // Modelo reactivo
@@ -23,7 +26,6 @@ class RegisterBusinessController extends GetxController {
 
   // Listas y Opciones
   final phoneCodes = ['0412', '0424', '0416', '0414', '0426'];
-  // Tip para UI: Asegúrate de tener los items de dropdown cargados
   final categories = ['Panadería', 'Restaurante', 'Pastelería', 'Supermercado', 'Cafetería', 'Farmacia', 'Otro'];
 
   // --- Controladores de Texto ---
@@ -60,10 +62,13 @@ class RegisterBusinessController extends GetxController {
     } catch (e) {
       print("Error cargando data de Venezuela: $e");
     }
+    // Valor por defecto para evitar nulos
     business.update((b) => b?.phonePrefix = phoneCodes.first);
   }
 
-  // ... (Tus funciones onStateChanged, onCityChanged, etc. se quedan igual) ...
+  // ===========================================================================
+  // LÓGICA DE CASCADA GEOGRÁFICA
+  // ===========================================================================
   void onStateChanged(String? val) {
     if (val == null) return;
     selectedState.value = val;
@@ -104,7 +109,9 @@ class RegisterBusinessController extends GetxController {
     update();
   }
 
-  // --- REGISTRO ---
+  // ===========================================================================
+  // REGISTRO BLINDADO
+  // ===========================================================================
   Future<void> register() async {
     // Validaciones básicas visuales
     if (commercialNameController.text.isEmpty || 
@@ -116,6 +123,12 @@ class RegisterBusinessController extends GetxController {
       return;
     }
 
+    if (passwordController.text != confirmPasswordController.text) {
+      Get.snackbar("Error", "Las contraseñas no coinciden", 
+        backgroundColor: Colors.red, colorText: Colors.white);
+      return;
+    }
+
     try {
       isLoading.value = true;
       
@@ -123,17 +136,15 @@ class RegisterBusinessController extends GetxController {
       final email = emailController.text.trim();
       final password = passwordController.text;
 
-      // 1. Verificación previa de duplicados (Opcional pero recomendado)
-      // Nota: Si esto falla mucho, puedes comentarlo y dejar que Auth maneje el error
+      // 1. Verificación previa de duplicados
       try {
         final existing = await _supabase.from('businesses')
           .select('id')
           .or('rif.eq.$rif,email.eq.$email')
-          .maybeSingle(); // Usamos maybeSingle para no dar error si está vacío
+          .maybeSingle(); 
         
         if (existing != null) throw "El RIF o Correo ya están registrados en el sistema.";
       } catch (e) {
-         // Si es error de conexión lo dejamos pasar, si es "ya registrado" lo lanzamos
          if (e.toString().contains("ya están registrados")) rethrow;
       }
 
@@ -162,19 +173,18 @@ class RegisterBusinessController extends GetxController {
           );
           uploadedRifUrl = _supabase.storage.from('logos').getPublicUrl(fileName);
         } catch (e) {
-          print("Error subiendo imagen: $e"); // No detenemos el registro por esto
+          print("Error subiendo imagen: $e"); 
         }
       }
 
-      // 4. Insertar en Base de Datos
-      // AQUI ESTABA EL ERROR: Los nombres deben coincidir con el SQL del Paso 1
+      // 4. Insertar en Base de Datos (Coincide con el SQL nuevo)
       final businessData = {
         'id': userId,
         'commercial_name': commercialNameController.text.trim(),
         'legal_name': legalNameController.text.trim(),
         'rif': rif,
         'email': email,
-        'phone': '${business.value.phonePrefix ?? "0412"}-${phoneController.text.trim()}', // Unimos prefijo y numero
+        'phone': '${business.value.phonePrefix ?? "0412"}-${phoneController.text.trim()}',
         
         // Ubicación
         'state': selectedState.value,
@@ -186,7 +196,7 @@ class RegisterBusinessController extends GetxController {
         'category': selectedCategory.value,
         'short_description': shortDescController.text.trim(),
         'representative_name': repNameController.text.trim(),
-        'rif_url': uploadedRifUrl, // URL de la imagen
+        'rif_url': uploadedRifUrl, 
       };
 
       await _supabase.from('businesses').insert(businessData);
