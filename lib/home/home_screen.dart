@@ -1,56 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../core/theme/app_theme.dart';
 import '../../routes/app_routes.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkOlive,
       appBar: AppBar(
-        title: const Text("Inicio", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
+        title: const Text("Inicio"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.exit_to_app, color: Colors.white),
+            icon: const Icon(Icons.logout),
             onPressed: () {
-              // Lógica temporal para cerrar sesión y volver al inicio
-              Get.offAllNamed(Routes.welcome);
+              // Aquí pondremos la lógica para cerrar sesión después
+              Get.offAllNamed(Routes.login);
             },
-          ),
+          )
         ],
       ),
-  body: Center(
-  child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      const Text(
-        "Bienvenido a Mango",
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "¡Bienvenido a Mango!",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.inventory_2),
+              label: const Text("Ver Packs Disponibles"),
+              onPressed: () {
+                Get.toNamed(Routes.packs);
+              },
+            ),
+          ],
         ),
       ),
-      const SizedBox(height: 24),
-      ElevatedButton(
-        onPressed: () {
-          Get.toNamed(Routes.packs);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.brightYellow,
-          foregroundColor: Colors.black,
-        ),
-        child: const Text("Ver packs cercanos"),
-      ),
-    ],
-  ),
-),
     );
   }
 }
