@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker: ^1.2.1
   supabase_flutter: ^2.6.0  # Versión actual recomendada
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
