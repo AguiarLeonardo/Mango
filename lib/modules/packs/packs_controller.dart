@@ -154,4 +154,44 @@ class PacksController extends GetxController {
   // Helpers para Fechas
   void setPickupStart(DateTime dt) { pickupStart = dt; update(); }
   void setPickupEnd(DateTime dt) { pickupEnd = dt; update(); }
+
+  // --- MÉTODO PARA RESERVAR ---
+  Future<void> reservePack(String packId, String businessId) async {
+    try {
+      isLoading.value = true;
+      final userId = _supabase.auth.currentUser?.id;
+
+      if (userId == null) {
+        Get.snackbar("Error", "Debes iniciar sesión para reservar");
+        return;
+      }
+      
+      // Llamamos a la función segura de SQL
+      final response = await _supabase.rpc('reserve_pack', params: {
+        'p_pack_id': packId,
+        'p_business_id': businessId,
+      });
+
+      if (response['success'] == true) {
+        Get.snackbar(
+          "¡Reserva Exitosa! 🎉", 
+          "Tu pack ha sido reservado. Ve a 'Mis Órdenes' para ver el código.",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4)
+        );
+        // Actualizamos la lista para que baje el contador de stock visualmente
+        fetchPacks(); 
+        Get.back(); // Regresar a la pantalla anterior
+      } else {
+        Get.snackbar("Lo sentimos", "Este pack ya se agotó", backgroundColor: Colors.red, colorText: Colors.white);
+      }
+
+    } catch (e) {
+      Get.snackbar("Error", "Ocurrió un problema: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
 }

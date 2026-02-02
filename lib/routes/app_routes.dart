@@ -6,6 +6,7 @@ abstract class Routes {
   static const registerUser = '/register-user';
   static const registerBusiness = '/register-business';
   static const home = '/home'; // Para cuando entren a la app
+  static const orders = '/orders';
   static const forgotPassword = '/forgot-password';
   static const updatePassword = '/update-password';
   static const packs = '/packs';
