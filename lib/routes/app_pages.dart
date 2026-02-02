@@ -10,6 +10,8 @@ import '../modules/auth/login/login_controller.dart';
 import '../modules/auth/update_password/update_password_screen.dart';
 import '../../home/home_screen.dart';
 import '../modules/start/start_screen.dart';
+import '../modules/packs/packs_screen.dart';
+import '../modules/packs/pack_detail_screen.dart';
 class AppPages {
   // CAMBIO IMPORTANTE: La app arranca en START
   static const initial = Routes.start; 
@@ -47,5 +49,13 @@ class AppPages {
       name: Routes.updatePassword,
       page: () => const UpdatePasswordScreen(),
     ),
+    GetPage(
+  name: Routes.packs,
+  page: () => const PacksScreen(),
+),
+GetPage(
+  name: Routes.packDetail,
+  page: () => const PackDetailScreen(),
+),
   ];
 }
