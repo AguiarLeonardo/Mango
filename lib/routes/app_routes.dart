@@ -1,13 +1,10 @@
 abstract class Routes {
-  // Definimos las rutas como constantes estáticas
-  static const start = '/start'; // <--- NUEVA
+  static const start = '/start';
   static const welcome = '/welcome';
-  static const login = '/login';
   static const registerUser = '/register-user';
   static const registerBusiness = '/register-business';
-  static const home = '/home'; // Para cuando entren a la app
-  static const orders = '/orders';
-  static const forgotPassword = '/forgot-password';
+  static const login = '/login';
+  static const home = '/home';
   static const updatePassword = '/update-password';
   static const packs = '/packs';
   static const packDetail = '/pack-detail';

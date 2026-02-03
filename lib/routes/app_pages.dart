@@ -57,7 +57,7 @@ class AppPages {
     // Home (Pantalla principal)
     GetPage(
       name: Routes.home,
-      page: () => const HomeScreen(),
+      page: () => HomeScreen(),
     ),
     
     // Actualizar Contraseña
