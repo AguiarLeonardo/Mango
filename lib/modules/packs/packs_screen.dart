@@ -1,13 +1,16 @@
-import 'dart:io'; // Necesario para mostrar la foto que acabas de elegir
+import 'dart:io'; 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart'; // Necesario para las horas
-// Importa tus propios archivos
+import 'package:intl/intl.dart'; 
+
 import 'packs_controller.dart';
 import 'pack_detail_screen.dart';
 
 class PacksScreen extends StatelessWidget {
+  // Asegúrate de instanciar el controlador
   final PacksController controller = Get.put(PacksController());
+
+  PacksScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +44,7 @@ class PacksScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.75, // Ajustar altura de la tarjeta
+            childAspectRatio: 0.75, 
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -110,9 +113,10 @@ class PacksScreen extends StatelessWidget {
   void _showCreatePackModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Para que suba con el teclado
+      isScrollControlled: true, 
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => GetBuilder<PacksController>( // Usamos GetBuilder para actualizar la imagen sin redibujar todo
+      // Usamos GetBuilder para la IMAGEN (que usa update()) y Obx dentro para las HORAS (que usan .value)
+      builder: (_) => GetBuilder<PacksController>( 
         builder: (_) => Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom, 
@@ -156,11 +160,19 @@ class PacksScreen extends StatelessWidget {
                 
                 const SizedBox(height: 15),
                 const Text("Horario de Retiro", style: TextStyle(fontWeight: FontWeight.bold)),
+                
+                // --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE ---
+                // Envolvemos los botones de hora en un Row
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center, // Centramos los botones
                   children: [
-                    TextButton.icon(
+                    // Botón Inicio (Envuelto en Obx porque pickupStart es reactivo)
+                    Obx(() => TextButton.icon(
                       icon: const Icon(Icons.access_time),
-                      label: Text(controller.pickupStart == null ? "Inicio" : DateFormat('HH:mm').format(controller.pickupStart!)),
+                      // AGREGAMOS .value AQUÍ ABAJO
+                      label: Text(controller.pickupStart.value == null 
+                          ? "Inicio" 
+                          : DateFormat('HH:mm').format(controller.pickupStart.value!)),
                       onPressed: () async {
                         final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                         if (time != null) {
@@ -168,11 +180,17 @@ class PacksScreen extends StatelessWidget {
                           controller.setPickupStart(DateTime(now.year, now.month, now.day, time.hour, time.minute));
                         }
                       },
-                    ),
+                    )),
+                    
                     const Text("-"),
-                    TextButton.icon(
+                    
+                    // Botón Fin (Envuelto en Obx porque pickupEnd es reactivo)
+                    Obx(() => TextButton.icon(
                       icon: const Icon(Icons.access_time),
-                      label: Text(controller.pickupEnd == null ? "Fin" : DateFormat('HH:mm').format(controller.pickupEnd!)),
+                      // AGREGAMOS .value AQUÍ ABAJO
+                      label: Text(controller.pickupEnd.value == null 
+                          ? "Fin" 
+                          : DateFormat('HH:mm').format(controller.pickupEnd.value!)),
                       onPressed: () async {
                         final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                         if (time != null) {
@@ -180,9 +198,10 @@ class PacksScreen extends StatelessWidget {
                           controller.setPickupEnd(DateTime(now.year, now.month, now.day, time.hour, time.minute));
                         }
                       },
-                    ),
+                    )),
                   ],
                 ),
+                // -------------------------------------
 
                 const SizedBox(height: 20),
                 SizedBox(

@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mango/orders/orders_screen.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart'; // <--- AGREGA ESTO
 
 // --- IMPORTACIONES DE TUS PANTALLAS ---
-import '../modules/packs/packs_screen.dart';      // Aquí está tu grilla de packs real
-import '../modules/packs/packs_controller.dart';  // El controlador
+// Asegúrate de que estas rutas sean correctas en tu proyecto
+import '../modules/packs/packs_screen.dart';      
+import '../modules/packs/packs_controller.dart';  
+import '../orders/orders_screen.dart'; // Asegúrate de que esta ruta exista
 
 // Controlador simple para la navegación del Home
 class HomeController extends GetxController {
@@ -23,13 +26,9 @@ class HomeScreen extends StatelessWidget {
   final PacksController packsController = Get.put(PacksController());
 
   // LISTA DE PÁGINAS
-  // 0: PacksScreen (La pantalla real con la grilla que hicimos antes)
-  // 1: OrdersScreen (La pantalla de reservas nueva)
-  // 2: Favoritos (Placeholder)
-  // 3: Perfil (Placeholder)
   final List<Widget> pages = [
     PacksScreen(), 
-    OrdersScreen(),
+    OrdersScreen(), // Asegúrate de que esta clase exista y esté importada
     const FavoritesView(),
     const ProfileView(),
   ];
@@ -37,7 +36,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
-      // Usamos IndexedStack para mantener el estado de las páginas (que no se recarguen al cambiar)
+      // Usamos IndexedStack para mantener el estado de las páginas
       body: IndexedStack(
         index: homeController.currentIndex.value,
         children: pages,
@@ -71,7 +70,6 @@ class HomeScreen extends StatelessWidget {
   }
 
   // --- MODAL PARA CREAR PACK ---
-  // Lo incluyo aquí completo para que no te de error de "function not found"
   void _showCreatePackModal(BuildContext context, PacksController controller) {
     showModalBottomSheet(
       context: context,
@@ -115,12 +113,15 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 15),
               const Text("Horario de Retiro", style: TextStyle(fontWeight: FontWeight.bold)),
               
-              // Selector de hora
+              // Selector de hora CORREGIDO
               Row(
                 children: [
                    Obx(() => TextButton.icon(
                     icon: const Icon(Icons.access_time),
-                    label: Text(controller.pickupStart == null ? "Inicio" : DateFormat('HH:mm').format(controller.pickupStart!)),
+                    // AQUÍ ESTABA EL ERROR: Agregamos .value antes del signo de exclamación y en la condición
+                    label: Text(controller.pickupStart.value == null 
+                        ? "Inicio" 
+                        : DateFormat('HH:mm').format(controller.pickupStart.value!)),
                     onPressed: () async {
                       final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                       if (time != null) {
@@ -132,7 +133,10 @@ class HomeScreen extends StatelessWidget {
                   const Text(" - "),
                   Obx(() => TextButton.icon(
                     icon: const Icon(Icons.access_time),
-                    label: Text(controller.pickupEnd == null ? "Fin" : DateFormat('HH:mm').format(controller.pickupEnd!)),
+                    // AQUÍ TAMBIÉN: Agregamos .value
+                    label: Text(controller.pickupEnd.value == null 
+                        ? "Fin" 
+                        : DateFormat('HH:mm').format(controller.pickupEnd.value!)),
                     onPressed: () async {
                        final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                       if (time != null) {
@@ -168,7 +172,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// --- CLASES PLACEHOLDER PARA QUE NO DE ERROR DE COMPILACIÓN ---
+// --- CLASES PLACEHOLDER ---
 class FavoritesView extends StatelessWidget {
   const FavoritesView({super.key});
   @override
@@ -177,20 +181,62 @@ class FavoritesView extends StatelessWidget {
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text("Perfil")), 
-    body: Center(
-      child: ElevatedButton(
-        onPressed: () {
-          // Lógica básica para cerrar sesión
-          try {
-             // Aquí iría tu Supabase.instance.client.auth.signOut();
-             Get.offAllNamed('/start');
-          } catch(e) {}
-        }, 
-        child: const Text("Cerrar Sesión")
+  Widget build(BuildContext context) {
+    // Obtenemos el usuario actual (si existe) para mostrar su email, opcional
+    final user = Supabase.instance.client.auth.currentUser;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Mi Perfil"),
+        centerTitle: true,
+      ), 
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.person_pin, size: 100, color: Colors.grey),
+              const SizedBox(height: 20),
+              
+              Text(
+                user?.email ?? "Usuario", 
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+              ),
+              
+              const SizedBox(height: 40),
+              
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      // 1. Cerramos sesión en Supabase
+                      await Supabase.instance.client.auth.signOut();
+                      
+                      // 2. Borramos el historial de navegación y vamos al inicio
+                      // Asegúrate de que '/start' o '/login' sea la ruta correcta en tu app_pages.dart
+                      Get.offAllNamed('/start'); 
+                      
+                    } catch(e) {
+                      Get.snackbar("Error", "No se pudo cerrar sesión: $e", 
+                        backgroundColor: Colors.red, colorText: Colors.white);
+                    }
+                  }, 
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  label: const Text("Cerrar Sesión", style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
       )
-    )
-  );
+    );
+  }
 }
