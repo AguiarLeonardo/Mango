@@ -1,90 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:mango/data/models/pack_model.dart';
-import 'packs_controller.dart';
+import 'packs_controller.dart'; // Asegúrate de importar tu controlador
 
 class PackDetailScreen extends StatelessWidget {
+  const PackDetailScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final PackModel pack = Get.arguments as PackModel;
+    // 1. RECIBIMOS EL MAPA (No el PackModel)
+    final pack = Get.arguments as Map<String, dynamic>;
+    
+    // Recuperamos el controlador para la función de reservar
     final PacksController controller = Get.find<PacksController>();
+    
+    // Obtenemos los datos del negocio (si vienen dentro del pack)
+    final business = pack['businesses'] ?? {};
 
-    final start = pack.pickupStart.toLocal();
-    final end = pack.pickupEnd.toLocal();
+    // 2. PARSEO DE FECHAS (Porque en el Mapa vienen como String)
+    final start = DateTime.parse(pack['pickup_start']).toLocal();
+    final end = DateTime.parse(pack['pickup_end']).toLocal();
     final timeFormat = DateFormat('hh:mm a');
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
+          // --- IMAGEN Y TÍTULO ---
           SliverAppBar(
             expandedHeight: 250.0,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                pack.title,
+                pack['title'] ?? 'Sin título',
                 style: const TextStyle(
                   shadows: [Shadow(color: Colors.black, blurRadius: 10)],
                 ),
               ),
-              background: pack.imageUrl != null
-                  ? Image.network(pack.imageUrl!, fit: BoxFit.cover)
+              background: pack['image_url'] != null
+                  ? Image.network(pack['image_url'], fit: BoxFit.cover)
                   : Container(
                       color: Colors.grey,
                       child: const Icon(Icons.fastfood, size: 80, color: Colors.white),
                     ),
             ),
           ),
+          
+          // --- INFORMACIÓN DEL PACK ---
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Precios y stock
+                  // PRECIO Y DISPONIBILIDAD
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (pack.originalPrice != null)
-                            Text(
-                              "\$${pack.originalPrice}",
-                              style: const TextStyle(
-                                decoration: TextDecoration.lineThrough,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          Text(
-                            "\$${pack.price}",
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        "\$${pack['price']}", 
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green)
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                        decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(20)),
                         child: Text(
-                          "${pack.quantityAvailable} Disponibles",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          "${pack['quantity_available']} Disponibles", 
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
                         ),
                       )
                     ],
                   ),
+                  
                   const SizedBox(height: 20),
 
-                  // Info del negocio
+                  // NOMBRE DEL NEGOCIO
                   Row(
                     children: [
                       const CircleAvatar(child: Icon(Icons.store)),
@@ -92,32 +81,19 @@ class PackDetailScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            pack.businessId,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          const Text("ID del negocio", style: TextStyle(color: Colors.grey)),
+                          Text(business['commercial_name'] ?? 'Comercio', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(business['address'] ?? 'Ver en mapa', style: const TextStyle(color: Colors.grey)),
                         ],
                       )
                     ],
                   ),
+                  
                   const Divider(height: 30),
 
-                  const Text("Lo que incluye:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  const SizedBox(height: 8),
-                  Text(
-                    pack.description ?? "Sin descripción",
-                    style: const TextStyle(fontSize: 16, height: 1.5),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Horario de Retiro
+                  // HORARIO
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(10)),
                     child: Row(
                       children: [
                         const Icon(Icons.access_time_filled, color: Colors.blue),
@@ -125,14 +101,8 @@ class PackDetailScreen extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "Horario de Retiro:",
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
-                            ),
-                            Text(
-                              "${timeFormat.format(start)} - ${timeFormat.format(end)}",
-                              style: const TextStyle(fontSize: 16),
-                            ),
+                            const Text("Horario de Retiro:", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                            Text("${timeFormat.format(start)} - ${timeFormat.format(end)}", style: const TextStyle(fontSize: 16)),
                           ],
                         )
                       ],
@@ -141,11 +111,13 @@ class PackDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
-                  // Botón de reservar
+                  // --- BOTÓN DE RESERVAR ---
                   SizedBox(
                     width: double.infinity,
                     child: Obx(() {
-                      final bool isAvailable = pack.quantityAvailable > 0;
+                      // Verificamos stock usando el mapa
+                      final stock = pack['quantity_available'] ?? 0;
+                      final bool isAvailable = stock > 0;
 
                       if (controller.isLoading.value) {
                         return const Center(child: CircularProgressIndicator());
@@ -154,7 +126,8 @@ class PackDetailScreen extends StatelessWidget {
                       return ElevatedButton(
                         onPressed: isAvailable
                             ? () {
-                                controller.reservePack(pack.id, pack.businessId);
+                                // Llamamos a reservar pasando los IDs del mapa
+                                controller.reservePack(pack['id'], pack['business_id']);
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
