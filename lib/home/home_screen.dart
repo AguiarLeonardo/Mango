@@ -67,50 +67,187 @@ class HomeScreen extends StatelessWidget {
     ));
   }
 
-  // --- MODAL PARA CREAR PACK (Reutilizado de tu código anterior) ---
+  // --- MODAL PARA CREAR PACK (VERSIÓN COMPLETA Y CORREGIDA) ---
   void _showCreatePackModal(BuildContext context, PacksController controller) {
-    // Usamos la misma lógica que tenías en packs_screen.dart
-    // NOTA: Asegúrate de tener los imports de dart:io e image_picker en packs_controller
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => GetBuilder<PacksController>(
-        builder: (_) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom, 
-            left: 20, right: 20, top: 20
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        height: Get.height * 0.85, // Ocupa el 85% de la pantalla
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: GetBuilder<PacksController>(
+            builder: (_) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Crear Nuevo Pack", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                // Encabezado
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Crear Nuevo Pack", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Get.back()),
+                  ],
+                ),
                 const SizedBox(height: 20),
+
+                // 1. FOTO
                 GestureDetector(
                   onTap: controller.pickImage,
                   child: Container(
-                    height: 150, width: double.infinity,
-                    decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)),
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!)
+                    ),
                     child: controller.pickedImage != null 
-                      ? Image.file(File(controller.pickedImage!.path), fit: BoxFit.cover)
-                      : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.camera_alt), Text("Foto")]),
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(File(controller.pickedImage!.path), fit: BoxFit.cover)
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, size: 40, color: Colors.grey[400]),
+                            const SizedBox(height: 5),
+                            Text("Toca para agregar foto", style: TextStyle(color: Colors.grey[600]))
+                          ],
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 2. TÍTULO Y DESCRIPCIÓN
+                TextField(
+                  controller: controller.titleController,
+                  decoration: const InputDecoration(
+                    labelText: "Título del Pack",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.fastfood),
                   ),
                 ),
                 const SizedBox(height: 15),
-                TextField(controller: controller.titleController, decoration: const InputDecoration(labelText: "Título", border: OutlineInputBorder())),
+                TextField(
+                  controller: controller.descController,
+                  maxLines: 3, 
+                  decoration: const InputDecoration(
+                    labelText: "Descripción (¿Qué incluye?)",
+                    border: OutlineInputBorder(),
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // 3. PRECIOS Y STOCK
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller.originalPriceController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: "Precio Original",
+                          suffixText: "\$",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: controller.priceController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: "Precio Oferta",
+                          suffixText: "\$",
+                          border: OutlineInputBorder(),
+                          labelStyle: TextStyle(color: Colors.green)
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: controller.quantityController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: "Cantidad Disponible",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.inventory),
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // 4. HORARIOS DE RETIRO
+                const Text("Horario de Retiro:", style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                TextField(controller: controller.priceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Precio", border: OutlineInputBorder())),
-                const SizedBox(height: 10),
-                TextField(controller: controller.quantityController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Cantidad", border: OutlineInputBorder())),
-                const SizedBox(height: 20),
-                SizedBox(width: double.infinity, child: ElevatedButton(onPressed: controller.createPack, style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), child: const Text("PUBLICAR", style: TextStyle(color: Colors.white)))),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.access_time),
+                        label: Text(controller.pickupStart == null 
+                          ? "Inicio" 
+                          : "${controller.pickupStart!.hour}:${controller.pickupStart!.minute.toString().padLeft(2, '0')}"),
+                        onPressed: () async {
+                          final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                          if (time != null) {
+                            final now = DateTime.now();
+                            controller.setPickupStart(DateTime(now.year, now.month, now.day, time.hour, time.minute));
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text("-"),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.access_time_filled),
+                        label: Text(controller.pickupEnd == null 
+                          ? "Fin" 
+                          : "${controller.pickupEnd!.hour}:${controller.pickupEnd!.minute.toString().padLeft(2, '0')}"),
+                        onPressed: () async {
+                          final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                          if (time != null) {
+                            final now = DateTime.now();
+                            controller.setPickupEnd(DateTime(now.year, now.month, now.day, time.hour, time.minute));
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+
+                // 5. BOTÓN FINAL
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back(); // Cerramos el modal
+                      controller.createPack(); // Creamos el pack
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                    ),
+                    child: const Text("PUBLICAR PACK AHORA", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
                 const SizedBox(height: 20),
               ],
             ),
           ),
         ),
       ),
+      isScrollControlled: true, // Importante para que el teclado no tape el formulario
     );
   }
 }
