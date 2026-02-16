@@ -1,48 +1,44 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart'; // <--- AGREGA ESTO
+// --- CONTROLADORES ---
+import 'home_controller.dart';
+import '../modules/packs/packs_controller.dart';
 
-// --- IMPORTACIONES DE TUS PANTALLAS ---
-// Asegúrate de que estas rutas sean correctas en tu proyecto
-import '../modules/packs/packs_screen.dart';      
-import '../modules/packs/packs_controller.dart';  
-import '../orders/orders_screen.dart'; // Asegúrate de que esta ruta exista
-
-// Controlador simple para la navegación del Home
-class HomeController extends GetxController {
-  var currentIndex = 0.obs;
-  void changeTab(int index) => currentIndex.value = index;
-}
+// --- PANTALLAS ---
+import '../modules/packs/packs_screen.dart';
+import '../orders/orders_screen.dart';
+// IMPORTANTE: Importamos la pantalla de visualización de perfil que acabamos de crear
+import '../modules/profile/profile_tab.dart'; 
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
 
+  // Inyectamos nuestro nuevo HomeController
   final HomeController homeController = Get.put(HomeController());
-  // Inyectamos el PacksController para saber si es negocio y mostrar el botón "+"
+  
+  // Inyectamos el PacksController para el botón flotante y el modal
   final PacksController packsController = Get.put(PacksController());
 
   // LISTA DE PÁGINAS
   final List<Widget> pages = [
     PacksScreen(), 
-    OrdersScreen(), // Asegúrate de que esta clase exista y esté importada
+    OrdersScreen(),
     const FavoritesView(),
-    const ProfileView(),
+    const ProfileTab(), // <--- AQUI USAMOS LA PANTALLA NUEVA COMPLETA
   ];
 
   @override
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
-      // Usamos IndexedStack para mantener el estado de las páginas
+      // Mantiene el estado de las páginas al cambiar de tab
       body: IndexedStack(
         index: homeController.currentIndex.value,
         children: pages,
       ),
       
-      // BOTÓN FLOTANTE (Solo si es pestaña 0 'Descubre' y es Negocio)
+      // BOTÓN FLOTANTE (Solo visible en tab 0 'Descubre' y si es Negocio)
       floatingActionButton: (homeController.currentIndex.value == 0 && packsController.isBusiness.value)
           ? FloatingActionButton.extended(
               onPressed: () => _showCreatePackModal(context, packsController),
@@ -69,7 +65,7 @@ class HomeScreen extends StatelessWidget {
     ));
   }
 
-  // --- MODAL PARA CREAR PACK ---
+  // --- MODAL PARA CREAR PACK (UI) ---
   void _showCreatePackModal(BuildContext context, PacksController controller) {
     showModalBottomSheet(
       context: context,
@@ -95,7 +91,6 @@ class HomeScreen extends StatelessWidget {
               ),
               const Divider(),
               
-              // Campos del formulario
               TextField(controller: controller.titleController, decoration: const InputDecoration(labelText: "Título del Pack", prefixIcon: Icon(Icons.fastfood))),
               const SizedBox(height: 10),
               TextField(controller: controller.descController, decoration: const InputDecoration(labelText: "Descripción", prefixIcon: Icon(Icons.description)), maxLines: 2),
@@ -113,35 +108,32 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 15),
               const Text("Horario de Retiro", style: TextStyle(fontWeight: FontWeight.bold)),
               
-              // Selector de hora CORREGIDO
               Row(
                 children: [
-                   Obx(() => TextButton.icon(
+                    Obx(() => TextButton.icon(
                     icon: const Icon(Icons.access_time),
-                    // AQUÍ ESTABA EL ERROR: Agregamos .value antes del signo de exclamación y en la condición
                     label: Text(controller.pickupStart.value == null 
                         ? "Inicio" 
                         : DateFormat('HH:mm').format(controller.pickupStart.value!)),
                     onPressed: () async {
                       final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                       if (time != null) {
-                         final now = DateTime.now();
-                         controller.setPickupStart(DateTime(now.year, now.month, now.day, time.hour, time.minute));
+                          final now = DateTime.now();
+                          controller.setPickupStart(DateTime(now.year, now.month, now.day, time.hour, time.minute));
                       }
                     },
                   )),
                   const Text(" - "),
                   Obx(() => TextButton.icon(
                     icon: const Icon(Icons.access_time),
-                    // AQUÍ TAMBIÉN: Agregamos .value
                     label: Text(controller.pickupEnd.value == null 
                         ? "Fin" 
                         : DateFormat('HH:mm').format(controller.pickupEnd.value!)),
                     onPressed: () async {
-                       final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                        final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                       if (time != null) {
-                         final now = DateTime.now();
-                         controller.setPickupEnd(DateTime(now.year, now.month, now.day, time.hour, time.minute));
+                          final now = DateTime.now();
+                          controller.setPickupEnd(DateTime(now.year, now.month, now.day, time.hour, time.minute));
                       }
                     },
                   )),
@@ -150,7 +142,6 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
               
-              // Botón guardar
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -162,7 +153,6 @@ class HomeScreen extends StatelessWidget {
                   child: const Text("PUBLICAR PACK", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
-              // Espacio extra para el teclado
               Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom))
             ],
           ),
@@ -172,71 +162,13 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// --- CLASES PLACEHOLDER ---
+// --- SUB-VISTAS ---
+
 class FavoritesView extends StatelessWidget {
   const FavoritesView({super.key});
   @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text("Favoritos")), body: const Center(child: Text("Próximamente")));
-}
-
-class ProfileView extends StatelessWidget {
-  const ProfileView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Obtenemos el usuario actual (si existe) para mostrar su email, opcional
-    final user = Supabase.instance.client.auth.currentUser;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Mi Perfil"),
-        centerTitle: true,
-      ), 
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.person_pin, size: 100, color: Colors.grey),
-              const SizedBox(height: 20),
-              
-              Text(
-                user?.email ?? "Usuario", 
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
-              ),
-              
-              const SizedBox(height: 40),
-              
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    try {
-                      // 1. Cerramos sesión en Supabase
-                      await Supabase.instance.client.auth.signOut();
-                      
-                      // 2. Borramos el historial de navegación y vamos al inicio
-                      // Asegúrate de que '/start' o '/login' sea la ruta correcta en tu app_pages.dart
-                      Get.offAllNamed('/start'); 
-                      
-                    } catch(e) {
-                      Get.snackbar("Error", "No se pudo cerrar sesión: $e", 
-                        backgroundColor: Colors.red, colorText: Colors.white);
-                    }
-                  }, 
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  label: const Text("Cerrar Sesión", style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-      )
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text("Favoritos"), centerTitle: true), 
+    body: const Center(child: Text("Próximamente", style: TextStyle(color: Colors.grey)))
+  );
 }

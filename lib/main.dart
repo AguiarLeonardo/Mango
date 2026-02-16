@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+// 1. IMPORTAR LOCALIZACIONES
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/theme/app_theme.dart';
 import 'routes/app_routes.dart'; 
@@ -9,12 +11,11 @@ import 'routes/app_pages.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. INICIALIZACIÓN DE SUPABASE
+  // INICIALIZACIÓN DE SUPABASE
   await Supabase.initialize(
     url: 'https://wssqfdvfcydbxncfrtmy.supabase.co',
     anonKey: 'sb_publishable_lps63HVdjyCRknnoADey7Q_jNIaBPqQ',
   );
-
   
   runApp(const MyApp());
 }
@@ -28,8 +29,18 @@ class MyApp extends StatelessWidget {
       title: 'Mango App',
       debugShowCheckedModeBanner: false,
       
+      // 2. CONFIGURACIÓN DE IDIOMA (Para que el calendario salga en Español)
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'), // Español
+      ],
+      // ------------------------------------------------------------------
+
       // CONFIGURACIÓN DE RUTAS
-      // Asegúrate que en app_pages.dart, 'initial' sea Routes.start
       initialRoute: AppPages.initial, 
       getPages: AppPages.routes,      
       
