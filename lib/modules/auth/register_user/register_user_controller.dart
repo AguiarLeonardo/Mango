@@ -120,7 +120,7 @@ class RegisterUserController extends GetxController {
   }
 
   // ===========================================================================
-  // REGISTRO DE USUARIO (BLINDADO)
+  // REGISTRO DE USUARIO (ACTUALIZADO CON USERNAME Y EMAIL)
   // ===========================================================================
   Future<void> registerUser() async {
     // 1. REVISAR ERRORES VISUALES
@@ -129,15 +129,16 @@ class RegisterUserController extends GetxController {
        return;
     }
 
-    // 2. REVISAR CAMPOS VACÍOS
+    // 2. REVISAR CAMPOS VACÍOS (Ahora incluimos usernameController)
     if (firstNameController.text.isEmpty || 
         lastNameController.text.isEmpty || 
         emailController.text.isEmpty ||
         cedulaController.text.isEmpty ||
         phoneController.text.isEmpty || 
-        passwordController.text.isEmpty) {
+        passwordController.text.isEmpty ||
+        usernameController.text.isEmpty) { // <--- AHORA ES OBLIGATORIO
         
-        Get.snackbar("Faltan datos", "Todos los campos de texto son obligatorios.", 
+        Get.snackbar("Faltan datos", "Todos los campos (incluyendo usuario) son obligatorios.", 
           backgroundColor: Colors.red, colorText: Colors.white);
         return;
     }
@@ -160,35 +161,41 @@ class RegisterUserController extends GetxController {
       
       final fullCedula = '${selectedDocType.value}${cedulaController.text}';
       final email = emailController.text.trim();
+      final username = usernameController.text.trim(); // <--- Capturamos el username
 
-      // --- [NUEVO] PRE-VERIFICACIÓN DE SEGURIDAD ---
-      // Verificamos si la CÉDULA ya existe antes de crear la cuenta.
-      // Nota: No chequeamos el correo aquí porque Supabase Auth ya lo hace, 
-      // pero la cédula es un dato personalizado que Supabase Auth ignora.
+      // --- VERIFICACIÓN DE SEGURIDAD PREVIA ---
       
-      final List<dynamic> existingUser = await _supabase
-          .from('users')
-          .select('id')
-          .eq('cedula', fullCedula); // Buscamos coincidencia exacta de cédula
-
-      if (existingUser.isNotEmpty) {
+      // A. Verificamos si la CÉDULA ya existe
+      final existingCedula = await _supabase
+          .from('users').select('id').eq('cedula', fullCedula).maybeSingle();
+      
+      if (existingCedula != null) {
         throw "La cédula $fullCedula ya está registrada.";
+      }
+
+      // B. Verificamos si el USUARIO ya existe [NUEVO]
+      final existingUser = await _supabase
+          .from('users').select('id').eq('username', username).maybeSingle();
+          
+      if (existingUser != null) {
+        throw "El usuario '$username' ya está en uso. Intenta con otro.";
       }
       // ----------------------------------------------
 
-      // 5. CREAR USUARIO EN AUTH (Solo si la cédula está libre)
+      // 5. CREAR CUENTA EN AUTH
       final AuthResponse res = await _supabase.auth.signUp(
         email: email,
         password: passwordController.text,
+        data: {'username': username}, // Guardamos en metadata por si acaso
       );
 
       if (res.user == null) {
-        throw "El usuario no se creó (respuesta nula)";
+        throw "Error al crear usuario (respuesta nula)";
       }
       
       final userId = res.user!.id;
 
-      // 6. INSERTAR EN LA TABLA DE DATOS
+      // 6. INSERTAR EN LA TABLA DE DATOS PÚBLICA
       final fullPhone = '${selectedPhoneCode.value}-${phoneController.text}';
       
       await _supabase.from('users').insert({
@@ -197,57 +204,39 @@ class RegisterUserController extends GetxController {
         'last_name': lastNameController.text, 
         'cedula': fullCedula, 
         'phone': fullPhone,
-        'username': usernameController.text.isNotEmpty ? usernameController.text : null,
+        'username': username, // <--- Obligatorio
+        'email': email,       // <--- IMPORTANTE: Guardamos el email aquí para buscarlo en el login
         'state': selectedState.value, 
         'city': selectedCity.value,
         'municipality': selectedMunicipality.value,
         'address': addressController.text,
       });
 
-      // 7. SUBIR FOTO (OPCIONAL)
-      // Agregamos esto por si decides subir la foto de perfil
+      // 7. SUBIR FOTO (Si aplica)
       if (profileImagePath.value != null) {
         try {
           final file = File(profileImagePath.value!);
           final fileExt = file.path.split('.').last;
           final fileName = '$userId/profile.$fileExt';
-          
           await _supabase.storage.from('avatars').upload(fileName, file, 
             fileOptions: const FileOptions(upsert: true));
-            
-          // Opcional: Podrías actualizar el campo 'avatar_url' en la tabla users aquí
         } catch (e) {
-          print("Error subiendo avatar: $e"); // No detenemos el flujo por esto
+          print("Error subiendo avatar: $e");
         }
       }
 
-      Get.snackbar(
-        "¡Bienvenido!", 
-        "Cuenta creada exitosamente.", 
-        backgroundColor: Colors.green, 
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3)
-      );
-      
+      Get.snackbar("¡Bienvenido!", "Cuenta creada exitosamente.", backgroundColor: Colors.green, colorText: Colors.white);
       await Future.delayed(const Duration(seconds: 2));
       Get.offAllNamed(Routes.login); 
 
     } catch (e) {
       String msg = e.toString();
-      
-      if (msg.contains("Exception:")) {
-         msg = msg.replaceAll("Exception:", "").trim();
-      }
+      if (msg.contains("Exception:")) msg = msg.replaceAll("Exception:", "").trim();
       
       // Manejo de errores comunes
-      if (msg.contains("User already registered")) {
-        msg = "Este correo ya está registrado.";
-      } else if (msg.contains("duplicate key")) {
-        msg = "La cédula o usuario ya existe.";
-      }
-
+      if (msg.contains("User already registered")) msg = "Este correo ya está registrado.";
+      
       Get.snackbar("Error de Registro", msg, backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 4));
-    
     } finally {
       isLoading.value = false;
     }
