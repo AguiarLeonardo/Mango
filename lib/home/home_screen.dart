@@ -9,8 +9,9 @@ import '../modules/packs/packs_controller.dart';
 // --- PANTALLAS ---
 import '../modules/packs/packs_screen.dart';
 import '../orders/orders_screen.dart';
-// IMPORTANTE: Importamos la pantalla de visualización de perfil que acabamos de crear
 import '../modules/profile/profile_tab.dart'; 
+// IMPORTANTE: Importamos la nueva pantalla de Buscador
+import '../modules/search/search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -21,12 +22,13 @@ class HomeScreen extends StatelessWidget {
   // Inyectamos el PacksController para el botón flotante y el modal
   final PacksController packsController = Get.put(PacksController());
 
-  // LISTA DE PÁGINAS
+  // LISTA DE PÁGINAS (Ahora son 5 incluyendo el Buscador)
   final List<Widget> pages = [
-    PacksScreen(), 
-    OrdersScreen(),
-    const FavoritesView(),
-    const ProfileTab(), // <--- AQUI USAMOS LA PANTALLA NUEVA COMPLETA
+    PacksScreen(),         // Index 0: Inicio
+    const SearchScreen(),  // Index 1: BUSCADOR (NUEVO)
+    OrdersScreen(),        // Index 2: Reservas
+    const FavoritesView(), // Index 3: Favoritos
+    const ProfileTab(),    // Index 4: Perfil
   ];
 
   @override
@@ -53,10 +55,11 @@ class HomeScreen extends StatelessWidget {
         onTap: homeController.changeTab,
         selectedItemColor: Colors.green[800],
         unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
+        type: BottomNavigationBarType.fixed, // Esto es vital para que se vean bien 5 iconos
         showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Descubre'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscador'), // <--- ÍCONO NUEVO
           BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Reservas'),
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favoritos'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
