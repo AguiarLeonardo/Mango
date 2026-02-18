@@ -1,10 +1,8 @@
 class UserModel {
   String? names;
   String? surnames;
-  // NUEVOS CAMPOS
-  String? documentType;   // V-, E-, P-
-  String? documentNumber; // 12345678
-  
+  String? documentType;
+  String? documentNumber;
   String? email;
   String? phonePrefix;
   String? phoneNumber;
@@ -15,11 +13,14 @@ class UserModel {
   String? username;
   String? password;
   bool acceptedTerms = false;
+  
+  // NUEVO ATRIBUTO
+  List<String> favorites; 
 
   UserModel({
     this.names,
     this.surnames,
-    this.documentType = 'V-', // Valor por defecto
+    this.documentType = 'V-',
     this.documentNumber,
     this.email,
     this.phonePrefix = '0412',
@@ -31,21 +32,29 @@ class UserModel {
     this.username,
     this.password,
     this.acceptedTerms = false,
+    this.favorites = const [], // Inicializado vacío por defecto
   });
+
+  // Si tienes un fromMap o fromJson, agrégalo así:
+  factory UserModel.fromMap(Map<String, dynamic> map) {
+    return UserModel(
+      names: map['names'],
+      // ... tus otros campos ...
+      favorites: List<String>.from(map['favorites'] ?? []), // Convierte el array de Supabase a List<String>
+    );
+  }
 
   Map<String, dynamic> toSupabaseMap() {
     return {
       'names': names,
       'surnames': surnames,
-      // Guardamos el documento completo concatenado: "V-12345678"
       'document_id': "$documentType$documentNumber", 
       'phone_prefix': phonePrefix,
       'phone_number': phoneNumber,
       'state': state,
       'city': city,
-      'municipality': municipality,
-      'address': address,
-      'username': username,
+      // ... tus otros campos ...
+      'favorites': favorites, // Lo enviamos a Supabase
     };
   }
 }
