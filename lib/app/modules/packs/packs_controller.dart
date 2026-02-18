@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// Si tienes errores de "File", agrega esto:
 import 'dart:io';
 
 class PacksController extends GetxController {
@@ -10,8 +9,8 @@ class PacksController extends GetxController {
   
   // Estado
   final isLoading = false.obs;
-  final isBusiness = false.obs; // Para saber si mostramos el botón de crear
-  final packsList = <Map<String, dynamic>>[].obs; // Lista de packs
+  final isBusiness = false.obs; 
+  final packsList = <Map<String, dynamic>>[].obs; 
 
   // --- Formulario Crear Pack ---
   final titleController = TextEditingController();
@@ -20,9 +19,9 @@ class PacksController extends GetxController {
   final originalPriceController = TextEditingController();
   final quantityController = TextEditingController();
   
-  // Fechas y Horas
-  DateTime? pickupStart;
-  DateTime? pickupEnd;
+  // --- AQUÍ ESTABA EL ERROR: AHORA SON REACTIVAS (Rxn) ---
+  final pickupStart = Rxn<DateTime>();
+  final pickupEnd = Rxn<DateTime>();
   
   // Imagen
   final ImagePicker _picker = ImagePicker();
@@ -40,7 +39,6 @@ class PacksController extends GetxController {
     final userId = _supabase.auth.currentUser?.id;
 
     if (userId != null) {
-      // Verificamos si este ID existe en la tabla 'businesses'
       final businessData = await _supabase
           .from('businesses')
           .select('id')
@@ -57,16 +55,13 @@ class PacksController extends GetxController {
   // 2. Traer los Packs de Supabase
   Future<void> fetchPacks() async {
     try {
-      // La query base: Traer packs y los datos de la empresa dueña
       var query = _supabase.from('packs').select('*, businesses(commercial_name, address, rif_url)');
 
       if (isBusiness.value) {
-        // Si soy empresa, SOLO veo los mios
         final myId = _supabase.auth.currentUser!.id;
         final response = await query.eq('business_id', myId).order('created_at', ascending: false);
         packsList.value = List<Map<String, dynamic>>.from(response);
       } else {
-        // Si soy usuario, veo TODOS los disponibles (status = available)
         final response = await query.eq('status', 'available').order('created_at', ascending: false);
         packsList.value = List<Map<String, dynamic>>.from(response);
       }
@@ -80,14 +75,15 @@ class PacksController extends GetxController {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       pickedImage = image;
-      update(); // Actualizar UI del modal
+      update(); // Actualizar UI del modal (si usas GetBuilder para la imagen)
     }
   }
 
   // 4. Crear Pack (Solo Business)
   Future<void> createPack() async {
+    // USAMOS .value PARA VERIFICAR
     if (titleController.text.isEmpty || priceController.text.isEmpty || 
-        quantityController.text.isEmpty || pickupStart == null || pickupEnd == null) {
+        quantityController.text.isEmpty || pickupStart.value == null || pickupEnd.value == null) {
       Get.snackbar("Faltan datos", "Por favor llena título, precio, cantidad y horarios.");
       return;
     }
@@ -99,7 +95,7 @@ class PacksController extends GetxController {
       final userId = _supabase.auth.currentUser!.id;
       String? uploadedImageUrl;
 
-      // A. Subir imagen si hay
+      // A. Subir imagen
       if (pickedImage != null) {
         final bytes = await pickedImage!.readAsBytes();
         final fileExt = pickedImage!.path.split('.').last;
@@ -112,17 +108,17 @@ class PacksController extends GetxController {
         uploadedImageUrl = _supabase.storage.from('packs').getPublicUrl(fileName);
       }
 
-      // B. Insertar Pack en BD
+      // B. Insertar Pack en BD (USAMOS .value PARA LEER LA FECHA)
       final packData = {
-        'business_id': userId, // ¡Aquí guardamos la relación!
+        'business_id': userId,
         'title': titleController.text,
         'description': descController.text,
         'price': double.parse(priceController.text),
         'original_price': originalPriceController.text.isNotEmpty ? double.parse(originalPriceController.text) : null,
         'quantity_total': int.parse(quantityController.text),
         'quantity_available': int.parse(quantityController.text),
-        'pickup_start': pickupStart!.toIso8601String(),
-        'pickup_end': pickupEnd!.toIso8601String(),
+        'pickup_start': pickupStart.value!.toIso8601String(), // .value!
+        'pickup_end': pickupEnd.value!.toIso8601String(),     // .value!
         'image_url': uploadedImageUrl,
         'status': 'available'
       };
@@ -136,12 +132,13 @@ class PacksController extends GetxController {
       originalPriceController.clear();
       quantityController.clear();
       pickedImage = null;
-      pickupStart = null;
-      pickupEnd = null;
+      
+      // RESETEAR VALORES REACTIVOS
+      pickupStart.value = null;
+      pickupEnd.value = null;
 
       Get.snackbar("¡Listo!", "Pack publicado exitosamente", backgroundColor: Colors.green, colorText: Colors.white);
       
-      // Recargar lista
       fetchPacks();
 
     } catch (e) {
@@ -151,9 +148,14 @@ class PacksController extends GetxController {
     }
   }
 
-  // Helpers para Fechas
-  void setPickupStart(DateTime dt) { pickupStart = dt; update(); }
-  void setPickupEnd(DateTime dt) { pickupEnd = dt; update(); }
+  // Helpers para Fechas (MODIFICADO PARA USAR .value)
+  void setPickupStart(DateTime dt) { 
+    pickupStart.value = dt; 
+  }
+
+  void setPickupEnd(DateTime dt) { 
+    pickupEnd.value = dt; 
+  }
 
   // --- MÉTODO PARA RESERVAR ---
   Future<void> reservePack(String packId, String businessId) async {
@@ -166,7 +168,6 @@ class PacksController extends GetxController {
         return;
       }
       
-      // Llamamos a la función segura de SQL
       final response = await _supabase.rpc('reserve_pack', params: {
         'p_pack_id': packId,
         'p_business_id': businessId,
@@ -180,9 +181,8 @@ class PacksController extends GetxController {
           colorText: Colors.white,
           duration: const Duration(seconds: 4)
         );
-        // Actualizamos la lista para que baje el contador de stock visualmente
         fetchPacks(); 
-        Get.back(); // Regresar a la pantalla anterior
+        Get.back();
       } else {
         Get.snackbar("Lo sentimos", "Este pack ya se agotó", backgroundColor: Colors.red, colorText: Colors.white);
       }
@@ -193,5 +193,4 @@ class PacksController extends GetxController {
       isLoading.value = false;
     }
   }
-
 }

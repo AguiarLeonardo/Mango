@@ -137,10 +137,8 @@ class RegisterUserScreen extends StatelessWidget {
 
                         // --- UBICACIÓN ---
                         const Divider(color: AppColors.sageGreen),
-                        // ... (Resto del código de ubicación igual que antes) ...
+                        const SizedBox(height: 10),
                         
-                        // (Por brevedad, asumo que aquí va el resto de tu código de ubicación, 
-                        //  es igual al anterior, solo cambia la parte superior).
                         Obx(() => _buildDropdown(
                           label: "Estado",
                           value: controller.selectedState.value,
@@ -176,8 +174,17 @@ class RegisterUserScreen extends StatelessWidget {
                         const Divider(color: AppColors.sageGreen),
 
                         // --- USUARIO Y PASS ---
-                        _buildStyledTextField("Usuario (Opcional)", controller.usernameController, Icons.alternate_email, roundedBorder),
+                        
+                        // [MODIFICADO] Aquí aplicamos el cambio: Ya no es opcional
+                        _buildStyledTextField(
+                          "Nombre de Usuario", 
+                          controller.usernameController, 
+                          Icons.alternate_email, 
+                          roundedBorder
+                        ),
+                        
                         const SizedBox(height: 15),
+                        
                         Obx(() => _buildStyledTextField(
                           "Contraseña", 
                           controller.passwordController, 
@@ -192,7 +199,7 @@ class RegisterUserScreen extends StatelessWidget {
 
                         const SizedBox(height: 30),
 
-// --- BOTONES (Atrás y Registrar) ---
+                        // --- BOTONES (Atrás y Registrar) ---
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -241,7 +248,6 @@ class RegisterUserScreen extends StatelessWidget {
                               GestureDetector(
                                 onTap: () {
                                   // Navega al registro de empresas
-                                  // Asegúrate de que Routes.registerBusiness esté definido
                                   Get.toNamed(Routes.registerBusiness); 
                                 },
                                 child: const Text(

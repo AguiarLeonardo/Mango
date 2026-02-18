@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../routes/app_routes.dart'; // Ajusta tus rutas
+import '../../../routes/app_routes.dart'; 
 
 class UpdatePasswordController extends GetxController {
   final passwordController = TextEditingController();
