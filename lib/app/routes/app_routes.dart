@@ -8,4 +8,6 @@ abstract class Routes {
   static const updatePassword = '/update-password';
   static const packs = '/packs';
   static const packDetail = '/pack-detail';
+  static const payment = '/payment';
+  static const orders = '/orders';
 }
