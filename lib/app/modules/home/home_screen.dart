@@ -4,14 +4,14 @@ import 'package:intl/intl.dart';
 
 // --- CONTROLADORES ---
 import 'home_controller.dart';
-import '../modules/packs/packs_controller.dart';
+import '../packs/packs_controller.dart';
 
 // --- PANTALLAS ---
-import '../modules/packs/packs_screen.dart';
+import '../packs/packs_screen.dart';
 import '../orders/orders_screen.dart';
-import '../modules/profile/profile_tab.dart'; 
+import '../profile/profile_tab.dart'; 
 // IMPORTANTE: Importamos la nueva pantalla de Buscador
-import '../modules/search/search_screen.dart';
+import '../search/search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
