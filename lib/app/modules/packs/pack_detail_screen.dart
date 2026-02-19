@@ -219,12 +219,15 @@ class PackDetailScreen extends StatelessWidget {
 
                       return ElevatedButton(
                         onPressed: isAvailable
-                            ? () =>
-                                controller.reservePack(
-                                  pack.id,
-                                  pack.businessId
-                                      .toString(),
-                                )
+                            ? () {
+          // En lugar de reservar directo, enviamos los datos a la pasarela
+          Get.toNamed('/payment', arguments: {
+            'packId': pack.id,
+            'businessId': pack.businessId.toString(),
+            'title': pack.title,
+            'price': pack.price, 
+          });
+        }
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
