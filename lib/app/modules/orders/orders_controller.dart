@@ -60,7 +60,7 @@ class OrdersController extends GetxController {
         // Intentamos traer el pack y el negocio
         response = await _supabase
             .from('orders')
-            .select('*, packs(title, image_url, businesses(commercial_name))') 
+            .select('*, packs(title, image_url, price, businesses(commercial_name))')
             .eq('user_id', userId)
             .order('created_at', ascending: false);
       }
