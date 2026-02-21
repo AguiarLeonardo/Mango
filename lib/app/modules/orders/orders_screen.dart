@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'orders_controller.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_theme.dart'; // Tu Tema Global
 
 class OrdersScreen extends StatelessWidget {
   final OrdersController controller = Get.put(OrdersController());
@@ -12,20 +12,23 @@ class OrdersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppTheme.backgroundCream, // Fondo Crema del Manual
       appBar: AppBar(
         title: Obx(() => Text(
           controller.isBusinessMode.value ? "Mis Ventas" : "Mis Reservas",
-          style: const TextStyle(fontWeight: FontWeight.bold)
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: AppTheme.primaryGreen, 
+            fontWeight: FontWeight.bold
+          )
         )),
         centerTitle: true,
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.backgroundCream, // Fundido con el fondo
         elevation: 0,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
         }
 
         if (controller.ordersList.isEmpty) {
@@ -33,13 +36,13 @@ class OrdersScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.receipt_long, size: 70, color: Colors.grey[300]),
+                Icon(Icons.receipt_long, size: 70, color: AppTheme.disabledIcon.withOpacity(0.5)),
                 const SizedBox(height: 15),
                 Text(
                   controller.isBusinessMode.value 
                     ? "Aún no tienes ventas." 
                     : "No tienes reservas activas.",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 16)
+                  style: TextStyle(color: AppTheme.textBlack.withOpacity(0.6), fontSize: 16)
                 ),
               ],
             ),
@@ -59,11 +62,22 @@ class OrdersScreen extends StatelessWidget {
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
+                color: Colors.white,
+                elevation: 2,
+                shadowColor: Colors.black.withOpacity(0.2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
-                  leading: const CircleAvatar(backgroundColor: AppColors.orange, child: Icon(Icons.store, color: Colors.white)),
-                  title: Text("Reserva: $code", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(pack['title'] ?? 'Pack'),
-                  trailing: Text(DateFormat('HH:mm').format(date)),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10)
+                    ),
+                    child: const Icon(Icons.store, color: AppTheme.primaryGreen)
+                  ),
+                  title: Text("Reserva: $code", style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
+                  subtitle: Text(pack['title'] ?? 'Pack', style: TextStyle(color: AppTheme.textBlack.withOpacity(0.7))),
+                  trailing: Text(DateFormat('HH:mm').format(date), style: const TextStyle(color: AppTheme.textBlack)),
                 ),
               );
             }
@@ -71,7 +85,6 @@ class OrdersScreen extends StatelessWidget {
         }
 
         // --- VISTA PARA EL CLIENTE (Boletos con Pestañas) ---
-        // Filtramos las órdenes activas y el historial para las pestañas
         final activeOrders = controller.ordersList.where((o) => o['status'] == 'pending').toList();
         final pastOrders = controller.ordersList.where((o) => o['status'] != 'pending').toList();
 
@@ -80,11 +93,12 @@ class OrdersScreen extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                color: Colors.white,
+                color: AppTheme.backgroundCream,
                 child: const TabBar(
-                  indicatorColor: AppColors.orange,
-                  labelColor: AppColors.orange,
-                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: AppTheme.accentOrange, // Naranja para la pestaña seleccionada
+                  labelColor: AppTheme.accentOrange,
+                  unselectedLabelColor: AppTheme.disabledIcon, // Gris para la inactiva
+                  indicatorWeight: 3,
                   tabs: [
                     Tab(text: "ACTIVAS"),
                     Tab(text: "HISTORIAL"),
@@ -112,7 +126,7 @@ class OrdersScreen extends StatelessWidget {
       return Center(
         child: Text(
           isActiveTab ? "No tienes reservas pendientes" : "Tu historial está vacío",
-          style: TextStyle(color: Colors.grey[500]),
+          style: TextStyle(color: AppTheme.textBlack.withOpacity(0.5)),
         ),
       );
     }
@@ -122,14 +136,11 @@ class OrdersScreen extends StatelessWidget {
       itemCount: orders.length,
       itemBuilder: (context, index) {
         final order = orders[index];
-        
-        // Extracción segura de datos
         final pack = order['packs'] ?? {}; 
         final business = pack['businesses'] ?? {}; 
         DateTime date = order['created_at'] != null ? DateTime.parse(order['created_at']).toLocal() : DateTime.now();
         final String code = order['code'] ?? order['pickup_code'] ?? '---';
         
-        // Manejo del precio
         final double rawPrice = pack['price'] != null ? double.tryParse(pack['price'].toString()) ?? 0.0 : 0.0;
         final String formattedPrice = "${rawPrice.toStringAsFixed(2)} Bs";
 
@@ -139,7 +150,7 @@ class OrdersScreen extends StatelessWidget {
           price: formattedPrice,
           orderCode: code,
           date: DateFormat('dd MMM, HH:mm').format(date),
-          isActive: isActiveTab, // Si estamos en la pestaña activa, es naranja. Si no, gris.
+          isActive: isActiveTab, 
         );
       },
     );
@@ -169,16 +180,20 @@ class TicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color mainColor = isActive ? AppColors.orange : Colors.grey.shade400;
-    final Color textColor = isActive ? AppColors.darkOlive : Colors.grey.shade500;
-    final Color codeColor = isActive ? AppColors.orange : Colors.grey.shade500;
+    // Si está activo usa Verde Mango, si es historial usa Gris Claro
+    final Color mainColor = isActive ? AppTheme.primaryGreen : AppTheme.disabledIcon;
+    final Color textColor = isActive ? AppTheme.textBlack : AppTheme.disabledIcon;
+    
+    // El código en Naranja solo si está activo para llamar la atención del vendedor
+    final Color codeColor = isActive ? AppTheme.accentOrange : AppTheme.disabledIcon;
+    final Color backgroundColor = isActive ? Colors.white : AppTheme.disabledBackground;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isActive ? 0.08 : 0.03),
+            color: Colors.black.withOpacity(isActive ? 0.06 : 0.02),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -187,15 +202,12 @@ class TicketCard extends StatelessWidget {
       child: ClipPath(
         clipper: TicketClipper(), 
         child: Container(
-          color: Colors.white,
+          color: backgroundColor,
           child: Column(
             children: [
               // --- MITAD SUPERIOR: DATOS DEL PACK ---
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isActive ? Colors.white : Colors.grey.shade100, 
-                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -213,14 +225,14 @@ class TicketCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(businessName, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                          Text(businessName, style: TextStyle(color: AppTheme.textBlack.withOpacity(0.6), fontSize: 14)),
                           const SizedBox(height: 5),
                           Text(packTitle, style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 5),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(date, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                              Text(date, style: TextStyle(color: AppTheme.textBlack.withOpacity(0.5), fontSize: 13)),
                               Text(price, style: TextStyle(color: mainColor, fontSize: 16, fontWeight: FontWeight.bold)),
                             ],
                           ),
@@ -239,7 +251,7 @@ class TicketCard extends StatelessWidget {
                     Center(
                       child: CustomPaint(
                         size: const Size(double.infinity, 1),
-                        painter: DashedLinePainter(color: Colors.grey.shade300),
+                        painter: DashedLinePainter(color: AppTheme.textBlack.withOpacity(0.15)),
                       ),
                     ),
                   ],
@@ -251,13 +263,13 @@ class TicketCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: isActive ? mainColor.withOpacity(0.05) : Colors.grey.shade100,
+                  color: isActive ? mainColor.withOpacity(0.04) : Colors.transparent,
                 ),
                 child: Column(
                   children: [
                     Text(
                       isActive ? "CÓDIGO DE RETIRO" : "CÓDIGO CANJEADO / VENCIDO",
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                      style: TextStyle(color: AppTheme.textBlack.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -266,7 +278,7 @@ class TicketCard extends StatelessWidget {
                         fontSize: 32, 
                         fontWeight: FontWeight.w900, 
                         letterSpacing: 6, 
-                        color: codeColor,
+                        color: codeColor, // Naranja si es válido
                         decoration: isActive ? TextDecoration.none : TextDecoration.lineThrough,
                       ),
                     ),
@@ -275,7 +287,7 @@ class TicketCard extends StatelessWidget {
                       Text(
                         "Muestra este código en el local para retirar tu pack.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        style: TextStyle(color: AppTheme.textBlack.withOpacity(0.7), fontSize: 13),
                       ),
                   ],
                 ),
@@ -298,6 +310,7 @@ class TicketClipper extends CustomClipper<Path> {
     path.lineTo(0.0, size.height);
     path.lineTo(size.width, size.height);
     path.lineTo(size.width, 0.0);
+    // Agujeros laterales
     path.addOval(Rect.fromCircle(center: Offset(size.width, size.height * 0.65), radius: 10));
     path.addOval(Rect.fromCircle(center: Offset(0.0, size.height * 0.65), radius: 10));
     return path..fillType = PathFillType.evenOdd;

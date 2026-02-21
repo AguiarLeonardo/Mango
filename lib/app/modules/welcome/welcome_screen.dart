@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../../routes/app_routes.dart';
-// Asegúrate de importar el controlador que acabamos de crear:
 import 'welcome_controller.dart'; 
 
 class WelcomeScreen extends GetView<WelcomeController> {
@@ -14,16 +13,34 @@ class WelcomeScreen extends GetView<WelcomeController> {
     Get.put(WelcomeController()); 
 
     return Scaffold(
-      backgroundColor: AppColors.darkOlive,
+      backgroundColor: AppTheme.backgroundCream, // Cambiado al fondo fresco y limpio
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(30.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.eco, size: 80, color: AppColors.brightYellow),
+              // Logo con el verde principal y un fondo sutil
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.eco, size: 80, color: AppTheme.primaryGreen), 
+              ),
               const SizedBox(height: 20),
-              const Text("MANGO", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppColors.white, letterSpacing: 2)),
+              
+              // Título actualizado al color de la marca
+              const Text(
+                "MANGO", 
+                style: TextStyle(
+                  fontSize: 40, 
+                  fontWeight: FontWeight.bold, 
+                  color: AppTheme.primaryGreen, // Texto verde en lugar de blanco
+                  letterSpacing: 2
+                )
+              ),
               const SizedBox(height: 50),
               
               _buildMenuButton(context, "Iniciar Sesión", () {
@@ -48,9 +65,9 @@ class WelcomeScreen extends GetView<WelcomeController> {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.orange,
+          backgroundColor: AppTheme.accentOrange,
           foregroundColor: Colors.white,
-          elevation: 5,
+          elevation: 2, // Bajé un poquito la sombra para un diseño más plano y moderno
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

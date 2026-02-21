@@ -16,7 +16,8 @@ class RegisterBusinessScreen extends StatelessWidget {
     final controller = Get.put(RegisterBusinessController());
 
     return Scaffold(
-      backgroundColor: AppColors.darkOlive,
+      // Usamos el Verde Principal de Mango para el fondo, resaltando la tarjeta blanca
+      backgroundColor: AppTheme.primaryGreen,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -27,7 +28,7 @@ class RegisterBusinessScreen extends StatelessWidget {
                 Card(
                   elevation: 8,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  color: AppColors.white.withOpacity(0.98),
+                  color: Colors.white, // Tarjeta blanca pura para contrastar
                   margin: const EdgeInsets.only(top: 10, right: 10),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
@@ -36,15 +37,26 @@ class RegisterBusinessScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // --- ENCABEZADO ---
-                        const Center(
-                          child: Text("REGISTRO EMPRESA", 
-                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.darkOlive, letterSpacing: 1.2),
+                        Center(
+                          child: Text(
+                            "REGISTRO EMPRESA", 
+                            // Llamamos a Poppins desde el tema y le ponemos nuestro verde
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: AppTheme.primaryGreen, 
+                              fontWeight: FontWeight.bold, 
+                              letterSpacing: 1.2
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         const SizedBox(height: 5),
-                        const Center(
-                          child: Text("Únete a Mango y gestiona tus pedidos", style: TextStyle(color: AppColors.sageGreen, fontWeight: FontWeight.bold)),
+                        Center(
+                          child: Text(
+                            "Únete a Mango y gestiona tus pedidos", 
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.textBlack.withOpacity(0.6), 
+                            )
+                          ),
                         ),
                         const SizedBox(height: 30),
 
@@ -77,7 +89,7 @@ class RegisterBusinessScreen extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => Get.back(),
                     child: const CircleAvatar(
-                      backgroundColor: AppColors.darkOlive, 
+                      backgroundColor: AppTheme.textBlack, // Negro UI para el botón cerrar
                       radius: 18, 
                       child: Icon(Icons.close, color: Colors.white, size: 20)
                     ),
@@ -95,8 +107,8 @@ class RegisterBusinessScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(color: AppColors.darkOlive, fontWeight: FontWeight.bold, fontSize: 16)),
-        const Divider(color: AppColors.sageGreen, thickness: 1),
+        Text(title, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16)),
+        Divider(color: AppTheme.primaryGreen.withOpacity(0.3), thickness: 1),
         const SizedBox(height: 10),
       ],
     );
@@ -218,7 +230,7 @@ class RegisterBusinessScreen extends StatelessWidget {
         const SizedBox(height: 20),
         const Align(
           alignment: Alignment.centerLeft, 
-          child: Text(" Foto del RIF Digital (Opcional)", style: TextStyle(color: AppColors.darkOlive, fontSize: 13, fontWeight: FontWeight.bold))
+          child: Text(" Foto del RIF Digital (Opcional)", style: TextStyle(color: AppTheme.textBlack, fontSize: 13, fontWeight: FontWeight.bold))
         ),
         const SizedBox(height: 8),
 
@@ -226,15 +238,11 @@ class RegisterBusinessScreen extends StatelessWidget {
           final imagePath = controller.business.value.rifImagePath;
           final hasImage = imagePath != null && imagePath.isNotEmpty;
           
-          // [FIX] LÓGICA HÍBRIDA (WEB vs MÓVIL)
-          // Para evitar el error "_Namespace" en Web
           ImageProvider? bgImage;
           if (hasImage) {
             if (GetPlatform.isWeb) {
-               // En web usamos NetworkImage para los Blob Urls
                bgImage = NetworkImage(imagePath!);
             } else {
-               // En móvil usamos FileImage
                bgImage = FileImage(File(imagePath!));
             }
           }
@@ -245,18 +253,21 @@ class RegisterBusinessScreen extends StatelessWidget {
               height: 140,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: hasImage ? Colors.transparent : AppColors.sageGreen.withOpacity(0.1),
+                color: hasImage ? Colors.transparent : AppTheme.primaryGreen.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: hasImage ? AppColors.orange : AppColors.sageGreen, width: 1.5),
+                border: Border.all(
+                  color: hasImage ? AppTheme.accentOrange : AppTheme.primaryGreen.withOpacity(0.5), 
+                  width: 1.5
+                ),
                 image: hasImage ? DecorationImage(image: bgImage!, fit: BoxFit.cover) : null,
               ),
               child: hasImage
-                ? const Center(child: Icon(Icons.check_circle, color: AppColors.white, size: 50))
+                ? const Center(child: Icon(Icons.check_circle, color: Colors.white, size: 50))
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center, 
                     children: [
-                      Icon(Icons.camera_alt_outlined, color: AppColors.darkOlive.withOpacity(0.6), size: 35), 
-                      Text("Toca para cargar foto", style: TextStyle(color: AppColors.darkOlive.withOpacity(0.6)))
+                      Icon(Icons.camera_alt_outlined, color: AppTheme.primaryGreen.withOpacity(0.8), size: 35), 
+                      Text("Toca para cargar foto", style: TextStyle(color: AppTheme.textBlack.withOpacity(0.6)))
                     ]
                   ),
             ),
@@ -269,8 +280,8 @@ class RegisterBusinessScreen extends StatelessWidget {
               alignment: Alignment.centerRight, 
               child: TextButton.icon(
                 onPressed: controller.removeRifImage, 
-                icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18), 
-                label: const Text("Quitar foto", style: TextStyle(color: Colors.red))
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18), 
+                label: const Text("Quitar foto", style: TextStyle(color: Colors.redAccent))
               )
             ); 
           } 
@@ -323,13 +334,13 @@ class RegisterBusinessScreen extends StatelessWidget {
           children: [
             Obx(() => Checkbox(
               value: controller.business.value.acceptedTerms, 
-              activeColor: AppColors.orange, 
+              activeColor: AppTheme.accentOrange, // Naranja para la interacción
               onChanged: (val) => controller.business.update((b) => b?.acceptedTerms = val ?? false)
             )),
             Expanded(
               child: Text(
                 "Acepto los términos y condiciones de Mango.", 
-                style: TextStyle(color: AppColors.darkOlive.withOpacity(0.8), fontSize: 13)
+                style: TextStyle(color: AppTheme.textBlack.withOpacity(0.8), fontSize: 13)
               )
             ),
           ],
@@ -340,20 +351,19 @@ class RegisterBusinessScreen extends StatelessWidget {
           children: [
             TextButton(
               onPressed: () => Get.back(), 
-              child: const Text("Cancelar", style: TextStyle(color: Colors.grey))
+              child: const Text("Cancelar", style: TextStyle(color: AppTheme.disabledIcon))
             ),
             
             Obx(() => ElevatedButton(
               onPressed: controller.isLoading.value ? null : controller.register, 
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange, 
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15), 
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 4
-              ), 
-              child: controller.isLoading.value
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text("REGISTRAR EMPRESA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white))
+              // ¡Mira qué limpio queda el botón! 
+              // Le quitamos todo el código de diseño porque el AppTheme ya hace el trabajo.
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                child: controller.isLoading.value
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text("REGISTRAR EMPRESA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+              )
             )),
           ]
         ),

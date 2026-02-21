@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 
-import '../../../core/theme/app_theme.dart';
 import '../../../data/models/business_model.dart';
 import '../../../data/venezuela_data.dart';
 import '../../../routes/app_routes.dart';

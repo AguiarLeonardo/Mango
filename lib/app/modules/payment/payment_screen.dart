@@ -12,13 +12,14 @@ class PaymentScreen extends StatelessWidget {
     final controller = Get.put(PaymentController());
 
     return Scaffold(
-      // 1. Un fondo ligeramente gris para que el blanco de los inputs resalte
-      backgroundColor: Colors.grey[50],
+      // Usamos el fondo crema global de Mango
+      backgroundColor: AppTheme.backgroundCream,
       appBar: AppBar(
-        title: const Text("Finalizar Compra", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Finalizar Compra", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: AppTheme.textBlack),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -33,23 +34,26 @@ class PaymentScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5)),
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 5)),
                 ],
-                border: Border.all(color: AppColors.sageGreen.withOpacity(0.3)),
+                border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
               ),
               child: Column(
                 children: [
                   const Text("Total a pagar", style: TextStyle(fontSize: 16, color: Colors.grey)),
                   const SizedBox(height: 5),
-                  Text("${controller.price.toStringAsFixed(2)} Bs", style: const TextStyle(fontSize: 32, color: AppColors.darkOlive, fontWeight: FontWeight.w900)),
+                  Text(
+                    "${controller.price.toStringAsFixed(2)} Bs", 
+                    style: const TextStyle(fontSize: 32, color: AppTheme.textBlack, fontWeight: FontWeight.w900)
+                  ),
                   const Divider(height: 30),
-                  Text(controller.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkOlive)),
+                  Text(controller.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
                 ],
               ),
             ),
             const SizedBox(height: 35),
 
-            const Text("Método de pago", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkOlive)),
+            const Text("Método de pago", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
             const SizedBox(height: 15),
 
             // --- SELECTOR DE MÉTODOS ---
@@ -80,20 +84,22 @@ class PaymentScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
-                    BoxShadow(color: AppColors.orange.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
+                    BoxShadow(color: AppTheme.accentOrange.withOpacity(0.25), blurRadius: 12, offset: const Offset(0, 6)),
                   ],
                 ),
                 child: ElevatedButton(
                   onPressed: controller.isLoading.value ? null : controller.processPayment,
+                  // Aquí forzamos el color Naranja para el botón más importante de la app (CTA crítico)
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: AppTheme.accentOrange,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     elevation: 0,
                   ),
                   child: controller.isLoading.value
                       ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                      : const Text("CONFIRMAR PAGO", style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      : const Text("CONFIRMAR PAGO", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 ),
               );
             }),
@@ -112,14 +118,14 @@ class PaymentScreen extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.orange : Colors.white,
+          color: isSelected ? AppTheme.accentOrange : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppColors.orange : Colors.grey.shade300),
-          boxShadow: isSelected ? [BoxShadow(color: AppColors.orange.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+          border: Border.all(color: isSelected ? AppTheme.accentOrange : Colors.grey.shade300),
+          boxShadow: isSelected ? [BoxShadow(color: AppTheme.accentOrange.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.grey.shade600, size: 32),
+            Icon(icon, color: isSelected ? Colors.white : Colors.grey.shade500, size: 32),
             const SizedBox(height: 8),
             Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.grey.shade600)),
           ],
@@ -146,24 +152,23 @@ class PaymentScreen extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.sageGreen),
+        prefixIcon: Icon(icon, color: AppTheme.primaryGreen),
         filled: true,
-        fillColor: Colors.white, // Fondo blanco!
+        fillColor: Colors.white, 
         labelStyle: TextStyle(color: Colors.grey.shade600),
         hintStyle: TextStyle(color: Colors.grey.shade400),
-        // Borde cuando no está seleccionado
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
         ),
-        // Borde cuando haces tap para escribir
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: AppColors.orange, width: 2),
+          borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2),
         ),
       ),
     );
   }
+
   // --- WIDGET MOLDE PARA LA LISTA DESPLEGABLE ---
   Widget _buildCustomDropdown({
     required String hint,
@@ -173,11 +178,11 @@ class PaymentScreen extends StatelessWidget {
   }) {
     return Obx(() => DropdownButtonFormField<String>(
       value: selectedValue.value.isEmpty ? null : selectedValue.value,
-      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.orange),
+      icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryGreen),
       decoration: InputDecoration(
         labelText: "Banco de Origen",
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.sageGreen),
+        prefixIcon: Icon(icon, color: AppTheme.primaryGreen),
         filled: true,
         fillColor: Colors.white,
         labelStyle: TextStyle(color: Colors.grey.shade600),
@@ -187,13 +192,13 @@ class PaymentScreen extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: AppColors.orange, width: 2),
+          borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2),
         ),
       ),
       items: items.map((String bank) {
         return DropdownMenuItem<String>(
           value: bank,
-          child: Text(bank, style: const TextStyle(fontSize: 15)),
+          child: Text(bank, style: const TextStyle(fontSize: 15, color: AppTheme.textBlack)),
         );
       }).toList(),
       onChanged: (newValue) {
@@ -208,7 +213,7 @@ class PaymentScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Datos de la Tarjeta", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkOlive)),
+        const Text("Datos de la Tarjeta", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
         const SizedBox(height: 15),
         
         _buildCustomTextField(
@@ -254,10 +259,10 @@ class PaymentScreen extends StatelessWidget {
 
   // --- FORMULARIO PAGO MÓVIL ---
   Widget _buildPagoMovilForm(PaymentController controller) {
-return Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Datos para Transferir", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkOlive)),
+        const Text("Datos para Transferir", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
         const SizedBox(height: 15),
         
         // Tarjeta con los datos del negocio
@@ -266,7 +271,7 @@ return Column(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: AppColors.sageGreen.withOpacity(0.5)),
+            border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.4)),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 4))],
           ),
           child: Column(
@@ -281,7 +286,7 @@ return Column(
         ),
         const SizedBox(height: 25),
         
-        const Text("Confirmación", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkOlive)),
+        const Text("Confirmación", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
         const SizedBox(height: 15),
 
         // --- NUEVA LISTA DESPLEGABLE DE BANCOS ---
@@ -292,7 +297,7 @@ return Column(
           items: controller.bankList,
         ),
         
-        const SizedBox(height: 15), // Separación
+        const SizedBox(height: 15),
 
         // Caja de referencia
         _buildCustomTextField(
@@ -312,7 +317,7 @@ return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.darkOlive)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textBlack)),
       ],
     );
   }

@@ -4,29 +4,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // 1. IMPORTAR LOCALIZACIONES
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'app/core/theme/app_theme.dart';
+// Asegúrate de que esta ruta apunte correctamente a tu nuevo archivo de tema
+import 'app/core/theme/app_theme.dart'; 
 import 'app/routes/app_routes.dart'; 
 import 'app/routes/app_pages.dart'; 
 import 'app/modules/auth/login/login_controller.dart';
-
 
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
     // Inyectamos el LoginController como "lazy" (se crea cuando se necesita)
-    // O como "put" directo si lo usas en todos lados.
-
     Get.lazyPut(() => LoginController(), fenix: true); 
-    
-
   }
 }
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // INICIALIZACIÓN DE SUPABASE
-  // Solo inicializamos la conexión. La verificación de sesión 
-  // la hará tu StartController cuando arranque la app.
   await Supabase.initialize(
     url: 'https://wssqfdvfcydbxncfrtmy.supabase.co',
     anonKey: 'sb_publishable_lps63HVdjyCRknnoADey7Q_jNIaBPqQ',
@@ -55,11 +50,11 @@ class MyApp extends StatelessWidget {
       ],
 
       // CONFIGURACIÓN DE RUTAS
-      // AppPages.initial debe ser Routes.start para que StartController haga su magia
       initialRoute: AppPages.initial, 
       getPages: AppPages.routes,      
+      initialBinding: InitialBinding(), // Añadido para que GetX use tu InitialBinding
       
-      // TEMA PERSONALIZADO
+      // TEMA PERSONALIZADO NUEVO
       theme: _buildTheme(),
     );
   }
@@ -67,25 +62,42 @@ class MyApp extends StatelessWidget {
   ThemeData _buildTheme() {
     return ThemeData(
       useMaterial3: true,
-      primaryColor: AppColors.darkOlive,
-      scaffoldBackgroundColor: AppColors.darkOlive,
+      
+      // Colores principales de la app
+      primaryColor: AppTheme.primaryGreen,
+      // El fondo global ahora es crema, para que toda la app se vea limpia
+      scaffoldBackgroundColor: AppTheme.backgroundCream, 
       
       // Esquema de colores
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.darkOlive,
-        primary: AppColors.darkOlive,
-        secondary: AppColors.orange,
-        surface: AppColors.white,
+        seedColor: AppTheme.primaryGreen,
+        primary: AppTheme.primaryGreen,
+        secondary: AppTheme.accentOrange,
+        surface: Colors.white,
       ),
 
+      // Tema global para las cajas de texto (TextFields)
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.sageGreen.withOpacity(0.25),
-        labelStyle: TextStyle(color: AppColors.darkOlive.withOpacity(0.6)),
+        fillColor: Colors.white, // Cajas de texto blancas
+        labelStyle: TextStyle(color: AppTheme.textBlack.withOpacity(0.6)),
         contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.orange, width: 2)),
+        
+        // Borde por defecto
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), 
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        ),
+        // Borde cuando no está seleccionado
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), 
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        ),
+        // Borde Naranja cuando el usuario toca para escribir
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), 
+          borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2),
+        ),
       ),
     );
   }
