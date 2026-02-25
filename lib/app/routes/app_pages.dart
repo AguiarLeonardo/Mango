@@ -11,10 +11,11 @@ import 'package:mango/app/modules/auth/register_business/register_business_scree
 import 'package:mango/app/modules/auth/update_password/update_password_screen.dart';
 import 'package:mango/app/modules/payment/payment_screen.dart';
 import 'package:mango/app/modules/orders/orders_screen.dart';
-// Importamos tu nuevo Shell
 import 'package:mango/app/modules/shell/shell_screen.dart';
-import 'package:mango/app/modules/packs/packs_screen.dart';
+import 'package:mango/app/modules/packs/vendedor_packs_screen.dart';
 import 'package:mango/app/modules/packs/pack_detail_screen.dart';
+import 'package:mango/app/modules/business/business_detail_screen.dart';
+import 'package:mango/app/modules/search/search_screen.dart';
 
 class AppPages {
   static const initial = Routes.start;
@@ -41,7 +42,18 @@ class AppPages {
       page: () => const UpdatePasswordScreen(),
     ),
     GetPage(name: Routes.shell, page: () => ShellScreen()),
-    GetPage(name: Routes.packs, page: () => PacksScreen()),
+    GetPage(name: Routes.vendorPacks, page: () => VendorPacksScreen()),
     GetPage(name: Routes.packDetail, page: () => const PackDetailScreen()),
+
+    // 🏢 DETALLE DEL NEGOCIO
+    GetPage(
+      name: Routes.businessDetail,
+      page: () => BusinessDetailScreen(
+        businessData: Get.arguments as Map<String, dynamic>,
+      ),
+    ),
+
+    // 🔍 SEARCH SCREEN
+    GetPage(name: Routes.search, page: () => const SearchScreen()),
   ];
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'favorites_controller.dart';
 import '../packs/pack_detail_screen.dart';
-import '../search/business_detail_screen.dart';
+import '../business/business_detail_screen.dart';
 import '../../core/theme/app_theme.dart'; // Importante para la consistencia
 
 class FavoritesScreen extends StatelessWidget {
@@ -12,8 +12,8 @@ class FavoritesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final FavoritesController controller =
         Get.isRegistered<FavoritesController>()
-        ? Get.find<FavoritesController>()
-        : Get.put(FavoritesController());
+            ? Get.find<FavoritesController>()
+            : Get.put(FavoritesController());
 
     return DefaultTabController(
       length: 2,
@@ -173,8 +173,7 @@ class FavoritesScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading:
-            leadingWidget ??
+        leading: leadingWidget ??
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(

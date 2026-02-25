@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Importante para la BD
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/pack_model.dart';
 import '../../data/models/business_model.dart';
@@ -11,8 +11,9 @@ class DiscoverController extends GetxController {
   final RxList<PackModel> featuredPacks = <PackModel>[].obs;
   final RxList<BusinessModel> recommendedBusinesses = <BusinessModel>[].obs;
 
-  // ✅ VARIABLE PARA GUARDAR EL NOMBRE DEL USUARIO
+  // ✅ VARIABLES PARA EL USUARIO
   final RxString userName = ''.obs;
+  final RxString avatarUrl = ''.obs; // Nueva variable para la foto
 
   @override
   void onInit() {
@@ -24,17 +25,22 @@ class DiscoverController extends GetxController {
     try {
       isLoading.value = true;
 
-      // --- 1. OBTENER EL NOMBRE DEL USUARIO (first_name) ---
+      // --- 1. OBTENER DATOS DEL USUARIO (first_name y avatar_url) ---
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
         final userResponse = await _supabase
             .from('users')
-            .select('first_name')
+            .select('first_name, avatar_url') // ✅ PEDIMOS TAMBIÉN EL AVATAR
             .eq('id', userId)
             .maybeSingle();
 
-        if (userResponse != null && userResponse['first_name'] != null) {
-          userName.value = userResponse['first_name'];
+        if (userResponse != null) {
+          if (userResponse['first_name'] != null) {
+            userName.value = userResponse['first_name'];
+          }
+          if (userResponse['avatar_url'] != null) {
+            avatarUrl.value = userResponse['avatar_url']; // ✅ GUARDAMOS LA FOTO
+          }
         }
       }
 
@@ -42,7 +48,7 @@ class DiscoverController extends GetxController {
       final packsResponse = await _supabase
           .from('packs')
           .select('*, businesses(commercial_name)')
-          .limit(10); // Límite para no saturar la pantalla
+          .limit(10);
 
       featuredPacks.assignAll(
           packsResponse.map((json) => PackModel.fromJson(json)).toList());
@@ -57,7 +63,6 @@ class DiscoverController extends GetxController {
                 category: json['category'],
                 city: json['city'],
                 address: json['address'] ?? '',
-                // Puedes mapear los demás campos si los necesitas
               ))
           .toList());
     } catch (e) {

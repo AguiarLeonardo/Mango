@@ -17,8 +17,6 @@ class DiscoverScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundCream,
-
-      // ✅ 1. AGREGAMOS EL MENÚ LATERAL (DRAWER)
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -31,15 +29,21 @@ class DiscoverScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: 30,
-                    child: Icon(
-                      Icons.person,
-                      size: 35,
-                      color: AppTheme.primaryGreen,
-                    ),
-                  ),
+                  // ✅ AVATAR DEL DRAWER ACTUALIZADO
+                  Obx(() => CircleAvatar(
+                        backgroundColor: Colors.white,
+                        radius: 30,
+                        backgroundImage: controller.avatarUrl.value.isNotEmpty
+                            ? NetworkImage(controller.avatarUrl.value)
+                            : null,
+                        child: controller.avatarUrl.value.isEmpty
+                            ? const Icon(
+                                Icons.person,
+                                size: 35,
+                                color: AppTheme.primaryGreen,
+                              )
+                            : null,
+                      )),
                   const SizedBox(height: 10),
                   Obx(() => Text(
                         controller.userName.value.isNotEmpty
@@ -54,35 +58,25 @@ class DiscoverScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // --- BOTÓN: MI PERFIL ---
             ListTile(
               leading:
                   const Icon(Icons.person_outline, color: AppTheme.textBlack),
               title: const Text('Mi Perfil'),
               onTap: () {
-                Get.back(); // 1. Cierra el menú lateral primero
-
-                // 2. Navega DIRECTAMENTE a la pantalla de perfil
+                Get.back();
                 Get.to(() => const ProfileScreen());
               },
             ),
-
-            // --- BOTÓN: CONFIGURACIÓN ---
             ListTile(
               leading: const Icon(Icons.settings_outlined,
                   color: AppTheme.textBlack),
               title: const Text('Configuración'),
               onTap: () {
                 Get.back();
-                // Aquí navegas a tu pantalla de ajustes (si la tienes creada)
                 Get.toNamed('/settings');
               },
             ),
-
-            const Divider(), // Línea separadora
-
-            // --- BOTÓN: CERRAR SESIÓN ---
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.redAccent),
               title: const Text(
@@ -92,7 +86,6 @@ class DiscoverScreen extends StatelessWidget {
               ),
               onTap: () {
                 Get.back();
-                // ✅ Usamos la función de cerrar sesión que ya tienes en tu ShellController
                 try {
                   Get.find<ShellController>().signOut();
                 } catch (e) {
@@ -103,32 +96,34 @@ class DiscoverScreen extends StatelessWidget {
           ],
         ),
       ),
-
-      // --- 2. APPBAR MODIFICADO (Avatar + Nombre abren el Drawer) ---
       appBar: AppBar(
         backgroundColor: AppTheme.primaryGreen,
         elevation: 0,
-        automaticallyImplyLeading: false, // Oculta las 3 rayitas
+        automaticallyImplyLeading: false,
         titleSpacing: 15,
         title: Builder(builder: (context) {
           return GestureDetector(
             onTap: () {
-              // ✅ AHORA SÍ FUNCIONARÁ PORQUE YA HAY UN DRAWER
               Scaffold.of(context).openDrawer();
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  child: const Icon(
-                    Icons.person_outline,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
+                // ✅ AVATAR DEL APPBAR ACTUALIZADO
+                Obx(() => CircleAvatar(
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      backgroundImage: controller.avatarUrl.value.isNotEmpty
+                          ? NetworkImage(controller.avatarUrl.value)
+                          : null,
+                      child: controller.avatarUrl.value.isEmpty
+                          ? const Icon(
+                              Icons.person_outline,
+                              color: Colors.white,
+                              size: 24,
+                            )
+                          : null,
+                    )),
                 const SizedBox(width: 12),
-                // Nombre del usuario
                 Obx(() => Text(
                       controller.userName.value.isNotEmpty
                           ? controller.userName.value
@@ -144,7 +139,6 @@ class DiscoverScreen extends StatelessWidget {
           );
         }),
       ),
-
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
@@ -161,7 +155,6 @@ class DiscoverScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- 3. TÍTULO DE BIENVENIDA ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -198,8 +191,6 @@ class DiscoverScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-
-                // --- 4. BANNER PROMOCIONAL ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Container(
@@ -250,8 +241,6 @@ class DiscoverScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 30),
-
-                // --- 5. SECCIÓN: PACKS RECOMENDADOS ---
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
@@ -260,7 +249,6 @@ class DiscoverScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-
                 SizedBox(
                   height: 230,
                   child: ListView.builder(
@@ -272,10 +260,7 @@ class DiscoverScreen extends StatelessWidget {
                     },
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
-                // --- 6. SECCIÓN: NEGOCIOS CERCA ---
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
@@ -284,7 +269,6 @@ class DiscoverScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-
                 SizedBox(
                   height: 120,
                   child: ListView.builder(
@@ -305,8 +289,6 @@ class DiscoverScreen extends StatelessWidget {
       }),
     );
   }
-
-  // --- WIDGETS AUXILIARES ---
 
   Widget _buildPackCard(PackModel pack) {
     return GestureDetector(
