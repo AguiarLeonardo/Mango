@@ -18,7 +18,7 @@ class PacksController extends GetxController {
   final originalPriceController = TextEditingController();
   final quantityController = TextEditingController();
 
-  // --- AQUÍ ESTABA EL ERROR: AHORA SON REACTIVAS (Rxn) ---
+  // --- FECHAS REACTIVAS (Rxn) ---
   final pickupStart = Rxn<DateTime>();
   final pickupEnd = Rxn<DateTime>();
 
@@ -86,36 +86,40 @@ class PacksController extends GetxController {
 
   // 4. Crear Pack (Solo Business)
   Future<void> createPack() async {
-    // USAMOS .value PARA VERIFICAR
-    if (titleController.text.isEmpty ||
-        priceController.text.isEmpty ||
-        quantityController.text.isEmpty ||
+    // ✅ VALIDACIÓN CORREGIDA: Salimos de la función si falta algo
+    if (titleController.text.trim().isEmpty ||
+        priceController.text.trim().isEmpty ||
+        quantityController.text.trim().isEmpty ||
         pickupStart.value == null ||
         pickupEnd.value == null) {
       Get.snackbar(
         "Faltan datos",
-        "Por favor llena título, precio, cantidad y horarios.",
+        "Por favor llena título, precio, cantidad y asegúrate de seleccionar los horarios.",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
       );
-      return;
+      return; // Detiene la ejecución aquí si faltan datos
     }
 
     try {
       isLoading.value = true;
-      Get.back(); // Cerrar modal
+
+      // Cerramos el modal/bottom sheet solo si estamos seguros de que va a procesar
+      if (Get.isBottomSheetOpen == true || Get.isDialogOpen == true) {
+        Get.back();
+      }
 
       final userId = _supabase.auth.currentUser!.id;
       String? uploadedImageUrl;
 
-      // A. Subir imagen
+      // A. Subir imagen (Si el usuario seleccionó una)
       if (pickedImage != null) {
         final bytes = await pickedImage!.readAsBytes();
         final fileExt = pickedImage!.path.split('.').last;
         final fileName =
             '$userId/pack_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-        await _supabase.storage
-            .from('packs')
-            .uploadBinary(
+        await _supabase.storage.from('packs').uploadBinary(
               fileName,
               bytes,
               fileOptions: FileOptions(
@@ -123,31 +127,31 @@ class PacksController extends GetxController {
                 upsert: true,
               ),
             );
-        uploadedImageUrl = _supabase.storage
-            .from('packs')
-            .getPublicUrl(fileName);
+        uploadedImageUrl =
+            _supabase.storage.from('packs').getPublicUrl(fileName);
       }
 
-      // B. Insertar Pack en BD (USAMOS .value PARA LEER LA FECHA)
+      // B. Insertar Pack en BD
+      // Usamos el '!' porque la validación de arriba nos asegura que no son null
       final packData = {
         'business_id': userId,
-        'title': titleController.text,
-        'description': descController.text,
-        'price': double.parse(priceController.text),
+        'title': titleController.text.trim(),
+        'description': descController.text.trim(),
+        'price': double.tryParse(priceController.text) ?? 0.0,
         'original_price': originalPriceController.text.isNotEmpty
-            ? double.parse(originalPriceController.text)
+            ? (double.tryParse(originalPriceController.text) ?? 0.0)
             : null,
-        'quantity_total': int.parse(quantityController.text),
-        'quantity_available': int.parse(quantityController.text),
-        'pickup_start': pickupStart.value!.toIso8601String(), // .value!
-        'pickup_end': pickupEnd.value!.toIso8601String(), // .value!
+        'quantity_total': int.tryParse(quantityController.text) ?? 1,
+        'quantity_available': int.tryParse(quantityController.text) ?? 1,
+        'pickup_start': pickupStart.value!.toIso8601String(),
+        'pickup_end': pickupEnd.value!.toIso8601String(),
         'image_url': uploadedImageUrl,
         'status': 'available',
       };
 
       await _supabase.from('packs').insert(packData);
 
-      // Limpiar formulario
+      // Limpiar formulario después de crear exitosamente
       titleController.clear();
       descController.clear();
       priceController.clear();
@@ -166,7 +170,8 @@ class PacksController extends GetxController {
         colorText: Colors.white,
       );
 
-      fetchPacks();
+      // Recargar la lista para mostrar el nuevo pack
+      await fetchPacks();
     } catch (e) {
       Get.snackbar(
         "Error",
@@ -179,7 +184,7 @@ class PacksController extends GetxController {
     }
   }
 
-  // Helpers para Fechas (MODIFICADO PARA USAR .value)
+  // Helpers para Fechas
   void setPickupStart(DateTime dt) {
     pickupStart.value = dt;
   }
@@ -199,31 +204,48 @@ class PacksController extends GetxController {
         return;
       }
 
+      // Llamamos a la función RPC en Supabase
       final response = await _supabase.rpc(
         'reserve_pack',
         params: {'p_pack_id': packId, 'p_business_id': businessId},
       );
 
-      if (response['success'] == true) {
-        Get.snackbar(
-          "¡Reserva Exitosa! 🎉",
-          "Tu pack ha sido reservado. Ve a 'Mis Órdenes' para ver el código.",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 4),
-        );
-        fetchPacks();
-        Get.back();
+      if (response != null && response['success'] == true) {
+        print(
+            "✅ PASO 1: Stock restado con éxito. Intentando crear la orden en Supabase...");
+
+        try {
+          final orderResponse = await _supabase.from('orders').insert({
+            'pack_id': packId,
+            'business_id': businessId,
+            'user_id': userId,
+            'status': 'completed',
+          }).select(); // <-- El .select() obliga a Supabase a decirnos si falló o triunfó
+
+          print(
+              "✅ PASO 2: ¡Orden creada exitosamente en Supabase!: $orderResponse");
+
+          await fetchPacks();
+          Get.snackbar("Éxito", "Compra realizada",
+              backgroundColor: Colors.green);
+        } catch (e) {
+          // Si Supabase lo rechaza por RLS o falta de datos, caerá aquí.
+          print("🚨 ERROR CRÍTICO AL CREAR LA ORDEN: $e");
+          Get.snackbar("Error oculto", "Mira la consola",
+              backgroundColor: Colors.red);
+        }
       } else {
         Get.snackbar(
           "Lo sentimos",
-          "Este pack ya se agotó",
-          backgroundColor: Colors.red,
+          "Este pack ya se agotó o no está disponible.",
+          backgroundColor: Colors.orange,
           colorText: Colors.white,
         );
+        throw Exception(
+            "Pack agotado"); // Lanzamos error para que la pasarela lo sepa
       }
     } catch (e) {
-      Get.snackbar("Error", "Ocurrió un problema: $e");
+      throw Exception(e.toString()); // Propagamos el error a la pasarela
     } finally {
       isLoading.value = false;
     }

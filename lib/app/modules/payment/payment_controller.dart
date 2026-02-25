@@ -4,6 +4,7 @@ import 'dart:math';
 import '../packs/packs_controller.dart';
 import '../shell/shell_controller.dart';
 import '../../routes/app_routes.dart';
+import '../orders/orders_controller.dart';
 
 class PaymentController extends GetxController {
   final isLoading = false.obs;
@@ -34,11 +35,40 @@ class PaymentController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments as Map<String, dynamic>;
-    packId = args['packId'];
-    businessId = args['businessId'];
-    title = args['title'];
-    price = args['price'];
+
+    final dynamic args = Get.arguments;
+
+    if (args == null) {
+      packId = '';
+      businessId = '';
+      title = 'Pack sin título';
+      price = 0.0;
+      return;
+    }
+
+    try {
+      if (args is Map) {
+        packId = args['id']?.toString() ?? args['packId']?.toString() ?? '';
+        businessId = args['business_id']?.toString() ??
+            args['businessId']?.toString() ??
+            '';
+        title = args['title']?.toString() ?? 'Pack sin título';
+        price = double.tryParse(args['price']?.toString() ?? '0') ?? 0.0;
+      } else {
+        packId = args.id?.toString() ?? '';
+
+        businessId = args.businessId?.toString() ?? '';
+
+        title = args.title?.toString() ?? 'Pack sin título';
+        price = double.tryParse(args.price?.toString() ?? '0') ?? 0.0;
+      }
+    } catch (e) {
+      print("Error al leer los datos del pack en pago: $e");
+      packId = '';
+      businessId = '';
+      title = 'Error cargando pack';
+      price = 0.0;
+    }
   }
 
   // --- VALIDACIÓN Y PAGO ---
@@ -46,30 +76,18 @@ class PaymentController extends GetxController {
     // 1. VALIDACIÓN TARJETA
     if (selectedMethod.value == 'tarjeta') {
       if (cardNumberController.text.length < 19) {
-        Get.snackbar(
-          "Error",
-          "Número de tarjeta inválido",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        Get.snackbar("Error", "Número de tarjeta inválido",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (cardExpiryController.text.length < 5) {
-        Get.snackbar(
-          "Error",
-          "Fecha de vencimiento inválida",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        Get.snackbar("Error", "Fecha de vencimiento inválida",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (cardCvvController.text.length < 3) {
-        Get.snackbar(
-          "Error",
-          "CVV inválido",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        Get.snackbar("Error", "CVV inválido",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
     }
@@ -77,21 +95,13 @@ class PaymentController extends GetxController {
     // 2. VALIDACIÓN PAGO MÓVIL
     if (selectedMethod.value == 'pagomovil') {
       if (selectedBank.value.isEmpty) {
-        Get.snackbar(
-          "Error",
-          "Selecciona el banco desde el que pagaste",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        Get.snackbar("Error", "Selecciona el banco desde el que pagaste",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (referenceController.text.length < 4) {
-        Get.snackbar(
-          "Error",
-          "Número de referencia muy corto",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        Get.snackbar("Error", "Número de referencia muy corto",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
     }
@@ -106,17 +116,27 @@ class PaymentController extends GetxController {
 
       // Simulamos conexión con el banco
       await Future.delayed(const Duration(seconds: 2));
-      bool paymentSuccess = Random().nextDouble() > 0.2; // 80% éxito
+      bool paymentSuccess = true;
 
       if (paymentSuccess) {
-        final packsController = Get.find<PacksController>();
-        await packsController.reservePack(packId, businessId);
+        // Guardamos el pack
+        if (Get.isRegistered<PacksController>()) {
+          final packsController = Get.find<PacksController>();
+          await packsController.reservePack(packId, businessId);
+        }
+
+        // ✅ NUEVO: Forzamos a la pantalla de Órdenes a actualizarse
+        if (Get.isRegistered<OrdersController>()) {
+          Get.find<OrdersController>().fetchOrders();
+        }
 
         Get.offAllNamed(Routes.shell);
 
         if (Get.isRegistered<ShellController>()) {
-          Get.find<ShellController>().changeIndex(1);
+          Get.find<ShellController>().changeIndex(1); // Mueve a reservas
         }
+
+        // ... (Aquí sigue tu código del Snackbar de éxito)
 
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.snackbar(
@@ -138,12 +158,8 @@ class PaymentController extends GetxController {
         );
       }
     } catch (e) {
-      Get.snackbar(
-        "Error de sistema",
-        "No se pudo procesar el pago.",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar("Error de sistema", "No se pudo procesar el pago.",
+          backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }

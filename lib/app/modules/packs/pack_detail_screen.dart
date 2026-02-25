@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/pack_model.dart';
 
@@ -103,29 +104,24 @@ class PackDetailScreen extends StatelessWidget {
 
                   const Spacer(),
 
-                  // Botón de Comprar/Reservar
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
+                      onPressed: () {
+                        // ✅ Enviamos el pack completo como argumento a la pasarela de pago
+                        Get.toNamed(Routes.payment, arguments: pack);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
+                            borderRadius: BorderRadius.circular(15)),
                       ),
-                      onPressed: () {
-                        // Navegar a la pasarela de pagos
-                        // Get.toNamed('/payment', arguments: pack);
-                      },
-                      child: const Text(
-                        "Reservar ahora",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: const Text("RESERVAR PACK",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
                     ),
                   ),
                 ],

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
-import 'packs_controller.dart'; // Mantén el import de tu controlador actual
+import 'packs_controller.dart';
 import 'pack_detail_screen.dart';
 
 class VendorPacksScreen extends StatelessWidget {
@@ -25,7 +25,7 @@ class VendorPacksScreen extends StatelessWidget {
         centerTitle: true,
       ),
 
-      // ✅ BOTÓN FLOTANTE: Ahora es el botón principal de acción del negocio
+      // ✅ BOTÓN FLOTANTE
       floatingActionButton: Obx(() => controller.isBusiness.value
           ? FloatingActionButton.extended(
               onPressed: () => _showCreatePackModal(context),
@@ -43,7 +43,6 @@ class VendorPacksScreen extends StatelessWidget {
               child: CircularProgressIndicator(color: AppTheme.primaryGreen));
         }
 
-        // ✅ PROTECCIÓN: Si por alguna razón un usuario normal entra aquí, le avisamos
         if (!controller.isBusiness.value) {
           return const Center(
             child: Text("Esta pantalla es exclusiva para negocios.",
@@ -51,7 +50,6 @@ class VendorPacksScreen extends StatelessWidget {
           );
         }
 
-        // ✅ ESTADO VACÍO EXCLUSIVO PARA NEGOCIOS
         if (controller.packsList.isEmpty) {
           return Center(
             child: Column(
@@ -73,7 +71,7 @@ class VendorPacksScreen extends StatelessWidget {
           );
         }
 
-        // ✅ CUADRÍCULA DE INVENTARIO DEL NEGOCIO
+        // ✅ CUADRÍCULA DE INVENTARIO
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -84,7 +82,8 @@ class VendorPacksScreen extends StatelessWidget {
           ),
           itemCount: controller.packsList.length,
           itemBuilder: (context, index) {
-            final pack = controller.packsList[index];
+            // Lo dejamos como dynamic para evitar el choque con PackModel
+            final dynamic pack = controller.packsList[index];
             return _buildVendorPackCard(pack);
           },
         );
@@ -92,15 +91,30 @@ class VendorPacksScreen extends StatelessWidget {
     );
   }
 
-  // ✅ TARJETA ADAPTADA AL VENDEDOR (Muestra stock restante de forma más clara)
-  Widget _buildVendorPackCard(Map<String, dynamic> pack) {
-    final String title = pack['title'] ?? 'Pack Sorpresa';
-    final String price = pack['price'].toString();
-    final String? imageUrl = pack['image_url'];
-    final int stock = pack['quantity_available'] ?? 0;
+  // ✅ SOLUCIÓN AL ERROR: Recibimos "dynamic" y leemos los datos de forma segura
+  Widget _buildVendorPackCard(dynamic pack) {
+    // Verificamos si es un Map o un PackModel y extraemos la info
+    final bool isMap = pack is Map;
+
+    // Si la lectura falla, ponemos valores por defecto para evitar pantallas rojas
+    final String title = isMap
+        ? (pack['title'] ?? 'Pack Sorpresa')
+        : (pack.title ?? 'Pack Sorpresa');
+    final String price =
+        isMap ? pack['price'].toString() : pack.price.toString();
+    final String? imageUrl = isMap ? pack['image_url'] : pack.imageUrl;
+
+    // Verificamos el stock de manera segura
+    int stock = 0;
+    try {
+      stock = isMap
+          ? (pack['quantity_available'] ?? 0)
+          : (pack.quantityAvailable ?? 0);
+    } catch (e) {
+      stock = 0;
+    }
 
     return GestureDetector(
-      // Por ahora los lleva al detalle general, pero en el futuro podrías llevarlos a una pantalla de "Editar Pack"
       onTap: () => Get.to(() => const PackDetailScreen(), arguments: pack),
       child: Card(
         clipBehavior: Clip.antiAlias,
@@ -111,7 +125,7 @@ class VendorPacksScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: imageUrl != null
+              child: imageUrl != null && imageUrl.isNotEmpty
                   ? Image.network(imageUrl,
                       fit: BoxFit.cover, width: double.infinity)
                   : Container(
@@ -172,7 +186,7 @@ class VendorPacksScreen extends StatelessWidget {
     );
   }
 
-  // ✅ MODAL DE CREACIÓN INTACTO (Solo se mejoró un poco el UI)
+  // ✅ MODAL DE CREACIÓN
   void _showCreatePackModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -204,8 +218,6 @@ class VendorPacksScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: AppTheme.textBlack)),
                 const SizedBox(height: 20),
-
-                // Selector de Imagen
                 GestureDetector(
                   onTap: controller.pickImage,
                   child: Container(
@@ -239,7 +251,6 @@ class VendorPacksScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-
                 TextField(
                     controller: controller.titleController,
                     decoration: _inputDecoration(
@@ -251,7 +262,6 @@ class VendorPacksScreen extends StatelessWidget {
                         _inputDecoration("Descripción breve (Opcional)"),
                     maxLines: 2),
                 const SizedBox(height: 10),
-
                 Row(
                   children: [
                     Expanded(
@@ -272,7 +282,6 @@ class VendorPacksScreen extends StatelessWidget {
                     controller: controller.quantityController,
                     keyboardType: TextInputType.number,
                     decoration: _inputDecoration("Cantidad disponible")),
-
                 const SizedBox(height: 20),
                 const Align(
                     alignment: Alignment.centerLeft,
@@ -281,7 +290,6 @@ class VendorPacksScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             color: AppTheme.textBlack))),
                 const SizedBox(height: 10),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -310,7 +318,6 @@ class VendorPacksScreen extends StatelessWidget {
                             time.minute)))),
                   ],
                 ),
-
                 const SizedBox(height: 25),
                 SizedBox(
                   width: double.infinity,
@@ -338,19 +345,17 @@ class VendorPacksScreen extends StatelessWidget {
     );
   }
 
-  // Helpers visuales para el formulario
+  // --- Función auxiliar ---
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.grey),
       filled: true,
-      fillColor: Colors.grey.shade50,
-      enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300)),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryGreen)),
+      fillColor: Colors.grey.shade100,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 

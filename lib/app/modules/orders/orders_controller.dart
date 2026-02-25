@@ -3,21 +3,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OrdersController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
-  
+
   // --- VARIABLES EXACTAS QUE NECESITA TU PANTALLA ---
   var isLoading = true.obs;
-  
+
   // 1. Aquí definimos "ordersList" para que la pantalla la encuentre
-  var ordersList = <Map<String, dynamic>>[].obs; 
-  
+  var ordersList = <Map<String, dynamic>>[].obs;
+
   // 2. Aquí definimos "isBusinessMode" para que la pantalla sepa el rol
-  var isBusinessMode = false.obs; 
+  var isBusinessMode = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     checkUserRole();
-    fetchOrders();
   }
 
   // Verificar si es empresa
@@ -30,12 +29,12 @@ class OrdersController extends GetxController {
           .select('id')
           .eq('id', userId)
           .maybeSingle();
-          
+
       // Si data no es null, es una empresa. Actualizamos la variable.
       isBusinessMode.value = (data != null);
-      
+
       // Volvemos a cargar las órdenes ahora que sabemos el rol correcto
-      fetchOrders(); 
+      fetchOrders();
     }
   }
 
@@ -52,15 +51,16 @@ class OrdersController extends GetxController {
         // --- MODO EMPRESA (Ver Ventas) ---
         response = await _supabase
             .from('orders')
-            .select('*, packs(title, image_url, price)') 
-            .eq('business_id', userId) 
+            .select('*, packs(title, image_url, price)')
+            .eq('business_id', userId)
             .order('created_at', ascending: false);
       } else {
         // --- MODO USUARIO (Ver Compras) ---
         // Intentamos traer el pack y el negocio
         response = await _supabase
             .from('orders')
-            .select('*, packs(title, image_url, price, businesses(commercial_name))')
+            .select(
+                '*, packs(title, image_url, price, businesses(commercial_name))')
             .eq('user_id', userId)
             .order('created_at', ascending: false);
       }

@@ -12,15 +12,12 @@ class PaymentScreen extends StatelessWidget {
     final controller = Get.put(PaymentController());
 
     return Scaffold(
-      // Usamos el fondo crema global de Mango
       backgroundColor: AppTheme.backgroundCream,
       appBar: AppBar(
         title: const Text(
           "Finalizar Compra",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textBlack,
-          ),
+          style:
+              TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textBlack),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -32,7 +29,7 @@ class PaymentScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- RESUMEN DE COMPRA (Estilo Ticket) ---
+            // --- RESUMEN DE COMPRA ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -46,47 +43,39 @@ class PaymentScreen extends StatelessWidget {
                     offset: const Offset(0, 5),
                   ),
                 ],
-                border: Border.all(
-                  color: AppTheme.primaryGreen.withOpacity(0.3),
-                ),
+                border:
+                    Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
               ),
               child: Column(
                 children: [
-                  const Text(
-                    "Total a pagar",
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
+                  const Text("Total a pagar",
+                      style: TextStyle(fontSize: 16, color: Colors.grey)),
                   const SizedBox(height: 5),
                   Text(
                     "${controller.price.toStringAsFixed(2)} Bs",
                     style: const TextStyle(
-                      fontSize: 32,
-                      color: AppTheme.textBlack,
-                      fontWeight: FontWeight.w900,
-                    ),
+                        fontSize: 32,
+                        color: AppTheme.textBlack,
+                        fontWeight: FontWeight.w900),
                   ),
                   const Divider(height: 30),
                   Text(
                     controller.title,
                     style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textBlack,
-                    ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textBlack),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 35),
 
-            const Text(
-              "Método de pago",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textBlack,
-              ),
-            ),
+            const Text("Método de pago",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textBlack)),
             const SizedBox(height: 15),
 
             // --- SELECTOR DE MÉTODOS ---
@@ -95,17 +84,9 @@ class PaymentScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildMethodSelector(
-                    controller,
-                    'tarjeta',
-                    Icons.credit_card,
-                    'Tarjeta',
-                  ),
-                  _buildMethodSelector(
-                    controller,
-                    'pagomovil',
-                    Icons.phone_android,
-                    'Pago Móvil',
-                  ),
+                      controller, 'tarjeta', Icons.credit_card, 'Tarjeta'),
+                  _buildMethodSelector(controller, 'pagomovil',
+                      Icons.phone_android, 'Pago Móvil'),
                 ],
               ),
             ),
@@ -122,7 +103,7 @@ class PaymentScreen extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // --- BOTÓN DE PAGO PRINCIPAL ---
+            // --- BOTÓN DE PAGO ---
             Obx(() {
               return Container(
                 width: double.infinity,
@@ -130,24 +111,21 @@ class PaymentScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.accentOrange.withOpacity(0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
+                        color: AppTheme.accentOrange.withOpacity(0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6)),
                   ],
                 ),
                 child: ElevatedButton(
                   onPressed: controller.isLoading.value
                       ? null
                       : controller.processPayment,
-                  // Aquí forzamos el color Naranja para el botón más importante de la app (CTA crítico)
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.accentOrange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
+                        borderRadius: BorderRadius.circular(15)),
                     elevation: 0,
                   ),
                   child: controller.isLoading.value
@@ -155,18 +133,12 @@ class PaymentScreen extends StatelessWidget {
                           height: 24,
                           width: 24,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
-                          ),
-                        )
-                      : const Text(
-                          "CONFIRMAR PAGO",
+                              color: Colors.white, strokeWidth: 3))
+                      : const Text("CONFIRMAR PAGO",
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2)),
                 ),
               );
             }),
@@ -176,13 +148,9 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET PARA LOS BOTONES REDONDOS DE SELECCIÓN ---
+  // Helpers de UI
   Widget _buildMethodSelector(
-    PaymentController controller,
-    String value,
-    IconData icon,
-    String label,
-  ) {
+      PaymentController controller, String value, IconData icon, String label) {
     final isSelected = controller.selectedMethod.value == value;
     return GestureDetector(
       onTap: () => controller.selectedMethod.value = value,
@@ -193,40 +161,32 @@ class PaymentScreen extends StatelessWidget {
           color: isSelected ? AppTheme.accentOrange : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppTheme.accentOrange : Colors.grey.shade300,
-          ),
+              color: isSelected ? AppTheme.accentOrange : Colors.grey.shade300),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppTheme.accentOrange.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
+                      color: AppTheme.accentOrange.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4))
                 ]
               : [],
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : Colors.grey.shade500,
-              size: 32,
-            ),
+            Icon(icon,
+                color: isSelected ? Colors.white : Colors.grey.shade500,
+                size: 32),
             const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.grey.shade600,
-              ),
-            ),
+            Text(label,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : Colors.grey.shade600)),
           ],
         ),
       ),
     );
   }
 
-  // --- WIDGET MOLDE PARA LAS CAJAS DE TEXTO LINDAS ---
   Widget _buildCustomTextField({
     required TextEditingController controller,
     required String label,
@@ -250,18 +210,16 @@ class PaymentScreen extends StatelessWidget {
         labelStyle: TextStyle(color: Colors.grey.shade600),
         hintStyle: TextStyle(color: Colors.grey.shade400),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2),
-        ),
+            borderRadius: BorderRadius.circular(15),
+            borderSide:
+                const BorderSide(color: AppTheme.accentOrange, width: 2)),
       ),
     );
   }
 
-  // --- WIDGET MOLDE PARA LA LISTA DESPLEGABLE ---
   Widget _buildCustomDropdown({
     required String hint,
     required IconData icon,
@@ -271,10 +229,8 @@ class PaymentScreen extends StatelessWidget {
     return Obx(
       () => DropdownButtonFormField<String>(
         initialValue: selectedValue.value.isEmpty ? null : selectedValue.value,
-        icon: const Icon(
-          Icons.keyboard_arrow_down,
-          color: AppTheme.primaryGreen,
-        ),
+        icon:
+            const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryGreen),
         decoration: InputDecoration(
           labelText: "Banco de Origen",
           hintText: hint,
@@ -283,25 +239,19 @@ class PaymentScreen extends StatelessWidget {
           fillColor: Colors.white,
           labelStyle: TextStyle(color: Colors.grey.shade600),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-          ),
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5)),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(
-              color: AppTheme.accentOrange,
-              width: 2,
-            ),
-          ),
+              borderRadius: BorderRadius.circular(15),
+              borderSide:
+                  const BorderSide(color: AppTheme.accentOrange, width: 2)),
         ),
         items: items.map((String bank) {
           return DropdownMenuItem<String>(
-            value: bank,
-            child: Text(
-              bank,
-              style: const TextStyle(fontSize: 15, color: AppTheme.textBlack),
-            ),
-          );
+              value: bank,
+              child: Text(bank,
+                  style: const TextStyle(
+                      fontSize: 15, color: AppTheme.textBlack)));
         }).toList(),
         onChanged: (newValue) {
           if (newValue != null) selectedValue.value = newValue;
@@ -310,21 +260,16 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  // --- FORMULARIO TARJETA ---
   Widget _buildCreditCardForm(PaymentController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Datos de la Tarjeta",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textBlack,
-          ),
-        ),
+        const Text("Datos de la Tarjeta",
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textBlack)),
         const SizedBox(height: 15),
-
         _buildCustomTextField(
           controller: controller.cardNumberController,
           label: "Número de Tarjeta",
@@ -334,12 +279,10 @@ class PaymentScreen extends StatelessWidget {
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
             LengthLimitingTextInputFormatter(16),
-            CardNumberFormatter(),
+            CardNumberFormatter()
           ],
         ),
-
         const SizedBox(height: 15),
-
         Row(
           children: [
             Expanded(
@@ -352,7 +295,7 @@ class PaymentScreen extends StatelessWidget {
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(4),
-                  CardMonthYearFormatter(),
+                  CardMonthYearFormatter()
                 ],
               ),
             ),
@@ -367,7 +310,7 @@ class PaymentScreen extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(3),
+                  LengthLimitingTextInputFormatter(3)
                 ],
               ),
             ),
@@ -377,22 +320,16 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  // --- FORMULARIO PAGO MÓVIL ---
   Widget _buildPagoMovilForm(PaymentController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Datos para Transferir",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textBlack,
-          ),
-        ),
+        const Text("Datos para Transferir",
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textBlack)),
         const SizedBox(height: 15),
-
-        // Tarjeta con los datos del negocio
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -401,10 +338,9 @@ class PaymentScreen extends StatelessWidget {
             border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.4)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4))
             ],
           ),
           child: Column(
@@ -418,28 +354,18 @@ class PaymentScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 25),
-
-        const Text(
-          "Confirmación",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textBlack,
-          ),
-        ),
+        const Text("Confirmación",
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textBlack)),
         const SizedBox(height: 15),
-
-        // --- NUEVA LISTA DESPLEGABLE DE BANCOS ---
         _buildCustomDropdown(
-          hint: "Selecciona tu banco",
-          icon: Icons.account_balance,
-          selectedValue: controller.selectedBank,
-          items: controller.bankList,
-        ),
-
+            hint: "Selecciona tu banco",
+            icon: Icons.account_balance,
+            selectedValue: controller.selectedBank,
+            items: controller.bankList),
         const SizedBox(height: 15),
-
-        // Caja de referencia
         _buildCustomTextField(
           controller: controller.referenceController,
           label: "Número de Referencia",
@@ -448,7 +374,7 @@ class PaymentScreen extends StatelessWidget {
           keyboardType: TextInputType.number,
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(8),
+            LengthLimitingTextInputFormatter(8)
           ],
         ),
       ],
@@ -459,71 +385,55 @@ class PaymentScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: AppTheme.textBlack,
-          ),
-        ),
+        Text(label,
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
+        Text(value,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: AppTheme.textBlack)),
       ],
     );
   }
 }
 
-// ==========================================
-// CLASES FORMATEADORAS DE TEXTO PERSONALIZADAS
-// ==========================================
-
+// FORMATTERS AL FINAL DEL ARCHIVO SCREEN (o en una carpeta de utils)
 class CardMonthYearFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+      TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) return newValue;
     var buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 2 == 0 && nonZeroIndex != text.length && i == 1) {
+      if (nonZeroIndex % 2 == 0 && nonZeroIndex != text.length && i == 1)
         buffer.write('/');
-      }
     }
     var string = buffer.toString();
     return newValue.copyWith(
-      text: string,
-      selection: TextSelection.collapsed(offset: string.length),
-    );
+        text: string,
+        selection: TextSelection.collapsed(offset: string.length));
   }
 }
 
 class CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+      TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) return newValue;
     var buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) {
+      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length)
         buffer.write(' ');
-      }
     }
     var string = buffer.toString();
     return newValue.copyWith(
-      text: string,
-      selection: TextSelection.collapsed(offset: string.length),
-    );
+        text: string,
+        selection: TextSelection.collapsed(offset: string.length));
   }
 }
