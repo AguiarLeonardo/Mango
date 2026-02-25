@@ -19,7 +19,8 @@ class ProfileController extends GetxController {
   final emailController = TextEditingController();
 
   // --- VARIABLES DE IMAGEN ---
-  final Rx<File?> selectedImage = Rx<File?>(null);
+  var avatarUrl = ''.obs; // 👈 Guarda el link de la foto que viene de Supabase
+  var isUploadingAvatar = false.obs; // 👈 Controla el estado de carga de la foto
 
   // --- OPCIONES DE GÉNERO ---
   final List<String> genderOptions = ['Hombre', 'Mujer'];
@@ -53,8 +54,8 @@ class ProfileController extends GetxController {
           usernameController.text = data['username'] ?? '';
           phoneController.text = data['phone'] ?? '';
           addressController.text = data['address'] ?? '';
-
           birthdateController.text = data['birthdate'] ?? '';
+          avatarUrl.value = data['avatar_url'] ?? ''; // 👈 Cargamos la URL de la foto
 
           String loadedGender = data['gender'] ?? '';
           if (genderOptions.contains(loadedGender)) {
@@ -71,18 +72,52 @@ class ProfileController extends GetxController {
     }
   }
 
-  // --- FUNCIÓN PARA SELECCIONAR IMAGEN ---
-  Future<void> pickImage() async {
+  // --- FUNCIÓN PARA SELECCIONAR Y SUBIR IMAGEN A SUPABASE ---
+  Future<void> uploadProfilePicture() async {
     final ImagePicker picker = ImagePicker();
     try {
+      // 1. Abrir galería
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return; // Si cancela, no hacemos nada
 
-      if (image != null) {
-        selectedImage.value = File(image.path);
-      }
+      isUploadingAvatar.value = true; // Mostramos el circulito de carga
+
+      // 2. Preparar imagen y datos
+      final bytes = await image.readAsBytes();
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      final fileExt = image.path.split('.').last;
+      final fileName = 'avatar_${user.id}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
+      // 3. Subir a Supabase Storage (asegúrate de haber creado el bucket 'avatars' como PÚBLICO)
+      await _supabase.storage.from('avatars').uploadBinary(
+        fileName, 
+        bytes,
+        fileOptions: const FileOptions(upsert: true), // Sobrescribe si por casualidad hay uno igual
+      );
+
+      // 4. Obtener link público
+      final String publicUrl = _supabase.storage.from('avatars').getPublicUrl(fileName);
+
+      // 5. Guardar el link en la tabla 'users'
+      await _supabase.from('users').update({'avatar_url': publicUrl}).eq('id', user.id);
+
+      // 6. Actualizar la variable reactiva en pantalla
+      avatarUrl.value = publicUrl;
+
+      Get.snackbar(
+        "Éxito", 
+        "Foto de perfil actualizada correctamente",
+        backgroundColor: Colors.white, 
+        colorText: Colors.green[800],
+      );
+
     } catch (e) {
-      Get.snackbar("Error", "No se pudo abrir la galería",
+      Get.snackbar("Error", "No se pudo subir la foto: $e",
           backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isUploadingAvatar.value = false; // Quitamos el circulito de carga
     }
   }
 

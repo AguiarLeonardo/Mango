@@ -50,14 +50,21 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             children: [
               // --- CABECERA DEL PERFIL ---
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.white,
-                child: Icon(
-                  Icons.person,
-                  size: 60,
-                  color: AppTheme.primaryGreen,
-                ),
+                // Si hay URL de foto, mostramos la imagen web
+                backgroundImage: controller.avatarUrl.value.isNotEmpty
+                    ? NetworkImage(controller.avatarUrl.value)
+                    : null,
+                // Si no hay URL, mostramos el ícono verde por defecto
+                child: controller.avatarUrl.value.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        size: 60,
+                        color: AppTheme.primaryGreen,
+                      )
+                    : null,
               ),
               const SizedBox(height: 12),
 
