@@ -15,12 +15,9 @@ class OrdersScreen extends StatelessWidget {
       backgroundColor: AppTheme.backgroundCream, // Fondo Crema del Manual
       appBar: AppBar(
         title: Obx(() => Text(
-          controller.isBusinessMode.value ? "Mis Ventas" : "Mis Reservas",
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: AppTheme.primaryGreen, 
-            fontWeight: FontWeight.bold
-          )
-        )),
+            controller.isBusinessMode.value ? "Mis Ventas" : "Mis Reservas",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppTheme.textBlack, fontWeight: FontWeight.bold))),
         centerTitle: true,
         automaticallyImplyLeading: false,
         backgroundColor: AppTheme.backgroundCream, // Fundido con el fondo
@@ -28,7 +25,8 @@ class OrdersScreen extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+          return const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryGreen));
         }
 
         if (controller.ordersList.isEmpty) {
@@ -36,14 +34,16 @@ class OrdersScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.receipt_long, size: 70, color: AppTheme.disabledIcon.withOpacity(0.5)),
+                Icon(Icons.receipt_long,
+                    size: 70, color: AppTheme.disabledIcon.withOpacity(0.5)),
                 const SizedBox(height: 15),
                 Text(
-                  controller.isBusinessMode.value 
-                    ? "Aún no tienes ventas." 
-                    : "No tienes reservas activas.",
-                  style: TextStyle(color: AppTheme.textBlack.withOpacity(0.6), fontSize: 16)
-                ),
+                    controller.isBusinessMode.value
+                        ? "Aún no tienes ventas."
+                        : "No tienes reservas activas.",
+                    style: TextStyle(
+                        color: AppTheme.textBlack.withOpacity(0.6),
+                        fontSize: 16)),
               ],
             ),
           );
@@ -52,41 +52,53 @@ class OrdersScreen extends StatelessWidget {
         // --- VISTA PARA LA EMPRESA (Lista Sencilla) ---
         if (controller.isBusinessMode.value) {
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.ordersList.length,
-            itemBuilder: (context, index) {
-              final order = controller.ordersList[index];
-              final pack = order['packs'] ?? {}; 
-              DateTime date = order['created_at'] != null ? DateTime.parse(order['created_at']).toLocal() : DateTime.now();
-              final String code = order['code'] ?? order['pickup_code'] ?? '---';
+              padding: const EdgeInsets.all(16),
+              itemCount: controller.ordersList.length,
+              itemBuilder: (context, index) {
+                final order = controller.ordersList[index];
+                final pack = order['packs'] ?? {};
+                DateTime date = order['created_at'] != null
+                    ? DateTime.parse(order['created_at']).toLocal()
+                    : DateTime.now();
+                final String code =
+                    order['code'] ?? order['pickup_code'] ?? '---';
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                color: Colors.white,
-                elevation: 2,
-                shadowColor: Colors.black.withOpacity(0.2),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10)
-                    ),
-                    child: const Icon(Icons.store, color: AppTheme.primaryGreen)
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  color: Colors.white,
+                  elevation: 2,
+                  shadowColor: Colors.black.withOpacity(0.2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: const Icon(Icons.store,
+                            color: AppTheme.primaryGreen)),
+                    title: Text("Reserva: $code",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textBlack)),
+                    subtitle: Text(pack['title'] ?? 'Pack',
+                        style: TextStyle(
+                            color: AppTheme.textBlack.withOpacity(0.7))),
+                    trailing: Text(DateFormat('HH:mm').format(date),
+                        style: const TextStyle(color: AppTheme.textBlack)),
                   ),
-                  title: Text("Reserva: $code", style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
-                  subtitle: Text(pack['title'] ?? 'Pack', style: TextStyle(color: AppTheme.textBlack.withOpacity(0.7))),
-                  trailing: Text(DateFormat('HH:mm').format(date), style: const TextStyle(color: AppTheme.textBlack)),
-                ),
-              );
-            }
-          );
+                );
+              });
         }
 
         // --- VISTA PARA EL CLIENTE (Boletos con Pestañas) ---
-        final activeOrders = controller.ordersList.where((o) => o['status'] == 'pending').toList();
-        final pastOrders = controller.ordersList.where((o) => o['status'] != 'pending').toList();
+        final activeOrders = controller.ordersList
+            .where((o) => o['status'] == 'pending')
+            .toList();
+        final pastOrders = controller.ordersList
+            .where((o) => o['status'] != 'pending')
+            .toList();
 
         return DefaultTabController(
           length: 2,
@@ -95,9 +107,11 @@ class OrdersScreen extends StatelessWidget {
               Container(
                 color: AppTheme.backgroundCream,
                 child: const TabBar(
-                  indicatorColor: AppTheme.accentOrange, // Naranja para la pestaña seleccionada
+                  indicatorColor: AppTheme
+                      .accentOrange, // Naranja para la pestaña seleccionada
                   labelColor: AppTheme.accentOrange,
-                  unselectedLabelColor: AppTheme.disabledIcon, // Gris para la inactiva
+                  unselectedLabelColor:
+                      AppTheme.disabledIcon, // Gris para la inactiva
                   indicatorWeight: 3,
                   tabs: [
                     Tab(text: "ACTIVAS"),
@@ -125,7 +139,9 @@ class OrdersScreen extends StatelessWidget {
     if (orders.isEmpty) {
       return Center(
         child: Text(
-          isActiveTab ? "No tienes reservas pendientes" : "Tu historial está vacío",
+          isActiveTab
+              ? "No tienes reservas pendientes"
+              : "Tu historial está vacío",
           style: TextStyle(color: AppTheme.textBlack.withOpacity(0.5)),
         ),
       );
@@ -136,12 +152,16 @@ class OrdersScreen extends StatelessWidget {
       itemCount: orders.length,
       itemBuilder: (context, index) {
         final order = orders[index];
-        final pack = order['packs'] ?? {}; 
-        final business = pack['businesses'] ?? {}; 
-        DateTime date = order['created_at'] != null ? DateTime.parse(order['created_at']).toLocal() : DateTime.now();
+        final pack = order['packs'] ?? {};
+        final business = pack['businesses'] ?? {};
+        DateTime date = order['created_at'] != null
+            ? DateTime.parse(order['created_at']).toLocal()
+            : DateTime.now();
         final String code = order['code'] ?? order['pickup_code'] ?? '---';
-        
-        final double rawPrice = pack['price'] != null ? double.tryParse(pack['price'].toString()) ?? 0.0 : 0.0;
+
+        final double rawPrice = pack['price'] != null
+            ? double.tryParse(pack['price'].toString()) ?? 0.0
+            : 0.0;
         final String formattedPrice = "${rawPrice.toStringAsFixed(2)} Bs";
 
         return TicketCard(
@@ -150,7 +170,7 @@ class OrdersScreen extends StatelessWidget {
           price: formattedPrice,
           orderCode: code,
           date: DateFormat('dd MMM, HH:mm').format(date),
-          isActive: isActiveTab, 
+          isActive: isActiveTab,
         );
       },
     );
@@ -181,12 +201,16 @@ class TicketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Si está activo usa Verde Mango, si es historial usa Gris Claro
-    final Color mainColor = isActive ? AppTheme.primaryGreen : AppTheme.disabledIcon;
-    final Color textColor = isActive ? AppTheme.textBlack : AppTheme.disabledIcon;
-    
+    final Color mainColor =
+        isActive ? AppTheme.primaryGreen : AppTheme.disabledIcon;
+    final Color textColor =
+        isActive ? AppTheme.textBlack : AppTheme.disabledIcon;
+
     // El código en Naranja solo si está activo para llamar la atención del vendedor
-    final Color codeColor = isActive ? AppTheme.accentOrange : AppTheme.disabledIcon;
-    final Color backgroundColor = isActive ? Colors.white : AppTheme.disabledBackground;
+    final Color codeColor =
+        isActive ? AppTheme.accentOrange : AppTheme.disabledIcon;
+    final Color backgroundColor =
+        isActive ? Colors.white : AppTheme.disabledBackground;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -200,7 +224,7 @@ class TicketCard extends StatelessWidget {
         ],
       ),
       child: ClipPath(
-        clipper: TicketClipper(), 
+        clipper: TicketClipper(),
         child: Container(
           color: backgroundColor,
           child: Column(
@@ -225,15 +249,30 @@ class TicketCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(businessName, style: TextStyle(color: AppTheme.textBlack.withOpacity(0.6), fontSize: 14)),
+                          Text(businessName,
+                              style: TextStyle(
+                                  color: AppTheme.textBlack.withOpacity(0.6),
+                                  fontSize: 14)),
                           const SizedBox(height: 5),
-                          Text(packTitle, style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(packTitle,
+                              style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
                           const SizedBox(height: 5),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(date, style: TextStyle(color: AppTheme.textBlack.withOpacity(0.5), fontSize: 13)),
-                              Text(price, style: TextStyle(color: mainColor, fontSize: 16, fontWeight: FontWeight.bold)),
+                              Text(date,
+                                  style: TextStyle(
+                                      color:
+                                          AppTheme.textBlack.withOpacity(0.5),
+                                      fontSize: 13)),
+                              Text(price,
+                                  style: TextStyle(
+                                      color: mainColor,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ],
@@ -251,7 +290,8 @@ class TicketCard extends StatelessWidget {
                     Center(
                       child: CustomPaint(
                         size: const Size(double.infinity, 1),
-                        painter: DashedLinePainter(color: AppTheme.textBlack.withOpacity(0.15)),
+                        painter: DashedLinePainter(
+                            color: AppTheme.textBlack.withOpacity(0.15)),
                       ),
                     ),
                   ],
@@ -261,25 +301,36 @@ class TicketCard extends StatelessWidget {
               // --- MITAD INFERIOR: CÓDIGO DE RETIRO ---
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: isActive ? mainColor.withOpacity(0.04) : Colors.transparent,
+                  color: isActive
+                      ? mainColor.withOpacity(0.04)
+                      : Colors.transparent,
                 ),
                 child: Column(
                   children: [
                     Text(
-                      isActive ? "CÓDIGO DE RETIRO" : "CÓDIGO CANJEADO / VENCIDO",
-                      style: TextStyle(color: AppTheme.textBlack.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                      isActive
+                          ? "CÓDIGO DE RETIRO"
+                          : "CÓDIGO CANJEADO / VENCIDO",
+                      style: TextStyle(
+                          color: AppTheme.textBlack.withOpacity(0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       orderCode,
                       style: TextStyle(
-                        fontSize: 32, 
-                        fontWeight: FontWeight.w900, 
-                        letterSpacing: 6, 
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 6,
                         color: codeColor, // Naranja si es válido
-                        decoration: isActive ? TextDecoration.none : TextDecoration.lineThrough,
+                        decoration: isActive
+                            ? TextDecoration.none
+                            : TextDecoration.lineThrough,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -287,7 +338,9 @@ class TicketCard extends StatelessWidget {
                       Text(
                         "Muestra este código en el local para retirar tu pack.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppTheme.textBlack.withOpacity(0.7), fontSize: 13),
+                        style: TextStyle(
+                            color: AppTheme.textBlack.withOpacity(0.7),
+                            fontSize: 13),
                       ),
                   ],
                 ),
@@ -311,10 +364,13 @@ class TicketClipper extends CustomClipper<Path> {
     path.lineTo(size.width, size.height);
     path.lineTo(size.width, 0.0);
     // Agujeros laterales
-    path.addOval(Rect.fromCircle(center: Offset(size.width, size.height * 0.65), radius: 10));
-    path.addOval(Rect.fromCircle(center: Offset(0.0, size.height * 0.65), radius: 10));
+    path.addOval(Rect.fromCircle(
+        center: Offset(size.width, size.height * 0.65), radius: 10));
+    path.addOval(
+        Rect.fromCircle(center: Offset(0.0, size.height * 0.65), radius: 10));
     return path..fillType = PathFillType.evenOdd;
   }
+
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
@@ -325,12 +381,15 @@ class DashedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     double dashWidth = 6, dashSpace = 4, startX = 15;
-    final paint = Paint()..color = color..strokeWidth = 2;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2;
     while (startX < size.width - 15) {
       canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
       startX += dashWidth + dashSpace;
     }
   }
+
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

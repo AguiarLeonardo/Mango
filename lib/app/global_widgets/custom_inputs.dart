@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // Asegúrate de que esta ruta coincida con la ubicación de tu app_theme.dart
-import '../core/theme/app_theme.dart'; 
+import '../core/theme/app_theme.dart';
 
 // --- 1. Input de Texto Genérico ---
 class CustomTextField extends StatelessWidget {
@@ -37,7 +37,8 @@ class CustomTextField extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), // Sombra muy sutil para dar elevación
+            color: Colors.black
+                .withOpacity(0.04), // Sombra muy sutil para dar elevación
             blurRadius: 8,
             offset: const Offset(0, 2),
           )
@@ -58,19 +59,23 @@ class CustomTextField extends StatelessWidget {
           errorText: errorText,
           errorMaxLines: 3,
           counterText: "",
-          prefixIcon: Icon(icon, color: AppTheme.primaryGreen), // Verde Mango para los íconos
+          prefixIcon: Icon(icon,
+              color: AppTheme.primaryGreen), // Verde Mango para los íconos
           filled: true,
-          fillColor: Colors.white, // Blanco puro para contrastar con el fondo crema general
+          fillColor: Colors
+              .white, // Blanco puro para contrastar con el fondo crema general
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), 
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), 
-            borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2), // Borde Naranja al tocar (Interacción)
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+                color: AppTheme.accentOrange,
+                width: 2), // Borde Naranja al tocar (Interacción)
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), 
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
           ),
         ),
@@ -82,7 +87,8 @@ class CustomTextField extends StatelessWidget {
 // --- 2. Dropdown Grande ---
 class CustomDropdown extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData
+      icon; // IMPORTANTE: Debe ser minúscula para no ocultar el Widget Icon
   final String? value;
   final List<String> items;
   final ValueChanged<String?> onChanged;
@@ -105,38 +111,47 @@ class CustomDropdown extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), 
-            blurRadius: 8, 
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           )
         ],
       ),
       child: DropdownButtonFormField<String>(
-        value: value,
-        items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, overflow: TextOverflow.ellipsis))).toList(),
+        initialValue: value,
+        items: items
+            .map((item) => DropdownMenuItem(
+                value: item,
+                child: Text(item, overflow: TextOverflow.ellipsis)))
+            .toList(),
         onChanged: isDisabled ? null : onChanged,
-        icon: Icon(
-          Icons.arrow_drop_down, 
-          color: isDisabled ? AppTheme.disabledIcon : AppTheme.primaryGreen // Gris si está inactivo, Verde si está activo
-        ),
+        icon: Icon(Icons.arrow_drop_down,
+            color: isDisabled
+                ? AppTheme.disabledIcon
+                : AppTheme
+                    .primaryGreen // Gris si está inactivo, Verde si está activo
+            ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
-            color: isDisabled ? AppTheme.disabledIcon : AppTheme.textBlack.withOpacity(0.6)
-          ),
-          prefixIcon: Icon(
-            icon, 
-            color: isDisabled ? AppTheme.disabledIcon : AppTheme.primaryGreen
-          ),
+              color: isDisabled
+                  ? AppTheme.disabledIcon
+                  : AppTheme.textBlack.withOpacity(0.6)),
+          prefixIcon: Icon(icon,
+              color:
+                  isDisabled ? AppTheme.disabledIcon : AppTheme.primaryGreen),
           filled: true,
-          fillColor: isDisabled ? AppTheme.disabledBackground : Colors.white, // Pasa a Gris Claro si se desactiva
+          fillColor: isDisabled
+              ? AppTheme.disabledBackground
+              : Colors.white, // Pasa a Gris Claro si se desactiva
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), 
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), 
-            borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2), // Borde naranja
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+                color: AppTheme.accentOrange, width: 2), // Borde naranja
           ),
         ),
       ),
@@ -151,9 +166,9 @@ class SimpleDropdown extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   const SimpleDropdown({
-    super.key, 
-    required this.value, 
-    required this.items, 
+    super.key,
+    required this.value,
+    required this.items,
     required this.onChanged,
   });
 
@@ -162,12 +177,12 @@ class SimpleDropdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white, 
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), 
-            blurRadius: 4, 
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
             offset: const Offset(0, 2),
           )
         ],
@@ -177,7 +192,9 @@ class SimpleDropdown extends StatelessWidget {
           value: value,
           isExpanded: true,
           icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primaryGreen),
-          items: items.map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
+          items: items
+              .map((val) => DropdownMenuItem(value: val, child: Text(val)))
+              .toList(),
           onChanged: onChanged,
         ),
       ),

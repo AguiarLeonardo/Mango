@@ -1,6 +1,6 @@
 class PackModel {
-  final String id;          // String (UUID)
-  final String businessId;  
+  final String id; // String (UUID)
+  final String businessId;
   final String title;
   final double price;
   final int quantityAvailable;
@@ -21,29 +21,59 @@ class PackModel {
     this.businessName,
   });
 
+  // 🔹 LO QUE FALTABA: copyWith
+  // Te permite clonar un objeto cambiando solo algunas propiedades.
+  // Súper útil para actualizar el 'quantityAvailable' cuando alguien hace una reserva.
+  PackModel copyWith({
+    String? id,
+    String? businessId,
+    String? title,
+    double? price,
+    int? quantityAvailable,
+    DateTime? pickupStart,
+    DateTime? pickupEnd,
+    String? imageUrl,
+    String? businessName,
+  }) {
+    return PackModel(
+      id: id ?? this.id,
+      businessId: businessId ?? this.businessId,
+      title: title ?? this.title,
+      price: price ?? this.price,
+      quantityAvailable: quantityAvailable ?? this.quantityAvailable,
+      pickupStart: pickupStart ?? this.pickupStart,
+      pickupEnd: pickupEnd ?? this.pickupEnd,
+      imageUrl: imageUrl ?? this.imageUrl,
+      businessName: businessName ?? this.businessName,
+    );
+  }
+
   factory PackModel.fromJson(Map<String, dynamic> json) {
     return PackModel(
-      // Convierte ID a String
-      id: json['id']?.toString() ?? '', 
-      
-      // Convierte BusinessID a String (Aquí estaba el fallo persistente)
+      id: json['id']?.toString() ?? '',
       businessId: json['business_id']?.toString() ?? '',
-      
-      title: json['title'] ?? 'Pack sin nombre',
-      
-      // Manejo seguro de números
+
+      // 🔹 LUPA: Añadí .toString() porsiaca llega como número de alguna forma
+      title: json['title']?.toString() ?? 'Pack sin nombre',
+
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       quantityAvailable: (json['quantity_available'] as num?)?.toInt() ?? 0,
-      
-      // Fechas
-      pickupStart: DateTime.tryParse(json['pickup_start'].toString()) ?? DateTime.now(),
-      pickupEnd: DateTime.tryParse(json['pickup_end'].toString()) ?? DateTime.now(),
-      
-      imageUrl: json['image_url'],
 
-      // Nombre del negocio
+      // 🔹 FIX (LUPA): Si 'pickup_start' era null, hacer null.toString() creaba
+      // el string "null", lo cual no es limpio. Ahora validamos primero.
+      pickupStart: json['pickup_start'] != null
+          ? DateTime.tryParse(json['pickup_start'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+
+      pickupEnd: json['pickup_end'] != null
+          ? DateTime.tryParse(json['pickup_end'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+
+      // 🔹 LUPA: Añadido .toString() para evitar casteos extraños
+      imageUrl: json['image_url']?.toString(),
+
       businessName: (json['businesses'] != null && json['businesses'] is Map)
-          ? json['businesses']['commercial_name']
+          ? json['businesses']['commercial_name']?.toString()
           : null,
     );
   }

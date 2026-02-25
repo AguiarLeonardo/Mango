@@ -5,7 +5,7 @@ import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_theme.dart'; // Asegúrate de que la ruta sea correcta
 
 class LoginScreen extends GetView<LoginController> {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,7 @@ class LoginScreen extends GetView<LoginController> {
     );
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundCream, // Fondo crema unificado
+      backgroundColor: AppTheme.primaryGreen, // Fondo crema unificado
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -1,267 +1,133 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/models/pack_model.dart';
-import 'packs_controller.dart';
-import '../favorites/favorites_controller.dart';
 
 class PackDetailScreen extends StatelessWidget {
   const PackDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 1️⃣ Obtener Pack seguro
-    final PackModel pack = (Get.arguments is PackModel)
-        ? Get.arguments as PackModel
-        : PackModel.fromJson(Get.arguments);
-
-    // 2️⃣ Inyección segura PacksController
-    final PacksController controller =
-        Get.isRegistered<PacksController>()
-            ? Get.find<PacksController>()
-            : Get.put(PacksController());
-
-    // 3️⃣ Inyección segura FavoritesController
-    final FavoritesController favController =
-        Get.isRegistered<FavoritesController>()
-          ? Get.find<FavoritesController>()
-          : Get.put(FavoritesController());
-
-    final timeFormat = DateFormat('hh:mm a');
+    // 🔥 RECUPERAMOS EL PACK QUE NOS MANDÓ EL DISCOVER
+    // Usamos 'as PackModel' para que Dart sepa exactamente qué tipo de dato es
+    final PackModel pack = Get.arguments as PackModel;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: CustomScrollView(
-        slivers: [
+      backgroundColor: AppTheme.backgroundCream,
 
-          // 🔥 APP BAR CON FAVORITO
-          SliverAppBar(
-            expandedHeight: 250.0,
-            pinned: true,
-            actions: [
-              Obx(() {
-                final isFav = favController.isPackFavorite(pack.id);
-                return IconButton(
-                  icon: Icon(
-                    isFav ? Icons.favorite : Icons.favorite_border,
-                    color: isFav ? Colors.redAccent : Colors.white,
-                  ),
-                  onPressed: () =>
-                      favController.togglePackFavorite(pack.id)
-                );
-              }),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                pack.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(color: Colors.black, blurRadius: 10)
-                  ],
-                ),
-              ),
-              background: pack.imageUrl != null &&
-                      pack.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      pack.imageUrl!,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      color: Colors.grey,
-                      child: const Icon(
-                        Icons.fastfood,
-                        size: 80,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        // Botón de atrás (GetX lo maneja automático si usas Get.back() o el default)
+        iconTheme: const IconThemeData(color: AppTheme.textBlack),
+      ),
+
+      // Extiende el body detrás del AppBar para que la foto se vea increíble
+      extendBodyBehindAppBar: true,
+
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- IMAGEN GRANDE ---
+          Container(
+            height: 300,
+            width: double.infinity,
+            color: Colors.grey.shade300,
+            child: pack.imageUrl == null
+                ? const Icon(Icons.fastfood, size: 80, color: Colors.white)
+                : Image.network(pack.imageUrl!, fit: BoxFit.cover),
           ),
 
-          // 🔥 DETALLES
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+          // --- DETALLES DEL PACK ---
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  // PRECIO Y DISPONIBLES
+                  // Título y Precio
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "${pack.price.toStringAsFixed(2)} Bs",
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius:
-                              BorderRadius.circular(20),
-                        ),
+                      Expanded(
                         child: Text(
-                          "${pack.quantityAvailable} Disponibles",
+                          pack.title,
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight:
-                                  FontWeight.bold),
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      )
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // NEGOCIO
-                  Row(
-                    children: [
-                      const CircleAvatar(
-                        backgroundColor: Colors.green,
-                        child: Icon(Icons.store,
-                            color: Colors.white),
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            pack.businessName ??
-                                'Negocio Desconocido',
-                            style: const TextStyle(
-                                fontWeight:
-                                    FontWeight.bold,
-                                fontSize: 16),
-                          ),
-                          const Text(
-                            'Ver ubicación en el mapa',
-                            style: TextStyle(
-                                color: Colors.grey),
-                          ),
-                        ],
-                      )
+                      Text(
+                        "\$${pack.price.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      ),
                     ],
                   ),
+                  const SizedBox(height: 8),
 
-                  const Divider(height: 40),
+                  // Nombre del negocio
+                  Text(
+                    pack.businessName ?? 'Negocio no especificado',
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                  ),
 
-                  // HORARIO
+                  const SizedBox(height: 24),
+
+                  // Disponibilidad
                   Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color:
-                          Colors.green.withOpacity(0.1),
-                      borderRadius:
-                          BorderRadius.circular(15),
-                      border: Border.all(
-                        color: Colors.green
-                            .withOpacity(0.3),
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time_filled,
-                          color: Colors.green,
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-                          children: [
-                            const Text(
-                              "Horario de Retiro:",
-                              style: TextStyle(
-                                fontWeight:
-                                    FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            ),
-                            Text(
-                              "${timeFormat.format(pack.pickupStart)} - ${timeFormat.format(pack.pickupEnd)}",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight:
-                                    FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentOrange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Solo quedan ${pack.quantityAvailable} packs",
+                      style: const TextStyle(
+                        color: AppTheme.accentOrange,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const Spacer(),
 
-                  // 🔥 BOTÓN RESERVA
+                  // Botón de Comprar/Reservar
                   SizedBox(
                     width: double.infinity,
-                    child: Obx(() {
-                      final bool isAvailable =
-                          pack.quantityAvailable > 0;
-
-                      if (controller.isLoading.value) {
-                        return const Center(
-                          child:
-                              CircularProgressIndicator(),
-                        );
-                      }
-
-                      return ElevatedButton(
-                        onPressed: isAvailable
-                            ? () {
-          // En lugar de reservar directo, enviamos los datos a la pasarela
-          Get.toNamed('/payment', arguments: {
-            'packId': pack.id,
-            'businessId': pack.businessId.toString(),
-            'title': pack.title,
-            'price': pack.price, 
-          });
-        }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isAvailable
-                                  ? Colors.orange
-                                  : Colors.grey,
-                          padding:
-                              const EdgeInsets
-                                      .symmetric(
-                                  vertical: 18),
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius
-                                    .circular(15),
-                          ),
-                          elevation: 0,
+                    height: 55,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        child: Text(
-                          isAvailable
-                              ? "RESERVAR AHORA"
-                              : "AGOTADO",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
+                      ),
+                      onPressed: () {
+                        // Navegar a la pasarela de pagos
+                        // Get.toNamed('/payment', arguments: pack);
+                      },
+                      child: const Text(
+                        "Reservar ahora",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                      );
-                    }),
+                      ),
+                    ),
                   ),
-
-                  const SizedBox(height: 40),
                 ],
               ),
             ),

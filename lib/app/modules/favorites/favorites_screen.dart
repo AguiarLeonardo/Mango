@@ -12,8 +12,8 @@ class FavoritesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final FavoritesController controller =
         Get.isRegistered<FavoritesController>()
-            ? Get.find<FavoritesController>()
-            : Get.put(FavoritesController());
+        ? Get.find<FavoritesController>()
+        : Get.put(FavoritesController());
 
     return DefaultTabController(
       length: 2,
@@ -22,7 +22,10 @@ class FavoritesScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text(
             "Mis Favoritos",
-            style: TextStyle(color: AppTheme.textBlack, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppTheme.textBlack,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           backgroundColor: Colors.transparent, // AppBar limpia
           elevation: 0,
@@ -34,14 +37,26 @@ class FavoritesScreen extends StatelessWidget {
             unselectedLabelColor: Colors.grey,
             labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             tabs: [
-              Tab(child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [Icon(Icons.fastfood_outlined, size: 18), SizedBox(width: 8), Text("Packs")],
-              )),
-              Tab(child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [Icon(Icons.storefront_outlined, size: 18), SizedBox(width: 8), Text("Negocios")],
-              )),
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.fastfood_outlined, size: 18),
+                    SizedBox(width: 8),
+                    Text("Packs"),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.storefront_outlined, size: 18),
+                    SizedBox(width: 8),
+                    Text("Negocios"),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -66,7 +81,10 @@ class FavoritesScreen extends StatelessWidget {
   // ❤️ SECCIÓN PACKS
   Widget _buildPacksTab(FavoritesController controller) {
     if (controller.favoritePacks.isEmpty) {
-      return _buildEmptyState("Aún no tienes packs favoritos", Icons.fastfood_outlined);
+      return _buildEmptyState(
+        "Aún no tienes packs favoritos",
+        Icons.fastfood_outlined,
+      );
     }
 
     return ListView.builder(
@@ -98,7 +116,10 @@ class FavoritesScreen extends StatelessWidget {
   // ❤️ SECCIÓN NEGOCIOS
   Widget _buildBusinessesTab(FavoritesController controller) {
     if (controller.favoriteBusinesses.isEmpty) {
-      return _buildEmptyState("Aún no sigues ningún negocio", Icons.storefront_outlined);
+      return _buildEmptyState(
+        "Aún no sigues ningún negocio",
+        Icons.storefront_outlined,
+      );
     }
 
     return ListView.builder(
@@ -116,8 +137,13 @@ class FavoritesScreen extends StatelessWidget {
           subtitle: category,
           leadingWidget: CircleAvatar(
             backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
-            child: Text(name[0].toUpperCase(), 
-              style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+            child: Text(
+              name[0].toUpperCase(),
+              style: const TextStyle(
+                color: AppTheme.primaryGreen,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           onTap: () {
             if (business.isNotEmpty) {
@@ -147,15 +173,23 @@ class FavoritesScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: leadingWidget ?? Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: (iconColor ?? AppTheme.primaryGreen).withOpacity(0.1),
-            shape: BoxShape.circle,
+        leading:
+            leadingWidget ??
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (iconColor ?? AppTheme.primaryGreen).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor ?? AppTheme.primaryGreen),
+            ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textBlack,
           ),
-          child: Icon(icon, color: iconColor ?? AppTheme.primaryGreen),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
         subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
         trailing: IconButton(
           icon: const Icon(Icons.favorite, color: Colors.redAccent),
@@ -173,7 +207,10 @@ class FavoritesScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          Text(message, style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+          Text(
+            message,
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+          ),
         ],
       ),
     );

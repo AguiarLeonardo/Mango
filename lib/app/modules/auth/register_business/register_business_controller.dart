@@ -2,14 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../data/models/business_model.dart';
 import '../../../data/venezuela_data.dart';
 import '../../../routes/app_routes.dart';
 
 class RegisterBusinessController extends GetxController {
-  
   // Instancia directa de Supabase
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -18,18 +17,26 @@ class RegisterBusinessController extends GetxController {
 
   // Modelo reactivo
   final business = BusinessModel().obs;
-  
+
   // Imagen
   final ImagePicker _picker = ImagePicker();
-  XFile? _rawImageFile; 
+  XFile? _rawImageFile;
 
   // Listas y Opciones
   final phoneCodes = ['0412', '0424', '0416', '0414', '0426'];
-  final categories = ['Panadería', 'Restaurante', 'Pastelería', 'Supermercado', 'Cafetería', 'Farmacia', 'Otro'];
+  final categories = [
+    'Panadería',
+    'Restaurante',
+    'Pastelería',
+    'Supermercado',
+    'Cafetería',
+    'Farmacia',
+    'Otro',
+  ];
 
   // --- Controladores de Texto ---
   final commercialNameController = TextEditingController();
-  final shortDescController = TextEditingController(); 
+  final shortDescController = TextEditingController();
   final addressController = TextEditingController();
   final phoneController = TextEditingController();
   final legalNameController = TextEditingController();
@@ -45,7 +52,7 @@ class RegisterBusinessController extends GetxController {
   final selectedState = RxnString();
   final selectedCity = RxnString();
   final selectedMunicipality = RxnString();
-  
+
   final availableCities = <Map<String, dynamic>>[].obs;
   final availableMunicipalities = <String>[].obs;
   final stateNames = <String>[].obs;
@@ -57,7 +64,9 @@ class RegisterBusinessController extends GetxController {
   void onInit() {
     super.onInit();
     try {
-      stateNames.value = venezuelaData.map((e) => e['estado'] as String).toList();
+      stateNames.value = venezuelaData
+          .map((e) => e['estado'] as String)
+          .toList();
     } catch (e) {
       print("Error cargando data de Venezuela: $e");
     }
@@ -74,9 +83,11 @@ class RegisterBusinessController extends GetxController {
     selectedCity.value = null;
     selectedMunicipality.value = null;
     availableMunicipalities.clear();
-    
+
     var estadoData = venezuelaData.firstWhere((e) => e['estado'] == val);
-    availableCities.value = List<Map<String, dynamic>>.from(estadoData['ciudades']);
+    availableCities.value = List<Map<String, dynamic>>.from(
+      estadoData['ciudades'],
+    );
   }
 
   void onCityChanged(String? val) {
@@ -95,7 +106,7 @@ class RegisterBusinessController extends GetxController {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
-        _rawImageFile = image; 
+        _rawImageFile = image;
         update(); // Refrescar UI si es necesario
       }
     } catch (e) {
@@ -113,45 +124,56 @@ class RegisterBusinessController extends GetxController {
   // ===========================================================================
   Future<void> register() async {
     // Validaciones básicas visuales
-    if (commercialNameController.text.isEmpty || 
-        rifController.text.isEmpty || 
-        emailController.text.isEmpty || 
+    if (commercialNameController.text.isEmpty ||
+        rifController.text.isEmpty ||
+        emailController.text.isEmpty ||
         passwordController.text.isEmpty) {
-      Get.snackbar("Faltan Datos", "Por favor llena los campos obligatorios", 
-        backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Faltan Datos",
+        "Por favor llena los campos obligatorios",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
     if (passwordController.text != confirmPasswordController.text) {
-      Get.snackbar("Error", "Las contraseñas no coinciden", 
-        backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Las contraseñas no coinciden",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
     try {
       isLoading.value = true;
-      
+
       final rif = rifController.text.trim();
       final email = emailController.text.trim();
       final password = passwordController.text;
 
       // 1. Verificación previa de duplicados
       try {
-        final existing = await _supabase.from('businesses')
-          .select('id')
-          .or('rif.eq.$rif,email.eq.$email')
-          .maybeSingle(); 
-        
-        if (existing != null) throw "El RIF o Correo ya están registrados en el sistema.";
+        final existing = await _supabase
+            .from('businesses')
+            .select('id')
+            .or('rif.eq.$rif,email.eq.$email')
+            .maybeSingle();
+
+        if (existing != null) {
+          throw "El RIF o Correo ya están registrados en el sistema.";
+        }
       } catch (e) {
-         if (e.toString().contains("ya están registrados")) rethrow;
+        if (e.toString().contains("ya están registrados")) rethrow;
       }
 
       // 2. Crear Usuario Auth
       final AuthResponse res = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: { 'role': 'business' } 
+        data: {'role': 'business'},
       );
 
       if (res.user == null) throw "No se pudo crear el usuario Auth";
@@ -165,14 +187,21 @@ class RegisterBusinessController extends GetxController {
           final fileExt = _rawImageFile!.path.split('.').last;
           final fileName = '$userId/rif_image.$fileExt';
 
-          await _supabase.storage.from('logos').uploadBinary(
-            fileName,
-            bytes,
-            fileOptions: FileOptions(contentType: 'image/$fileExt', upsert: true),
-          );
-          uploadedRifUrl = _supabase.storage.from('logos').getPublicUrl(fileName);
+          await _supabase.storage
+              .from('logos')
+              .uploadBinary(
+                fileName,
+                bytes,
+                fileOptions: FileOptions(
+                  contentType: 'image/$fileExt',
+                  upsert: true,
+                ),
+              );
+          uploadedRifUrl = _supabase.storage
+              .from('logos')
+              .getPublicUrl(fileName);
         } catch (e) {
-          print("Error subiendo imagen: $e"); 
+          print("Error subiendo imagen: $e");
         }
       }
 
@@ -183,8 +212,9 @@ class RegisterBusinessController extends GetxController {
         'legal_name': legalNameController.text.trim(),
         'rif': rif,
         'email': email,
-        'phone': '${business.value.phonePrefix ?? "0412"}-${phoneController.text.trim()}',
-        
+        'phone':
+            '${business.value.phonePrefix ?? "0412"}-${phoneController.text.trim()}',
+
         // Ubicación
         'state': selectedState.value,
         'city': selectedCity.value,
@@ -195,22 +225,32 @@ class RegisterBusinessController extends GetxController {
         'category': selectedCategory.value,
         'short_description': shortDescController.text.trim(),
         'representative_name': repNameController.text.trim(),
-        'rif_url': uploadedRifUrl, 
+        'rif_url': uploadedRifUrl,
       };
 
       await _supabase.from('businesses').insert(businessData);
 
-      Get.snackbar("¡Éxito!", "Empresa registrada correctamente", 
-        backgroundColor: Colors.green, colorText: Colors.white);
-      
-      Get.offAllNamed(Routes.home);
+      Get.snackbar(
+        "¡Éxito!",
+        "Empresa registrada correctamente",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
 
+      Get.offAllNamed(Routes.shell);
     } catch (e) {
       String msg = e.toString();
-      if (msg.contains("User already registered")) msg = "Este correo ya está registrado.";
+      if (msg.contains("User already registered")) {
+        msg = "Este correo ya está registrado.";
+      }
       if (msg.contains("duplicate key")) msg = "El RIF o correo ya existen.";
-      
-      Get.snackbar("Error", msg, backgroundColor: Colors.red, colorText: Colors.white);
+
+      Get.snackbar(
+        "Error",
+        msg,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       print("🚨 ERROR: $e");
     } finally {
       isLoading.value = false;

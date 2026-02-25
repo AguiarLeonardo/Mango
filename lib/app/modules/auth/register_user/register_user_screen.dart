@@ -20,7 +20,7 @@ class RegisterUserScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundCream, 
+      backgroundColor: AppTheme.primaryGreen, 
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../routes/app_routes.dart';
 
 class StartController extends GetxController {
-  
   @override
   void onReady() {
     super.onReady();
@@ -23,10 +22,11 @@ class StartController extends GetxController {
 
     // --- ESCENARIO A: RECUPERACIÓN WEB (Futuro Implicit Flow) ---
     // Detecta: localhost:3000/#access_token=...&type=recovery
-    if (fragment.contains("type=recovery") && fragment.contains("access_token")) {
+    if (fragment.contains("type=recovery") &&
+        fragment.contains("access_token")) {
       print("✅ DETECTADO: Link de recuperación (Implicit).");
       // Damos un respiro extra para que el SDK procese el token del hash
-      await Future.delayed(const Duration(milliseconds: 500)); 
+      await Future.delayed(const Duration(milliseconds: 500));
       _navigateBasedOnSession(isRecovery: true);
       return;
     }
@@ -52,8 +52,8 @@ class StartController extends GetxController {
         print("🚀 Sesión válida + Recuperación -> UpdatePassword");
         Get.offAllNamed(Routes.updatePassword);
       } else {
-        print("🚀 Sesión válida -> Home");
-        Get.offAllNamed(Routes.home);
+        print("🚀 Sesión válida -> shell");
+        Get.offAllNamed(Routes.shell);
       }
     } else {
       print("👋 Sin sesión -> Welcome");

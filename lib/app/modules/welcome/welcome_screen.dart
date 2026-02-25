@@ -13,7 +13,7 @@ class WelcomeScreen extends GetView<WelcomeController> {
     Get.put(WelcomeController()); 
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundCream, // Cambiado al fondo fresco y limpio
+      backgroundColor: AppTheme.primaryGreen, // Cambiado al fondo fresco y limpio
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(30.0),
@@ -24,10 +24,10 @@ class WelcomeScreen extends GetView<WelcomeController> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withOpacity(0.1),
+                  color: AppTheme.backgroundCream.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.eco, size: 80, color: AppTheme.primaryGreen), 
+                child: const Icon(Icons.eco, size: 80, color: AppTheme.backgroundCream), 
               ),
               const SizedBox(height: 20),
               
@@ -37,7 +37,7 @@ class WelcomeScreen extends GetView<WelcomeController> {
                 style: TextStyle(
                   fontSize: 40, 
                   fontWeight: FontWeight.bold, 
-                  color: AppTheme.primaryGreen, // Texto verde en lugar de blanco
+                  color: AppTheme.backgroundCream, // Texto verde en lugar de blanco
                   letterSpacing: 2
                 )
               ),

@@ -15,7 +15,13 @@ class PaymentScreen extends StatelessWidget {
       // Usamos el fondo crema global de Mango
       backgroundColor: AppTheme.backgroundCream,
       appBar: AppBar(
-        title: const Text("Finalizar Compra", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
+        title: const Text(
+          "Finalizar Compra",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textBlack,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -34,36 +40,75 @@ class PaymentScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 5)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
                 ],
-                border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppTheme.primaryGreen.withOpacity(0.3),
+                ),
               ),
               child: Column(
                 children: [
-                  const Text("Total a pagar", style: TextStyle(fontSize: 16, color: Colors.grey)),
+                  const Text(
+                    "Total a pagar",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
                   const SizedBox(height: 5),
                   Text(
-                    "${controller.price.toStringAsFixed(2)} Bs", 
-                    style: const TextStyle(fontSize: 32, color: AppTheme.textBlack, fontWeight: FontWeight.w900)
+                    "${controller.price.toStringAsFixed(2)} Bs",
+                    style: const TextStyle(
+                      fontSize: 32,
+                      color: AppTheme.textBlack,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const Divider(height: 30),
-                  Text(controller.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
+                  Text(
+                    controller.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textBlack,
+                    ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 35),
 
-            const Text("Método de pago", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
+            const Text(
+              "Método de pago",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textBlack,
+              ),
+            ),
             const SizedBox(height: 15),
 
             // --- SELECTOR DE MÉTODOS ---
-            Obx(() => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildMethodSelector(controller, 'tarjeta', Icons.credit_card, 'Tarjeta'),
-                _buildMethodSelector(controller, 'pagomovil', Icons.phone_android, 'Pago Móvil'),
-              ],
-            )),
+            Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMethodSelector(
+                    controller,
+                    'tarjeta',
+                    Icons.credit_card,
+                    'Tarjeta',
+                  ),
+                  _buildMethodSelector(
+                    controller,
+                    'pagomovil',
+                    Icons.phone_android,
+                    'Pago Móvil',
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 35),
 
             // --- FORMULARIOS DINÁMICOS ---
@@ -74,7 +119,7 @@ class PaymentScreen extends StatelessWidget {
                 return _buildPagoMovilForm(controller);
               }
             }),
-            
+
             const SizedBox(height: 40),
 
             // --- BOTÓN DE PAGO PRINCIPAL ---
@@ -84,22 +129,44 @@ class PaymentScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
-                    BoxShadow(color: AppTheme.accentOrange.withOpacity(0.25), blurRadius: 12, offset: const Offset(0, 6)),
+                    BoxShadow(
+                      color: AppTheme.accentOrange.withOpacity(0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.processPayment,
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : controller.processPayment,
                   // Aquí forzamos el color Naranja para el botón más importante de la app (CTA crítico)
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.accentOrange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
                     elevation: 0,
                   ),
                   child: controller.isLoading.value
-                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                      : const Text("CONFIRMAR PAGO", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        )
+                      : const Text(
+                          "CONFIRMAR PAGO",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
                 ),
               );
             }),
@@ -110,7 +177,12 @@ class PaymentScreen extends StatelessWidget {
   }
 
   // --- WIDGET PARA LOS BOTONES REDONDOS DE SELECCIÓN ---
-  Widget _buildMethodSelector(PaymentController controller, String value, IconData icon, String label) {
+  Widget _buildMethodSelector(
+    PaymentController controller,
+    String value,
+    IconData icon,
+    String label,
+  ) {
     final isSelected = controller.selectedMethod.value == value;
     return GestureDetector(
       onTap: () => controller.selectedMethod.value = value,
@@ -120,14 +192,34 @@ class PaymentScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.accentOrange : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppTheme.accentOrange : Colors.grey.shade300),
-          boxShadow: isSelected ? [BoxShadow(color: AppTheme.accentOrange.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+          border: Border.all(
+            color: isSelected ? AppTheme.accentOrange : Colors.grey.shade300,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppTheme.accentOrange.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.grey.shade500, size: 32),
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey.shade500,
+              size: 32,
+            ),
             const SizedBox(height: 8),
-            Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.grey.shade600)),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+              ),
+            ),
           ],
         ),
       ),
@@ -154,7 +246,7 @@ class PaymentScreen extends StatelessWidget {
         hintText: hint,
         prefixIcon: Icon(icon, color: AppTheme.primaryGreen),
         filled: true,
-        fillColor: Colors.white, 
+        fillColor: Colors.white,
         labelStyle: TextStyle(color: Colors.grey.shade600),
         hintStyle: TextStyle(color: Colors.grey.shade400),
         enabledBorder: OutlineInputBorder(
@@ -176,57 +268,78 @@ class PaymentScreen extends StatelessWidget {
     required RxString selectedValue,
     required List<String> items,
   }) {
-    return Obx(() => DropdownButtonFormField<String>(
-      value: selectedValue.value.isEmpty ? null : selectedValue.value,
-      icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryGreen),
-      decoration: InputDecoration(
-        labelText: "Banco de Origen",
-        hintText: hint,
-        prefixIcon: Icon(icon, color: AppTheme.primaryGreen),
-        filled: true,
-        fillColor: Colors.white,
-        labelStyle: TextStyle(color: Colors.grey.shade600),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+    return Obx(
+      () => DropdownButtonFormField<String>(
+        initialValue: selectedValue.value.isEmpty ? null : selectedValue.value,
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          color: AppTheme.primaryGreen,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: AppTheme.accentOrange, width: 2),
+        decoration: InputDecoration(
+          labelText: "Banco de Origen",
+          hintText: hint,
+          prefixIcon: Icon(icon, color: AppTheme.primaryGreen),
+          filled: true,
+          fillColor: Colors.white,
+          labelStyle: TextStyle(color: Colors.grey.shade600),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(
+              color: AppTheme.accentOrange,
+              width: 2,
+            ),
+          ),
         ),
+        items: items.map((String bank) {
+          return DropdownMenuItem<String>(
+            value: bank,
+            child: Text(
+              bank,
+              style: const TextStyle(fontSize: 15, color: AppTheme.textBlack),
+            ),
+          );
+        }).toList(),
+        onChanged: (newValue) {
+          if (newValue != null) selectedValue.value = newValue;
+        },
       ),
-      items: items.map((String bank) {
-        return DropdownMenuItem<String>(
-          value: bank,
-          child: Text(bank, style: const TextStyle(fontSize: 15, color: AppTheme.textBlack)),
-        );
-      }).toList(),
-      onChanged: (newValue) {
-        if (newValue != null) selectedValue.value = newValue;
-      },
-    ));
+    );
   }
-
 
   // --- FORMULARIO TARJETA ---
   Widget _buildCreditCardForm(PaymentController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Datos de la Tarjeta", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
+        const Text(
+          "Datos de la Tarjeta",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textBlack,
+          ),
+        ),
         const SizedBox(height: 15),
-        
+
         _buildCustomTextField(
           controller: controller.cardNumberController,
           label: "Número de Tarjeta",
           hint: "0000 0000 0000 0000",
           icon: Icons.credit_card,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(16), CardNumberFormatter()],
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(16),
+            CardNumberFormatter(),
+          ],
         ),
-        
+
         const SizedBox(height: 15),
-        
+
         Row(
           children: [
             Expanded(
@@ -236,7 +349,11 @@ class PaymentScreen extends StatelessWidget {
                 hint: "MM/AA",
                 icon: Icons.calendar_month,
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4), CardMonthYearFormatter()],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                  CardMonthYearFormatter(),
+                ],
               ),
             ),
             const SizedBox(width: 15),
@@ -248,7 +365,10 @@ class PaymentScreen extends StatelessWidget {
                 icon: Icons.security,
                 obscureText: true,
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(3)],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(3),
+                ],
               ),
             ),
           ],
@@ -262,9 +382,16 @@ class PaymentScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Datos para Transferir", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
+        const Text(
+          "Datos para Transferir",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textBlack,
+          ),
+        ),
         const SizedBox(height: 15),
-        
+
         // Tarjeta con los datos del negocio
         Container(
           padding: const EdgeInsets.all(20),
@@ -272,7 +399,13 @@ class PaymentScreen extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.4)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -285,8 +418,15 @@ class PaymentScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 25),
-        
-        const Text("Confirmación", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textBlack)),
+
+        const Text(
+          "Confirmación",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textBlack,
+          ),
+        ),
         const SizedBox(height: 15),
 
         // --- NUEVA LISTA DESPLEGABLE DE BANCOS ---
@@ -296,7 +436,7 @@ class PaymentScreen extends StatelessWidget {
           selectedValue: controller.selectedBank,
           items: controller.bankList,
         ),
-        
+
         const SizedBox(height: 15),
 
         // Caja de referencia
@@ -306,7 +446,10 @@ class PaymentScreen extends StatelessWidget {
           hint: "Últimos dígitos",
           icon: Icons.numbers,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(8)],
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(8),
+          ],
         ),
       ],
     );
@@ -316,8 +459,18 @@ class PaymentScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textBlack)),
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: AppTheme.textBlack,
+          ),
+        ),
       ],
     );
   }
@@ -329,7 +482,10 @@ class PaymentScreen extends StatelessWidget {
 
 class CardMonthYearFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) return newValue;
     var buffer = StringBuffer();
@@ -337,17 +493,23 @@ class CardMonthYearFormatter extends TextInputFormatter {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
       if (nonZeroIndex % 2 == 0 && nonZeroIndex != text.length && i == 1) {
-        buffer.write('/'); 
+        buffer.write('/');
       }
     }
     var string = buffer.toString();
-    return newValue.copyWith(text: string, selection: TextSelection.collapsed(offset: string.length));
+    return newValue.copyWith(
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
   }
 }
 
 class CardNumberFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) return newValue;
     var buffer = StringBuffer();
@@ -355,10 +517,13 @@ class CardNumberFormatter extends TextInputFormatter {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
       if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) {
-        buffer.write(' '); 
+        buffer.write(' ');
       }
     }
     var string = buffer.toString();
-    return newValue.copyWith(text: string, selection: TextSelection.collapsed(offset: string.length));
+    return newValue.copyWith(
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
   }
 }

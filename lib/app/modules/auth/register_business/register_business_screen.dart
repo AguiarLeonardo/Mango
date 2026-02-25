@@ -27,7 +27,9 @@ class RegisterBusinessScreen extends StatelessWidget {
               children: [
                 Card(
                   elevation: 8,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   color: Colors.white, // Tarjeta blanca pura para contrastar
                   margin: const EdgeInsets.only(top: 10, right: 10),
                   child: Padding(
@@ -39,23 +41,25 @@ class RegisterBusinessScreen extends StatelessWidget {
                         // --- ENCABEZADO ---
                         Center(
                           child: Text(
-                            "REGISTRO EMPRESA", 
+                            "REGISTRO EMPRESA",
                             // Llamamos a Poppins desde el tema y le ponemos nuestro verde
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: AppTheme.primaryGreen, 
-                              fontWeight: FontWeight.bold, 
-                              letterSpacing: 1.2
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: AppTheme.primaryGreen,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         const SizedBox(height: 5),
                         Center(
                           child: Text(
-                            "Únete a Mango y gestiona tus pedidos", 
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textBlack.withOpacity(0.6), 
-                            )
+                            "Únete a Mango y gestiona tus pedidos",
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppTheme.textBlack.withOpacity(0.6),
+                                ),
                           ),
                         ),
                         const SizedBox(height: 30),
@@ -82,16 +86,18 @@ class RegisterBusinessScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 // Botón Cerrar (X)
                 Positioned(
-                  top: 0, right: 0,
+                  top: 0,
+                  right: 0,
                   child: GestureDetector(
                     onTap: () => Get.back(),
                     child: const CircleAvatar(
-                      backgroundColor: AppTheme.textBlack, // Negro UI para el botón cerrar
-                      radius: 18, 
-                      child: Icon(Icons.close, color: Colors.white, size: 20)
+                      backgroundColor:
+                          AppTheme.textBlack, // Negro UI para el botón cerrar
+                      radius: 18,
+                      child: Icon(Icons.close, color: Colors.white, size: 20),
                     ),
                   ),
                 ),
@@ -107,7 +113,14 @@ class RegisterBusinessScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppTheme.primaryGreen,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
         Divider(color: AppTheme.primaryGreen.withOpacity(0.3), thickness: 1),
         const SizedBox(height: 10),
       ],
@@ -119,25 +132,27 @@ class RegisterBusinessScreen extends StatelessWidget {
     return Column(
       children: [
         CustomTextField(
-          label: "Nombre Comercial *", 
-          icon: Icons.store_mall_directory_outlined, 
-          controller: controller.commercialNameController, 
+          label: "Nombre Comercial *",
+          icon: Icons.store_mall_directory_outlined,
+          controller: controller.commercialNameController,
         ),
         const SizedBox(height: 15),
         CustomTextField(
-          label: "Slogan / Descripción Corta", 
-          icon: Icons.description_outlined, 
-          controller: controller.shortDescController, 
-          maxLength: 100, 
+          label: "Slogan / Descripción Corta",
+          icon: Icons.description_outlined,
+          controller: controller.shortDescController,
+          maxLength: 100,
         ),
         const SizedBox(height: 15),
-        Obx(() => CustomDropdown(
-          label: "Categoría *", 
-          icon: Icons.category_outlined, 
-          value: controller.selectedCategory.value, 
-          items: controller.categories, 
-          onChanged: controller.onCategoryChanged,
-        )),
+        Obx(
+          () => CustomDropdown(
+            label: "Categoría *",
+            icon: Icons.category_outlined,
+            value: controller.selectedCategory.value,
+            items: controller.categories,
+            onChanged: controller.onCategoryChanged,
+          ),
+        ),
       ],
     );
   }
@@ -146,37 +161,45 @@ class RegisterBusinessScreen extends StatelessWidget {
   Widget _buildOperationalDataSection(RegisterBusinessController controller) {
     return Column(
       children: [
-        Obx(() => CustomDropdown(
-          label: "Estado *",
-          icon: Icons.map,
-          value: controller.selectedState.value,
-          items: controller.stateNames.toList(),
-          onChanged: controller.onStateChanged,
-        )),
-        const SizedBox(height: 15),
-        
-        Obx(() => CustomDropdown(
-          label: "Ciudad *",
-          icon: Icons.location_city,
-          value: controller.selectedCity.value,
-          isDisabled: controller.selectedState.value == null,
-          items: controller.availableCities.map((e) => e['nombre'] as String).toList(),
-          onChanged: controller.onCityChanged,
-        )),
+        Obx(
+          () => CustomDropdown(
+            label: "Estado *",
+            icon: Icons.map,
+            value: controller.selectedState.value,
+            items: controller.stateNames.toList(),
+            onChanged: controller.onStateChanged,
+          ),
+        ),
         const SizedBox(height: 15),
 
-        Obx(() => CustomDropdown(
-          label: "Municipio *",
-          icon: Icons.location_on_outlined,
-          value: controller.selectedMunicipality.value,
-          isDisabled: controller.selectedCity.value == null,
-          items: controller.availableMunicipalities.toList(),
-          onChanged: controller.onMunicipalityChanged,
-        )),
+        Obx(
+          () => CustomDropdown(
+            label: "Ciudad *",
+            icon: Icons.location_city,
+            value: controller.selectedCity.value,
+            isDisabled: controller.selectedState.value == null,
+            items: controller.availableCities
+                .map((e) => e['nombre'] as String)
+                .toList(),
+            onChanged: controller.onCityChanged,
+          ),
+        ),
+        const SizedBox(height: 15),
+
+        Obx(
+          () => CustomDropdown(
+            label: "Municipio *",
+            icon: Icons.location_on_outlined,
+            value: controller.selectedMunicipality.value,
+            isDisabled: controller.selectedCity.value == null,
+            items: controller.availableMunicipalities.toList(),
+            onChanged: controller.onMunicipalityChanged,
+          ),
+        ),
         const SizedBox(height: 15),
 
         CustomTextField(
-          label: "Dirección Exacta *", 
+          label: "Dirección Exacta *",
           icon: Icons.map_outlined,
           maxLines: 2,
           controller: controller.addressController,
@@ -187,23 +210,26 @@ class RegisterBusinessScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 90, 
-              margin: const EdgeInsets.only(right: 10), 
-              child: Obx(() => SimpleDropdown(
-                value: controller.business.value.phonePrefix ?? '0412',
-                items: controller.phoneCodes, 
-                onChanged: (val) => controller.business.update((b) => b?.phonePrefix = val!)
-              ))
+              width: 90,
+              margin: const EdgeInsets.only(right: 10),
+              child: Obx(
+                () => SimpleDropdown(
+                  value: controller.business.value.phonePrefix ?? '0412',
+                  items: controller.phoneCodes,
+                  onChanged: (val) =>
+                      controller.business.update((b) => b?.phonePrefix = val!),
+                ),
+              ),
             ),
             Expanded(
               child: CustomTextField(
-                label: "Teléfono *", 
-                icon: Icons.phone_outlined, 
-                inputType: TextInputType.number, 
-                maxLength: 7, 
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
-                controller: controller.phoneController, 
-              )
+                label: "Teléfono *",
+                icon: Icons.phone_outlined,
+                inputType: TextInputType.number,
+                maxLength: 7,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                controller: controller.phoneController,
+              ),
             ),
           ],
         ),
@@ -216,34 +242,41 @@ class RegisterBusinessScreen extends StatelessWidget {
     return Column(
       children: [
         CustomTextField(
-          label: "Razón Social *", 
-          icon: Icons.gavel_outlined, 
-          controller: controller.legalNameController, 
+          label: "Razón Social *",
+          icon: Icons.gavel_outlined,
+          controller: controller.legalNameController,
         ),
         const SizedBox(height: 15),
         CustomTextField(
-          label: "RIF (J-12345678-9) *", 
-          icon: Icons.numbers, 
-          controller: controller.rifController, 
+          label: "RIF (J-12345678-9) *",
+          icon: Icons.numbers,
+          controller: controller.rifController,
         ),
-        
+
         const SizedBox(height: 20),
         const Align(
-          alignment: Alignment.centerLeft, 
-          child: Text(" Foto del RIF Digital (Opcional)", style: TextStyle(color: AppTheme.textBlack, fontSize: 13, fontWeight: FontWeight.bold))
+          alignment: Alignment.centerLeft,
+          child: Text(
+            " Foto del RIF Digital (Opcional)",
+            style: TextStyle(
+              color: AppTheme.textBlack,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         const SizedBox(height: 8),
 
         Obx(() {
           final imagePath = controller.business.value.rifImagePath;
           final hasImage = imagePath != null && imagePath.isNotEmpty;
-          
+
           ImageProvider? bgImage;
           if (hasImage) {
             if (GetPlatform.isWeb) {
-               bgImage = NetworkImage(imagePath!);
+              bgImage = NetworkImage(imagePath);
             } else {
-               bgImage = FileImage(File(imagePath!));
+              bgImage = FileImage(File(imagePath));
             }
           }
 
@@ -253,46 +286,74 @@ class RegisterBusinessScreen extends StatelessWidget {
               height: 140,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: hasImage ? Colors.transparent : AppTheme.primaryGreen.withOpacity(0.05),
+                color: hasImage
+                    ? Colors.transparent
+                    : AppTheme.primaryGreen.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: hasImage ? AppTheme.accentOrange : AppTheme.primaryGreen.withOpacity(0.5), 
-                  width: 1.5
+                  color: hasImage
+                      ? AppTheme.accentOrange
+                      : AppTheme.primaryGreen.withOpacity(0.5),
+                  width: 1.5,
                 ),
-                image: hasImage ? DecorationImage(image: bgImage!, fit: BoxFit.cover) : null,
+                image: hasImage
+                    ? DecorationImage(image: bgImage!, fit: BoxFit.cover)
+                    : null,
               ),
               child: hasImage
-                ? const Center(child: Icon(Icons.check_circle, color: Colors.white, size: 50))
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center, 
-                    children: [
-                      Icon(Icons.camera_alt_outlined, color: AppTheme.primaryGreen.withOpacity(0.8), size: 35), 
-                      Text("Toca para cargar foto", style: TextStyle(color: AppTheme.textBlack.withOpacity(0.6)))
-                    ]
-                  ),
+                  ? const Center(
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 50,
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          color: AppTheme.primaryGreen.withOpacity(0.8),
+                          size: 35,
+                        ),
+                        Text(
+                          "Toca para cargar foto",
+                          style: TextStyle(
+                            color: AppTheme.textBlack.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           );
         }),
-        
-        Obx(() { 
-          if (controller.business.value.rifImagePath != null) { 
+
+        Obx(() {
+          if (controller.business.value.rifImagePath != null) {
             return Align(
-              alignment: Alignment.centerRight, 
+              alignment: Alignment.centerRight,
               child: TextButton.icon(
-                onPressed: controller.removeRifImage, 
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18), 
-                label: const Text("Quitar foto", style: TextStyle(color: Colors.redAccent))
-              )
-            ); 
-          } 
-          return const SizedBox.shrink(); 
+                onPressed: controller.removeRifImage,
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.redAccent,
+                  size: 18,
+                ),
+                label: const Text(
+                  "Quitar foto",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
         }),
-        
+
         const SizedBox(height: 15),
         CustomTextField(
-          label: "Nombre del Representante *", 
-          icon: Icons.person_outline, 
-          controller: controller.repNameController, 
+          label: "Nombre del Representante *",
+          icon: Icons.person_outline,
+          controller: controller.repNameController,
         ),
       ],
     );
@@ -312,14 +373,14 @@ class RegisterBusinessScreen extends StatelessWidget {
         CustomTextField(
           label: "Contraseña *",
           icon: Icons.lock_outline,
-          isPassword: true, 
+          isPassword: true,
           controller: controller.passwordController,
         ),
         const SizedBox(height: 15),
         CustomTextField(
           label: "Confirmar Contraseña *",
           icon: Icons.lock_outline,
-          isPassword: true, 
+          isPassword: true,
           controller: controller.confirmPasswordController,
         ),
       ],
@@ -332,40 +393,72 @@ class RegisterBusinessScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Obx(() => Checkbox(
-              value: controller.business.value.acceptedTerms, 
-              activeColor: AppTheme.accentOrange, // Naranja para la interacción
-              onChanged: (val) => controller.business.update((b) => b?.acceptedTerms = val ?? false)
-            )),
+            Obx(
+              () => Checkbox(
+                value: controller.business.value.acceptedTerms,
+                activeColor:
+                    AppTheme.accentOrange, // Naranja para la interacción
+                onChanged: (val) => controller.business.update(
+                  (b) => b?.acceptedTerms = val ?? false,
+                ),
+              ),
+            ),
             Expanded(
               child: Text(
-                "Acepto los términos y condiciones de Mango.", 
-                style: TextStyle(color: AppTheme.textBlack.withOpacity(0.8), fontSize: 13)
-              )
+                "Acepto los términos y condiciones de Mango.",
+                style: TextStyle(
+                  color: AppTheme.textBlack.withOpacity(0.8),
+                  fontSize: 13,
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 30),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             TextButton(
-              onPressed: () => Get.back(), 
-              child: const Text("Cancelar", style: TextStyle(color: AppTheme.disabledIcon))
+              onPressed: () => Get.back(),
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(color: AppTheme.disabledIcon),
+              ),
             ),
-            
-            Obx(() => ElevatedButton(
-              onPressed: controller.isLoading.value ? null : controller.register, 
-              // ¡Mira qué limpio queda el botón! 
-              // Le quitamos todo el código de diseño porque el AppTheme ya hace el trabajo.
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                child: controller.isLoading.value
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text("REGISTRAR EMPRESA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
-              )
-            )),
-          ]
+
+            Obx(
+              () => ElevatedButton(
+                onPressed: controller.isLoading.value
+                    ? null
+                    : controller.register,
+                // ¡Mira qué limpio queda el botón!
+                // Le quitamos todo el código de diseño porque el AppTheme ya hace el trabajo.
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 12,
+                  ),
+                  child: controller.isLoading.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          "REGISTRAR EMPRESA",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
