@@ -119,11 +119,9 @@ class PaymentController extends GetxController {
       bool paymentSuccess = true;
 
       if (paymentSuccess) {
-        // Guardamos el pack
-        if (Get.isRegistered<PacksController>()) {
-          final packsController = Get.find<PacksController>();
-          await packsController.reservePack(packId, businessId);
-        }
+        // Guardamos el pack usando Get.put para asegurarnos de que el controlador se inicialice si no existe
+        final packsController = Get.put(PacksController());
+        await packsController.reservePack(packId, businessId);
 
         // ✅ NUEVO: Forzamos a la pantalla de Órdenes a actualizarse
         if (Get.isRegistered<OrdersController>()) {
@@ -133,7 +131,7 @@ class PaymentController extends GetxController {
         Get.offAllNamed(Routes.shell);
 
         if (Get.isRegistered<ShellController>()) {
-          Get.find<ShellController>().changeIndex(1); // Mueve a reservas
+          Get.find<ShellController>().changeIndex(2); // Mueve a reservas
         }
 
         // ... (Aquí sigue tu código del Snackbar de éxito)

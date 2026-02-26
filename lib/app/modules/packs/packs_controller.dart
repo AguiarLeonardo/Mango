@@ -215,24 +215,16 @@ class PacksController extends GetxController {
             "✅ PASO 1: Stock restado con éxito. Intentando crear la orden en Supabase...");
 
         try {
-          final orderResponse = await _supabase.from('orders').insert({
-            'pack_id': packId,
-            'business_id': businessId,
-            'user_id': userId,
-            'status': 'completed',
-          }).select(); // <-- El .select() obliga a Supabase a decirnos si falló o triunfó
+          // Ya no necesitamos insertar la orden aquí, la BD lo hace por su cuenta en reserve_pack
+          print("✅ PASO 2: ¡Orden creada exitosamente por la base de datos!: ${response['order_id']}");
 
-          print(
-              "✅ PASO 2: ¡Orden creada exitosamente en Supabase!: $orderResponse");
-
+          // Refrescamos la lista de packs para que se actualice el stock en la pantalla de "Descubrir"
           await fetchPacks();
-          Get.snackbar("Éxito", "Compra realizada",
-              backgroundColor: Colors.green);
         } catch (e) {
-          // Si Supabase lo rechaza por RLS o falta de datos, caerá aquí.
-          print("🚨 ERROR CRÍTICO AL CREAR LA ORDEN: $e");
-          Get.snackbar("Error oculto", "Mira la consola",
-              backgroundColor: Colors.red);
+          // Si algo falla al recargar
+          print("🚨 ERROR CRÍTICO AL RECARGAR PACKS: $e");
+          throw Exception(
+              "Error al actualizar la lista de packs.");
         }
       } else {
         Get.snackbar(
