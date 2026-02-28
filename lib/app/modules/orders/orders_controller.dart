@@ -1,16 +1,12 @@
+import 'package:flutter/material.dart'; // <-- Agregamos Material para los colores del SnackBar
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OrdersController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // --- VARIABLES EXACTAS QUE NECESITA TU PANTALLA ---
   var isLoading = true.obs;
-
-  // 1. Aquí definimos "ordersList" para que la pantalla la encuentre
   var ordersList = <Map<String, dynamic>>[].obs;
-
-  // 2. Aquí definimos "isBusinessMode" para que la pantalla sepa el rol
   var isBusinessMode = false.obs;
 
   @override
@@ -19,26 +15,20 @@ class OrdersController extends GetxController {
     checkUserRole();
   }
 
-  // Verificar si es empresa
   Future<void> checkUserRole() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId != null) {
-      // Buscamos si el ID está en la tabla businesses
       final data = await _supabase
           .from('businesses')
           .select('id')
           .eq('id', userId)
           .maybeSingle();
 
-      // Si data no es null, es una empresa. Actualizamos la variable.
       isBusinessMode.value = (data != null);
-
-      // Volvemos a cargar las órdenes ahora que sabemos el rol correcto
       fetchOrders();
     }
   }
 
-  // Cargar las órdenes
   Future<void> fetchOrders() async {
     try {
       isLoading.value = true;
@@ -48,19 +38,16 @@ class OrdersController extends GetxController {
       dynamic response;
 
       if (isBusinessMode.value) {
-        // --- MODO EMPRESA (Ver Ventas) ---
         response = await _supabase
             .from('orders')
             .select('*, packs(title, image_url, price)')
             .eq('business_id', userId)
             .order('created_at', ascending: false);
       } else {
-        // --- MODO USUARIO (Ver Compras) ---
-        // Intentamos traer el pack y el negocio
+        // ✅ Aseguramos traer también los IDs de negocio y pack por si acaso
         response = await _supabase
             .from('orders')
-            .select(
-                '*, packs(title, image_url, price, businesses(commercial_name))')
+            .select('*, packs(id, title, image_url, price, businesses(id, commercial_name))')
             .eq('user_id', userId)
             .order('created_at', ascending: false);
       }
@@ -72,6 +59,46 @@ class OrdersController extends GetxController {
       print("Error cargando órdenes: $e");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // ✅ NUEVA FUNCIÓN: ENVIAR RESEÑA A SUPABASE
+  Future<void> submitReview({
+    required String businessId,
+    required String packId,
+    required int rating,
+    required String comment,
+  }) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Insertamos los datos en la tabla 'ratings' que hizo tu compañera
+      await _supabase.from('ratings').insert({
+        'user_id': userId,
+        'business_id': businessId,
+        'pack_id': packId,
+        'rating': rating,
+        'comment': comment,
+      });
+
+      Get.back(); // Cierra la ventanita emergente (BottomSheet)
+      
+      Get.snackbar(
+        "¡Gracias por tu reseña! ⭐",
+        "Tu opinión ayuda a otros a salvar comida.",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } catch (e) {
+      print("Error al enviar reseña: $e");
+      Get.snackbar(
+        "Error", 
+        "No se pudo enviar la reseña. Intenta de nuevo.",
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 }
