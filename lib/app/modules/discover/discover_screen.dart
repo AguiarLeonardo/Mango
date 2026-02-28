@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import '../support/support_screen.dart';
 import '../../core/theme/app_theme.dart';
 import 'discover_controller.dart';
 import '../../data/models/pack_model.dart';
 import '../../data/models/business_model.dart';
 import '../shell/shell_controller.dart';
 import '../profile/profile_screen.dart';
+
+// ✅ IMPORTAMOS EL CARRITO Y LAS RUTAS (NUEVO)
+import '../../routes/app_routes.dart';
+import '../cart/cart_controller.dart';
 
 class DiscoverScreen extends StatelessWidget {
   const DiscoverScreen({super.key});
@@ -65,6 +69,16 @@ class DiscoverScreen extends StatelessWidget {
               onTap: () {
                 Get.back();
                 Get.to(() => const ProfileScreen());
+              },
+            ),
+            // Asegúrate de importar la pantalla arriba: import '../support/support_screen.dart';
+
+            ListTile(
+              leading: const Icon(Icons.help_outline, color: AppTheme.textBlack),
+              title: const Text('Ayuda y Soporte'),
+              onTap: () {
+                Get.back(); // Cierra el menú lateral primero
+                Get.to(() => const SupportScreen()); // Navega a la pantalla de soporte
               },
             ),
             ListTile(
@@ -138,6 +152,50 @@ class DiscoverScreen extends StatelessWidget {
             ),
           );
         }),
+        // ✅ AQUÍ AGREGAMOS EL BOTÓN DEL CARRITO A LA DERECHA (NUEVO)
+        actions: [
+          Obx(() {
+            // Buscamos o creamos el controlador del carrito
+            final cartController = Get.put(CartController());
+            final hasItem = cartController.cartItem.value != null;
+
+            return IconButton(
+              onPressed: () {
+                // Si le dan clic, los llevamos al carrito
+                Get.toNamed(Routes.cart);
+              },
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    // Si hay un pack reservado, es naranja, si no, es blanco (para combinar con el fondo verde)
+                    color: hasItem ? AppTheme.accentOrange : Colors.white,
+                    size: 28,
+                  ),
+                  // El "globito" rojo que aparece solo si hay un ítem
+                  if (hasItem)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 12,
+                          minHeight: 12,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(width: 15), // Un pequeño espacio al borde derecho
+        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

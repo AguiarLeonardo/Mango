@@ -16,6 +16,7 @@ import 'package:mango/app/modules/packs/vendedor_packs_screen.dart';
 import 'package:mango/app/modules/packs/pack_detail_screen.dart';
 import 'package:mango/app/modules/business/business_detail_screen.dart';
 import 'package:mango/app/modules/search/search_screen.dart';
+import '../modules/cart/cart_screen.dart';
 
 class AppPages {
   static const initial = Routes.start;
@@ -51,6 +52,12 @@ class AppPages {
       page: () => BusinessDetailScreen(
         businessData: Get.arguments as Map<String, dynamic>,
       ),
+    ),
+
+    GetPage(
+      name: Routes.cart,
+      page: () => const CartScreen(),
+      transition: Transition.downToUp, // Un efecto bonito al abrir el carrito
     ),
 
     // 🔍 SEARCH SCREEN

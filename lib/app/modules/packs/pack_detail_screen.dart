@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/pack_model.dart';
+import '../cart/cart_controller.dart';
 
 class PackDetailScreen extends StatelessWidget {
   const PackDetailScreen({super.key});
@@ -110,7 +111,8 @@ class PackDetailScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         // ✅ Enviamos el pack completo como argumento a la pasarela de pago
-                        Get.toNamed(Routes.payment, arguments: pack);
+                        final cartController = Get.put(CartController());
+                        cartController.addToCart(pack);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,

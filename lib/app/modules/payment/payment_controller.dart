@@ -5,6 +5,7 @@ import '../packs/packs_controller.dart';
 import '../shell/shell_controller.dart';
 import '../../routes/app_routes.dart';
 import '../orders/orders_controller.dart';
+import '../cart/cart_controller.dart'; // <-- AGREGA ESTO
 
 class PaymentController extends GetxController {
   final isLoading = false.obs;
@@ -118,12 +119,17 @@ class PaymentController extends GetxController {
       await Future.delayed(const Duration(seconds: 2));
       bool paymentSuccess = true;
 
-      if (paymentSuccess) {
-        // Guardamos el pack usando Get.put para asegurarnos de que el controlador se inicialice si no existe
+if (paymentSuccess) {
+        // 👇 1. APAGAMOS EL TEMPORIZADOR Y LIMPIAMOS EL CARRITO
+        if (Get.isRegistered<CartController>()) {
+          await Get.find<CartController>().clearCartAfterPayment();
+        }
+
+        // 👇 2. CREAMOS LA ORDEN REAL EN LA BASE DE DATOS
         final packsController = Get.put(PacksController());
         await packsController.reservePack(packId, businessId);
 
-        // ✅ NUEVO: Forzamos a la pantalla de Órdenes a actualizarse
+        // Forzamos a la pantalla de Órdenes a actualizarse
         if (Get.isRegistered<OrdersController>()) {
           Get.find<OrdersController>().fetchOrders();
         }
@@ -133,19 +139,18 @@ class PaymentController extends GetxController {
         if (Get.isRegistered<ShellController>()) {
           Get.find<ShellController>().changeIndex(2); // Mueve a reservas
         }
-
-        // ... (Aquí sigue tu código del Snackbar de éxito)
-
+        
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.snackbar(
-            "¡Reserva Exitosa! 🎉",
-            "Tu pack ha sido reservado. Revísalo en la pestaña Reservas.",
+            "¡Reserva Exitosa! 🎉", 
+            "Tu pack ha sido reservado. Aquí puedes ver tu código.",
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: const Duration(seconds: 4),
             snackPosition: SnackPosition.TOP,
           );
         });
+
       } else {
         Get.snackbar(
           "Pago Rechazado",
