@@ -59,6 +59,7 @@ class DiscoverController extends GetxController {
 
       recommendedBusinesses.assignAll(businessesResponse
           .map((json) => BusinessModel(
+                id: json['id'],
                 commercialName: json['commercial_name'] ?? 'Negocio',
                 category: json['category'],
                 city: json['city'],

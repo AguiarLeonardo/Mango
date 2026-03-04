@@ -3,23 +3,43 @@ import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../favorites/favorites_controller.dart';
 import '../business/business_controller.dart';
-// ✅ IMPORTAMOS EL MODELO DEL PACK (Ajusta la ruta si es necesario)
 import '../../data/models/pack_model.dart';
+// ✅ IMPORTAMOS EL MODELO DEL NEGOCIO
+import '../../data/models/business_model.dart';
 
 class BusinessDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> businessData;
+  // ✅ 1. CAMBIAMOS A DYNAMIC PARA QUE ACEPTE AMBOS TIPOS (Map o BusinessModel)
+  final dynamic businessData;
 
   const BusinessDetailScreen({
     super.key,
-    required this.businessData,
+    this.businessData, // Le quitamos el 'required'
   });
 
   @override
   Widget build(BuildContext context) {
-    final String businessId = businessData['id'].toString();
-    final String name = businessData['commercial_name'] ?? "Comercio";
-    final String address = businessData['address'] ?? "Dirección no registrada";
-    final String category = businessData['category'] ?? "General";
+    // ✅ 2. LEEMOS LOS DATOS DE Get.arguments (Si no hay, usa el del constructor)
+    final dynamic data = Get.arguments ?? businessData;
+
+    // ✅ 3. IDENTIFICAMOS QUÉ TIPO DE DATO LLEGÓ
+    final bool isMap = data is Map;
+
+    // Extraemos la información de forma segura
+    final String businessId = isMap 
+        ? (data['id']?.toString() ?? '') 
+        : (data.id?.toString() ?? '');
+        
+    final String name = isMap 
+        ? (data['commercial_name'] ?? "Comercio") 
+        : (data.commercialName ?? "Comercio");
+        
+    final String address = isMap 
+        ? (data['address'] ?? "Dirección no registrada") 
+        : (data.address ?? "Dirección no registrada");
+        
+    final String category = isMap 
+        ? (data['category'] ?? "General") 
+        : (data.category ?? "General");
 
     // Inyectamos el controlador específico de este negocio usando un tag
     final controller = Get.put(
@@ -204,18 +224,15 @@ class BusinessDetailScreen extends StatelessWidget {
                     child: ListTile(
                       title: Text(title,
                           style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text("$price Bs",
+                      subtitle: Text("\$$price",
                           style: const TextStyle(
                               color: AppTheme.primaryGreen,
                               fontWeight: FontWeight.w600)),
                       trailing: const Icon(Icons.arrow_forward_ios,
                           size: 16, color: AppTheme.disabledIcon),
                       onTap: () {
-                        // ✅ CONVERTIMOS EL JSON A PACKMODEL Y NAVEGAMOS
-                        // Como en el JSON no viene el nombre del negocio (porque estamos DENTRO del negocio),
-                        // se lo inyectamos manualmente al mapa antes de convertirlo
+                        // Inyectamos manualmente el nombre del negocio al pack
                         packMap['businesses'] = {'commercial_name': name};
-
                         final packModel = PackModel.fromJson(packMap);
                         Get.toNamed('/pack-detail', arguments: packModel);
                       },

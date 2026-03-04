@@ -1,9 +1,10 @@
 class BusinessModel {
+  String id; // ✅ 1. AGREGAMOS EL ID AQUÍ
   String commercialName;
   String shortDesc;
   String? category;
   
-  // Ubicación (Faltaban estos campos en tu modelo original)
+  // Ubicación
   String? state;
   String? city;
   String? municipality;
@@ -19,6 +20,7 @@ class BusinessModel {
   String? rifUrl;       // URL remota (después de subir a Supabase)
 
   BusinessModel({
+    this.id = '', // ✅ 2. LO AGREGAMOS AL CONSTRUCTOR
     this.commercialName = '',
     this.shortDesc = '',
     this.category,

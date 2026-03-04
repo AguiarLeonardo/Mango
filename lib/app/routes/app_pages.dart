@@ -46,11 +46,11 @@ class AppPages {
     GetPage(name: Routes.vendorPacks, page: () => VendorPacksScreen()),
     GetPage(name: Routes.packDetail, page: () => const PackDetailScreen()),
 
-    // 🏢 DETALLE DEL NEGOCIO
+    // 🏢 DETALLE DEL NEGOCIO (¡Aquí está la magia!)
     GetPage(
       name: Routes.businessDetail,
       page: () => BusinessDetailScreen(
-        businessData: Get.arguments as Map<String, dynamic>,
+        businessData: Get.arguments, // ✅ LE QUITAMOS EL "as Map..."
       ),
     ),
 

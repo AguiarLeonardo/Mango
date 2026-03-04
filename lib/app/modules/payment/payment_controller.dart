@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:math';
+import 'package:supabase_flutter/supabase_flutter.dart'; // <-- IMPORTANTE: Agregar Supabase
+
 import '../packs/packs_controller.dart';
 import '../shell/shell_controller.dart';
 import '../../routes/app_routes.dart';
 import '../orders/orders_controller.dart';
-import '../cart/cart_controller.dart'; // <-- AGREGA ESTO
+import '../cart/cart_controller.dart';
 
 class PaymentController extends GetxController {
   final isLoading = false.obs;
@@ -57,9 +59,7 @@ class PaymentController extends GetxController {
         price = double.tryParse(args['price']?.toString() ?? '0') ?? 0.0;
       } else {
         packId = args.id?.toString() ?? '';
-
         businessId = args.businessId?.toString() ?? '';
-
         title = args.title?.toString() ?? 'Pack sin título';
         price = double.tryParse(args.price?.toString() ?? '0') ?? 0.0;
       }
@@ -117,15 +117,42 @@ class PaymentController extends GetxController {
 
       // Simulamos conexión con el banco
       await Future.delayed(const Duration(seconds: 2));
-      bool paymentSuccess = true;
+      bool paymentSuccess = true; // Aquí podrías poner tu Random() si quieres que a veces falle
 
-if (paymentSuccess) {
-        // 👇 1. APAGAMOS EL TEMPORIZADOR Y LIMPIAMOS EL CARRITO
+      // 👇 OBTENEMOS EL USUARIO ACTUAL
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) throw Exception("Usuario no autenticado");
+
+      // 👇 EXTRAEMOS LOS ÚLTIMOS 4 DÍGITOS DE LA TARJETA (Si usó tarjeta)
+      String? last4;
+      if (selectedMethod.value == 'tarjeta') {
+        // Como validamos arriba que tiene al menos 19 caracteres, esto es seguro
+        String rawCard = cardNumberController.text.replaceAll(' ', ''); // quitamos espacios por si acaso
+        if (rawCard.length >= 4) {
+          last4 = rawCard.substring(rawCard.length - 4);
+        }
+      }
+
+      // 👇 INSERTAMOS EL REGISTRO EN SUPABASE (Tabla: payments)
+      await Supabase.instance.client.from('payments').insert({
+        'user_id': userId,
+        'pack_id': packId,
+        'business_id': businessId,
+        'amount': price,
+        'payment_method': selectedMethod.value,
+        'status': paymentSuccess ? 'success' : 'failed',
+        'bank_name': selectedMethod.value == 'pagomovil' ? selectedBank.value : null,
+        'reference_number': selectedMethod.value == 'pagomovil' ? referenceController.text : null,
+        'card_last4': last4,
+      });
+
+      if (paymentSuccess) {
+        // 1. APAGAMOS EL TEMPORIZADOR Y LIMPIAMOS EL CARRITO
         if (Get.isRegistered<CartController>()) {
           await Get.find<CartController>().clearCartAfterPayment();
         }
 
-        // 👇 2. CREAMOS LA ORDEN REAL EN LA BASE DE DATOS
+        // 2. CREAMOS LA ORDEN REAL EN LA BASE DE DATOS
         final packsController = Get.put(PacksController());
         await packsController.reservePack(packId, businessId);
 
@@ -143,7 +170,7 @@ if (paymentSuccess) {
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.snackbar(
             "¡Reserva Exitosa! 🎉", 
-            "Tu pack ha sido reservado. Aquí puedes ver tu código.",
+            "Tu pago se registró y tu pack ha sido reservado.",
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: const Duration(seconds: 4),
@@ -161,6 +188,7 @@ if (paymentSuccess) {
         );
       }
     } catch (e) {
+      print("Error al registrar el pago: $e");
       Get.snackbar("Error de sistema", "No se pudo procesar el pago.",
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {

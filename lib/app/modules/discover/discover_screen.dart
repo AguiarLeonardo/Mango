@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../support/support_screen.dart';
 import '../../core/theme/app_theme.dart';
 import 'discover_controller.dart';
@@ -8,7 +9,7 @@ import '../../data/models/business_model.dart';
 import '../shell/shell_controller.dart';
 import '../profile/profile_screen.dart';
 
-// ✅ IMPORTAMOS EL CARRITO Y LAS RUTAS (NUEVO)
+// ✅ IMPORTAMOS EL CARRITO Y LAS RUTAS
 import '../../routes/app_routes.dart';
 import '../cart/cart_controller.dart';
 
@@ -71,8 +72,6 @@ class DiscoverScreen extends StatelessWidget {
                 Get.to(() => const ProfileScreen());
               },
             ),
-            // Asegúrate de importar la pantalla arriba: import '../support/support_screen.dart';
-
             ListTile(
               leading: const Icon(Icons.help_outline, color: AppTheme.textBlack),
               title: const Text('Ayuda y Soporte'),
@@ -152,7 +151,7 @@ class DiscoverScreen extends StatelessWidget {
             ),
           );
         }),
-        // ✅ AQUÍ AGREGAMOS EL BOTÓN DEL CARRITO A LA DERECHA (NUEVO)
+        // ✅ AQUÍ AGREGAMOS EL BOTÓN DEL CARRITO A LA DERECHA
         actions: [
           Obx(() {
             // Buscamos o creamos el controlador del carrito
@@ -437,62 +436,66 @@ class DiscoverScreen extends StatelessWidget {
   }
 
   Widget _buildBusinessCard(BusinessModel business) {
-    return Container(
-      width: 280,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withOpacity(0.1),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      // ✅ AQUÍ ESTÁ LA MAGIA: Al tocar, vamos a la ruta y pasamos los datos del negocio
+      onTap: () => Get.toNamed(Routes.businessDetail, arguments: business),
+      child: Container(
+        width: 280,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.storefront,
+                  color: AppTheme.primaryGreen, size: 25),
             ),
-            child: const Icon(Icons.storefront,
-                color: AppTheme.primaryGreen, size: 25),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  business.commercialName,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15),
-                  maxLines: 1,
-                ),
-                Text(
-                  business.category ?? "Comida",
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on,
-                        size: 12, color: AppTheme.primaryGreen),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        business.city ?? business.address,
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12),
-                        maxLines: 1,
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    business.commercialName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
+                    maxLines: 1,
+                  ),
+                  Text(
+                    business.category ?? "Comida",
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 12, color: AppTheme.primaryGreen),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          business.city ?? business.address,
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 12),
+                          maxLines: 1,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
