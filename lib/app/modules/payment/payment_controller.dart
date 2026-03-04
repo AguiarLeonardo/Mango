@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:math';
-import 'package:supabase_flutter/supabase_flutter.dart'; // <-- IMPORTANTE: Agregar Supabase
+import 'package:supabase_flutter/supabase_flutter.dart'; 
 
 import '../packs/packs_controller.dart';
 import '../shell/shell_controller.dart';
@@ -12,12 +11,12 @@ import '../cart/cart_controller.dart';
 class PaymentController extends GetxController {
   final isLoading = false.obs;
 
-  late String packId;
-  late String businessId;
-  late String title;
-  late double price;
+  // ✅ Inyectamos el carrito directamente para leer todo desde allí
+  final CartController cartController = Get.find<CartController>();
 
-  // Solo nos quedamos con tarjeta y pagomovil
+  late String title;
+  late double totalPrice;
+
   var selectedMethod = 'tarjeta'.obs;
   var selectedBank = ''.obs;
   final List<String> bankList = [
@@ -38,76 +37,40 @@ class PaymentController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
-    final dynamic args = Get.arguments;
-
-    if (args == null) {
-      packId = '';
-      businessId = '';
-      title = 'Pack sin título';
-      price = 0.0;
-      return;
-    }
-
-    try {
-      if (args is Map) {
-        packId = args['id']?.toString() ?? args['packId']?.toString() ?? '';
-        businessId = args['business_id']?.toString() ??
-            args['businessId']?.toString() ??
-            '';
-        title = args['title']?.toString() ?? 'Pack sin título';
-        price = double.tryParse(args['price']?.toString() ?? '0') ?? 0.0;
-      } else {
-        packId = args.id?.toString() ?? '';
-        businessId = args.businessId?.toString() ?? '';
-        title = args.title?.toString() ?? 'Pack sin título';
-        price = double.tryParse(args.price?.toString() ?? '0') ?? 0.0;
-      }
-    } catch (e) {
-      print("Error al leer los datos del pack en pago: $e");
-      packId = '';
-      businessId = '';
-      title = 'Error cargando pack';
-      price = 0.0;
-    }
+    // Leemos el total a cobrar y preparamos el título del recibo
+    totalPrice = cartController.totalCartPrice;
+    int amountPacks = cartController.cartItems.length;
+    title = amountPacks == 1 ? "1 Pack seleccionado" : "$amountPacks Packs seleccionados";
   }
 
   // --- VALIDACIÓN Y PAGO ---
   Future<void> processPayment() async {
-    // 1. VALIDACIÓN TARJETA
     if (selectedMethod.value == 'tarjeta') {
       if (cardNumberController.text.length < 19) {
-        Get.snackbar("Error", "Número de tarjeta inválido",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Número de tarjeta inválido", backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (cardExpiryController.text.length < 5) {
-        Get.snackbar("Error", "Fecha de vencimiento inválida",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Fecha de vencimiento inválida", backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (cardCvvController.text.length < 3) {
-        Get.snackbar("Error", "CVV inválido",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "CVV inválido", backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
     }
 
-    // 2. VALIDACIÓN PAGO MÓVIL
     if (selectedMethod.value == 'pagomovil') {
       if (selectedBank.value.isEmpty) {
-        Get.snackbar("Error", "Selecciona el banco desde el que pagaste",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Selecciona el banco desde el que pagaste", backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (referenceController.text.length < 4) {
-        Get.snackbar("Error", "Número de referencia muy corto",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Número de referencia muy corto", backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
     }
 
-    // Si todo está correcto, procesamos el pago
     await _executePayment();
   }
 
@@ -117,46 +80,46 @@ class PaymentController extends GetxController {
 
       // Simulamos conexión con el banco
       await Future.delayed(const Duration(seconds: 2));
-      bool paymentSuccess = true; // Aquí podrías poner tu Random() si quieres que a veces falle
+      bool paymentSuccess = true; 
 
-      // 👇 OBTENEMOS EL USUARIO ACTUAL
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) throw Exception("Usuario no autenticado");
 
-      // 👇 EXTRAEMOS LOS ÚLTIMOS 4 DÍGITOS DE LA TARJETA (Si usó tarjeta)
       String? last4;
       if (selectedMethod.value == 'tarjeta') {
-        // Como validamos arriba que tiene al menos 19 caracteres, esto es seguro
-        String rawCard = cardNumberController.text.replaceAll(' ', ''); // quitamos espacios por si acaso
+        String rawCard = cardNumberController.text.replaceAll(' ', ''); 
         if (rawCard.length >= 4) {
           last4 = rawCard.substring(rawCard.length - 4);
         }
       }
 
-      // 👇 INSERTAMOS EL REGISTRO EN SUPABASE (Tabla: payments)
-      await Supabase.instance.client.from('payments').insert({
-        'user_id': userId,
-        'pack_id': packId,
-        'business_id': businessId,
-        'amount': price,
-        'payment_method': selectedMethod.value,
-        'status': paymentSuccess ? 'success' : 'failed',
-        'bank_name': selectedMethod.value == 'pagomovil' ? selectedBank.value : null,
-        'reference_number': selectedMethod.value == 'pagomovil' ? referenceController.text : null,
-        'card_last4': last4,
-      });
-
       if (paymentSuccess) {
-        // 1. APAGAMOS EL TEMPORIZADOR Y LIMPIAMOS EL CARRITO
-        if (Get.isRegistered<CartController>()) {
-          await Get.find<CartController>().clearCartAfterPayment();
+        final packsController = Get.put(PacksController());
+
+        // ✅ MAGIA: RECORREMOS TODOS LOS PACKS DEL CARRITO
+        for (var pack in cartController.cartItems) {
+          
+          // 1. Guardamos cada pago en Supabase vinculado a su negocio respectivo
+          await Supabase.instance.client.from('payments').insert({
+            'user_id': userId,
+            'pack_id': pack.id,
+            'business_id': pack.businessId,
+            'amount': pack.price, // Registramos el precio individual de este pack
+            'payment_method': selectedMethod.value,
+            'status': 'success',
+            'bank_name': selectedMethod.value == 'pagomovil' ? selectedBank.value : null,
+            'reference_number': selectedMethod.value == 'pagomovil' ? referenceController.text : null,
+            'card_last4': last4,
+          });
+
+          // 2. Ejecutamos la reserva (resta de cantidad, creación de orden, etc.)
+          await packsController.reservePack(pack.id, pack.businessId ?? '');
         }
 
-        // 2. CREAMOS LA ORDEN REAL EN LA BASE DE DATOS
-        final packsController = Get.put(PacksController());
-        await packsController.reservePack(packId, businessId);
+        // 3. Vaciamos el carrito (ya no maneja lógica de base de datos)
+        cartController.clearCartAfterPayment();
 
-        // Forzamos a la pantalla de Órdenes a actualizarse
+        // 4. Actualizamos vistas y navegamos
         if (Get.isRegistered<OrdersController>()) {
           Get.find<OrdersController>().fetchOrders();
         }
@@ -164,33 +127,26 @@ class PaymentController extends GetxController {
         Get.offAllNamed(Routes.shell);
 
         if (Get.isRegistered<ShellController>()) {
-          Get.find<ShellController>().changeIndex(2); // Mueve a reservas
+          Get.find<ShellController>().changeIndex(2); 
         }
         
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.snackbar(
-            "¡Reserva Exitosa! 🎉", 
-            "Tu pago se registró y tu pack ha sido reservado.",
+            "¡Compra Exitosa! 🎉", 
+            "Tus packs han sido reservados. Busca tus códigos en la pestaña de reservas.",
             backgroundColor: Colors.green,
             colorText: Colors.white,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 5),
             snackPosition: SnackPosition.TOP,
           );
         });
 
       } else {
-        Get.snackbar(
-          "Pago Rechazado",
-          "El banco ha declinado la transacción. Verifica tus datos o fondos.",
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 4),
-        );
+        Get.snackbar("Pago Rechazado", "El banco declinó la transacción.", backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
     } catch (e) {
-      print("Error al registrar el pago: $e");
-      Get.snackbar("Error de sistema", "No se pudo procesar el pago.",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      print("Error procesando carrito múltiple: $e");
+      Get.snackbar("Error de sistema", "Hubo un problema. Intenta de nuevo.", backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }

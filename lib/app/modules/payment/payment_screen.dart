@@ -52,7 +52,8 @@ class PaymentScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 16, color: Colors.grey)),
                   const SizedBox(height: 5),
                   Text(
-                    "${controller.price.toStringAsFixed(2)} Bs",
+                    // ✅ CAMBIO AQUÍ: Ahora lee totalPrice en vez de price
+                    "${controller.totalPrice.toStringAsFixed(2)} Bs",
                     style: const TextStyle(
                         fontSize: 32,
                         color: AppTheme.textBlack,
@@ -397,7 +398,6 @@ class PaymentScreen extends StatelessWidget {
   }
 }
 
-// FORMATTERS AL FINAL DEL ARCHIVO SCREEN (o en una carpeta de utils)
 class CardMonthYearFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -408,8 +408,9 @@ class CardMonthYearFormatter extends TextInputFormatter {
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 2 == 0 && nonZeroIndex != text.length && i == 1)
+      if (nonZeroIndex % 2 == 0 && nonZeroIndex != text.length && i == 1) {
         buffer.write('/');
+      }
     }
     var string = buffer.toString();
     return newValue.copyWith(
@@ -428,8 +429,9 @@ class CardNumberFormatter extends TextInputFormatter {
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length)
+      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) {
         buffer.write(' ');
+      }
     }
     var string = buffer.toString();
     return newValue.copyWith(

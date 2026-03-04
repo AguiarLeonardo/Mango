@@ -34,7 +34,6 @@ class DiscoverScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // ✅ AVATAR DEL DRAWER ACTUALIZADO
                   Obx(() => CircleAvatar(
                         backgroundColor: Colors.white,
                         radius: 30,
@@ -76,8 +75,8 @@ class DiscoverScreen extends StatelessWidget {
               leading: const Icon(Icons.help_outline, color: AppTheme.textBlack),
               title: const Text('Ayuda y Soporte'),
               onTap: () {
-                Get.back(); // Cierra el menú lateral primero
-                Get.to(() => const SupportScreen()); // Navega a la pantalla de soporte
+                Get.back();
+                Get.to(() => const SupportScreen());
               },
             ),
             ListTile(
@@ -122,7 +121,6 @@ class DiscoverScreen extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ✅ AVATAR DEL APPBAR ACTUALIZADO
                 Obx(() => CircleAvatar(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       backgroundImage: controller.avatarUrl.value.isNotEmpty
@@ -151,16 +149,15 @@ class DiscoverScreen extends StatelessWidget {
             ),
           );
         }),
-        // ✅ AQUÍ AGREGAMOS EL BOTÓN DEL CARRITO A LA DERECHA
+        // ✅ ICONO DEL CARRITO ACTUALIZADO
         actions: [
           Obx(() {
-            // Buscamos o creamos el controlador del carrito
             final cartController = Get.put(CartController());
-            final hasItem = cartController.cartItem.value != null;
+            // Ahora revisamos si la lista tiene elementos
+            final hasItem = cartController.cartItems.isNotEmpty;
 
             return IconButton(
               onPressed: () {
-                // Si le dan clic, los llevamos al carrito
                 Get.toNamed(Routes.cart);
               },
               icon: Stack(
@@ -168,15 +165,14 @@ class DiscoverScreen extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.shopping_cart_outlined,
-                    // Si hay un pack reservado, es naranja, si no, es blanco (para combinar con el fondo verde)
                     color: hasItem ? AppTheme.accentOrange : Colors.white,
                     size: 28,
                   ),
-                  // El "globito" rojo que aparece solo si hay un ítem
+                  // Globito rojo con el número de elementos
                   if (hasItem)
                     Positioned(
-                      right: -2,
-                      top: -2,
+                      right: -5,
+                      top: -5,
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
@@ -184,8 +180,18 @@ class DiscoverScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 12,
-                          minHeight: 12,
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${cartController.cartItems.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -193,7 +199,7 @@ class DiscoverScreen extends StatelessWidget {
               ),
             );
           }),
-          const SizedBox(width: 15), // Un pequeño espacio al borde derecho
+          const SizedBox(width: 15),
         ],
       ),
       body: Obx(() {
@@ -437,7 +443,6 @@ class DiscoverScreen extends StatelessWidget {
 
   Widget _buildBusinessCard(BusinessModel business) {
     return GestureDetector(
-      // ✅ AQUÍ ESTÁ LA MAGIA: Al tocar, vamos a la ruta y pasamos los datos del negocio
       onTap: () => Get.toNamed(Routes.businessDetail, arguments: business),
       child: Container(
         width: 280,
