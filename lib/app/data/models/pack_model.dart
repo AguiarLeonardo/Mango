@@ -1,3 +1,17 @@
+/// Enum que representa los posibles estados de un pack.
+enum PackStatus {
+  available,
+  soldOut,
+  hidden;
+
+  static PackStatus fromString(String value) {
+    return PackStatus.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => PackStatus.available,
+    );
+  }
+}
+
 class PackModel {
   final String id; // String (UUID)
   final String businessId;
@@ -8,6 +22,7 @@ class PackModel {
   final DateTime pickupEnd;
   final String? imageUrl;
   final String? businessName;
+  final PackStatus status;
 
   PackModel({
     required this.id,
@@ -19,6 +34,7 @@ class PackModel {
     required this.pickupEnd,
     this.imageUrl,
     this.businessName,
+    this.status = PackStatus.available,
   });
 
   // 🔹 LO QUE FALTABA: copyWith
@@ -34,6 +50,7 @@ class PackModel {
     DateTime? pickupEnd,
     String? imageUrl,
     String? businessName,
+    PackStatus? status,
   }) {
     return PackModel(
       id: id ?? this.id,
@@ -45,6 +62,7 @@ class PackModel {
       pickupEnd: pickupEnd ?? this.pickupEnd,
       imageUrl: imageUrl ?? this.imageUrl,
       businessName: businessName ?? this.businessName,
+      status: status ?? this.status,
     );
   }
 
@@ -75,6 +93,7 @@ class PackModel {
       businessName: (json['businesses'] != null && json['businesses'] is Map)
           ? json['businesses']['commercial_name']?.toString()
           : null,
+      status: PackStatus.fromString(json['status']?.toString() ?? 'available'),
     );
   }
 
@@ -88,6 +107,7 @@ class PackModel {
       'pickup_start': pickupStart.toIso8601String(),
       'pickup_end': pickupEnd.toIso8601String(),
       'image_url': imageUrl,
+      'status': status.name,
     };
   }
 }

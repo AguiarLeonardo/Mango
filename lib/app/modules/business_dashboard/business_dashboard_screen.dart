@@ -1,0 +1,341 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../core/theme/app_theme.dart';
+import '../packs/vendedor_packs_screen.dart';
+import 'business_dashboard_controller.dart';
+import 'business_orders_controller.dart';
+import 'business_orders_screen.dart';
+
+class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
+  const BusinessDashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Inject controllers if not already available
+    Get.put(BusinessOrdersController());
+    final vendorPacksScreen = VendorPacksScreen();
+
+    return Obx(() => Scaffold(
+          backgroundColor: AppTheme.backgroundCream,
+
+          // ─── APP BAR: PERFIL DEL NEGOCIO ───
+          appBar: _buildAppBar(),
+
+          // ─── BODY: INDEXED STACK ───
+          body: IndexedStack(
+            index: controller.currentIndex.value,
+            children: [
+              vendorPacksScreen, // Tab 0: Mis Packs
+              const BusinessOrdersScreen(), // Tab 1: Entregas / Pedidos
+            ],
+          ),
+
+          // ─── FAB: CREAR PACK (solo en pestaña Mis Packs) ───
+          floatingActionButton: controller.currentIndex.value == 0
+              ? FloatingActionButton.extended(
+                  onPressed: () =>
+                      vendorPacksScreen.openCreatePackModal(context),
+                  label: const Text("Nuevo Pack",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  backgroundColor: AppTheme.accentOrange,
+                )
+              : null,
+
+          // ─── BOTTOM NAVIGATION BAR ───
+          bottomNavigationBar: _buildBottomNavigationBar(),
+        ));
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppTheme.primaryGreen,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 80, // Aspecto más premium y espacioso
+      titleSpacing: 20,
+      title: Row(
+        children: [
+          _buildBusinessAvatar(),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  controller.businessName.value.isNotEmpty
+                      ? controller.businessName.value
+                      : 'Mi Negocio',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    letterSpacing: 0.2,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (controller.businessCategory.value.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(40),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      controller.businessCategory.value.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ]
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        // Botón de Escanear / Validar Entrega como detalle premium
+        Padding(
+          padding: const EdgeInsets.only(right: 12.0),
+          child: _buildActionButton(
+            icon: Icons.qr_code_scanner_rounded,
+            tooltip: 'Validar Entrega',
+            onPressed: () => _showValidationDialog(),
+          ),
+        ),
+      ],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(24), // Curvatura pronunciada moderna
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBusinessAvatar() {
+    final String name = controller.businessName.value;
+    final String? imageUrl = controller.businessImageUrl.value;
+
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: CircleAvatar(
+        radius: 26,
+        backgroundColor: Colors.white.withAlpha(40),
+        backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
+            ? NetworkImage(imageUrl)
+            : null,
+        child: (imageUrl == null || imageUrl.isEmpty)
+            ? Text(
+                name.isNotEmpty ? name[0].toUpperCase() : 'N',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(40),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        tooltip: tooltip,
+        onPressed: onPressed,
+        splashRadius: 24,
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(15),
+            blurRadius: 20,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: BottomNavigationBar(
+            currentIndex: controller.currentIndex.value,
+            onTap: controller.changeTab,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: AppTheme.primaryGreen,
+            unselectedItemColor: Colors.grey.shade400,
+            selectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 13, height: 1.5),
+            unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 12, height: 1.5),
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.inventory_2_outlined, size: 26),
+                activeIcon: Icon(Icons.inventory_2_rounded, size: 30),
+                label: 'Mis Packs',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.local_shipping_outlined, size: 26),
+                activeIcon: Icon(Icons.local_shipping_rounded, size: 30),
+                label: 'Entregas',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Diálogo rápido de validación de entrega ───
+  void _showValidationDialog() {
+    final TextEditingController codeController = TextEditingController();
+    final BusinessOrdersController ordersCtrl =
+        Get.find<BusinessOrdersController>();
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.qr_code_scanner_rounded,
+                  size: 50, color: AppTheme.primaryGreen),
+              const SizedBox(height: 16),
+              const Text(
+                "Validar Entrega",
+                style: TextStyle(
+                  color: AppTheme.textBlack,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Ingresa el código proporcionado por el cliente",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: codeController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: "Ej. MNG-4X9B",
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                        color: AppTheme.primaryGreen, width: 2),
+                  ),
+                  prefixIcon: const Icon(Icons.tag, color: Colors.grey),
+                ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: () => Get.back(),
+                      child: const Text("Cancelar",
+                          style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: () {
+                        final code = codeController.text.trim();
+                        if (code.isNotEmpty) {
+                          Get.back();
+                          ordersCtrl.validateOrderCode(code);
+                        } else {
+                          Get.snackbar(
+                            "Error",
+                            "Debes ingresar un código válido",
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        }
+                      },
+                      child: const Text("Confirmar",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

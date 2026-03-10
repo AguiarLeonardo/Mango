@@ -17,6 +17,8 @@ import 'package:mango/app/modules/packs/pack_detail_screen.dart';
 import 'package:mango/app/modules/business/business_detail_screen.dart';
 import 'package:mango/app/modules/search/search_screen.dart';
 import '../modules/cart/cart_screen.dart';
+import '../modules/business_dashboard/business_dashboard_screen.dart';
+import '../modules/business_dashboard/business_dashboard_binding.dart';
 
 class AppPages {
   static const initial = Routes.start;
@@ -62,5 +64,13 @@ class AppPages {
 
     // 🔍 SEARCH SCREEN
     GetPage(name: Routes.search, page: () => const SearchScreen()),
+
+    // 📊 BUSINESS DASHBOARD
+    GetPage(
+      name: Routes.businessDashboard,
+      page: () => const BusinessDashboardScreen(),
+      binding: BusinessDashboardBinding(),
+      transition: Transition.fadeIn,
+    ),
   ];
 }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../data/models/pack_model.dart';
 import 'packs_controller.dart';
 import 'pack_detail_screen.dart';
 
@@ -12,107 +13,74 @@ class VendorPacksScreen extends StatelessWidget {
 
   VendorPacksScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCream,
-      appBar: AppBar(
-        title: const Text("Mis Publicaciones",
-            style: TextStyle(
-                color: AppTheme.textBlack, fontWeight: FontWeight.bold)),
-        backgroundColor: AppTheme.backgroundCream,
-        elevation: 0,
-        centerTitle: true,
-      ),
-
-      // ✅ BOTÓN FLOTANTE
-      floatingActionButton: Obx(() => controller.isBusiness.value
-          ? FloatingActionButton.extended(
-              onPressed: () => _showCreatePackModal(context),
-              label: const Text("Nuevo Pack",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-              icon: const Icon(Icons.add_business, color: Colors.white),
-              backgroundColor: AppTheme.accentOrange,
-            )
-          : const SizedBox.shrink()),
-
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryGreen));
-        }
-
-        if (!controller.isBusiness.value) {
-          return const Center(
-            child: Text("Esta pantalla es exclusiva para negocios.",
-                style: TextStyle(fontSize: 16, color: Colors.grey)),
-          );
-        }
-
-        if (controller.packsList.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.inventory_2_outlined,
-                    size: 80, color: AppTheme.disabledIcon.withOpacity(0.5)),
-                const SizedBox(height: 15),
-                const Text("No tienes packs activos",
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textBlack)),
-                const SizedBox(height: 5),
-                const Text("Toca el botón 'Nuevo Pack' para publicar.",
-                    style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          );
-        }
-
-        // ✅ CUADRÍCULA DE INVENTARIO
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.75,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: controller.packsList.length,
-          itemBuilder: (context, index) {
-            // Lo dejamos como dynamic para evitar el choque con PackModel
-            final dynamic pack = controller.packsList[index];
-            return _buildVendorPackCard(pack);
-          },
-        );
-      }),
-    );
+  /// Abre el modal de creación de pack (expuesto para uso externo desde el FAB del dashboard).
+  void openCreatePackModal(BuildContext context) {
+    _showCreatePackModal(context);
   }
 
-  // ✅ SOLUCIÓN AL ERROR: Recibimos "dynamic" y leemos los datos de forma segura
-  Widget _buildVendorPackCard(dynamic pack) {
-    // Verificamos si es un Map o un PackModel y extraemos la info
-    final bool isMap = pack is Map;
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(
+            child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+      }
 
-    // Si la lectura falla, ponemos valores por defecto para evitar pantallas rojas
-    final String title = isMap
-        ? (pack['title'] ?? 'Pack Sorpresa')
-        : (pack.title ?? 'Pack Sorpresa');
-    final String price =
-        isMap ? pack['price'].toString() : pack.price.toString();
-    final String? imageUrl = isMap ? pack['image_url'] : pack.imageUrl;
+      if (!controller.isBusiness.value) {
+        return const Center(
+          child: Text("Esta pantalla es exclusiva para negocios.",
+              style: TextStyle(fontSize: 16, color: Colors.grey)),
+        );
+      }
 
-    // Verificamos el stock de manera segura
-    int stock = 0;
-    try {
-      stock = isMap
-          ? (pack['quantity_available'] ?? 0)
-          : (pack.quantityAvailable ?? 0);
-    } catch (e) {
-      stock = 0;
-    }
+      if (controller.packsList.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inventory_2_outlined,
+                  size: 80, color: AppTheme.disabledIcon.withOpacity(0.5)),
+              const SizedBox(height: 15),
+              const Text("No tienes packs activos",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textBlack)),
+              const SizedBox(height: 5),
+              const Text("Toca el botón 'Nuevo Pack' para publicar.",
+                  style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        );
+      }
+
+      // ✅ CUADRÍCULA DE INVENTARIO
+      return GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: controller.packsList.length,
+        itemBuilder: (context, index) {
+          final dynamic item = controller.packsList[index];
+          final PackModel pack = item is PackModel
+              ? item
+              : PackModel.fromJson(Map<String, dynamic>.from(item));
+          return _buildVendorPackCard(pack);
+        },
+      );
+    });
+  }
+
+  // ✅ Tarjeta de pack tipada con PackModel
+  Widget _buildVendorPackCard(PackModel pack) {
+    final String title = pack.title;
+    final String price = pack.price.toStringAsFixed(2);
+    final String? imageUrl = pack.imageUrl;
+    final int stock = pack.quantityAvailable;
 
     return GestureDetector(
       onTap: () => Get.to(() => const PackDetailScreen(), arguments: pack),

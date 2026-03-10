@@ -27,7 +27,7 @@ class StartController extends GetxController {
       print("✅ DETECTADO: Link de recuperación (Implicit).");
       // Damos un respiro extra para que el SDK procese el token del hash
       await Future.delayed(const Duration(milliseconds: 500));
-      _navigateBasedOnSession(isRecovery: true);
+      await _navigateBasedOnSession(isRecovery: true);
       return;
     }
 
@@ -41,10 +41,10 @@ class StartController extends GetxController {
 
     // --- ESCENARIO C: FLUJO NORMAL (Desarrollo actual) ---
     // Si no hay links raros, o si fallaron, verificamos si ya estás logueado.
-    _navigateBasedOnSession(isRecovery: false);
+    await _navigateBasedOnSession(isRecovery: false);
   }
 
-  void _navigateBasedOnSession({required bool isRecovery}) {
+  Future<void> _navigateBasedOnSession({required bool isRecovery}) async {
     final session = Supabase.instance.client.auth.currentSession;
 
     if (session != null) {
@@ -52,8 +52,20 @@ class StartController extends GetxController {
         print("🚀 Sesión válida + Recuperación -> UpdatePassword");
         Get.offAllNamed(Routes.updatePassword);
       } else {
-        print("🚀 Sesión válida -> shell");
-        Get.offAllNamed(Routes.shell);
+        print("🚀 Sesión válida -> Verificando Rol");
+
+        final userId = session.user.id;
+        final businessData = await Supabase.instance.client
+            .from('businesses')
+            .select('id')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (businessData != null) {
+          Get.offAllNamed(Routes.businessDashboard);
+        } else {
+          Get.offAllNamed(Routes.shell);
+        }
       }
     } else {
       print("👋 Sin sesión -> Welcome");

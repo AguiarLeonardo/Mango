@@ -74,7 +74,19 @@ class LoginController extends GetxController {
 
         await Future.delayed(const Duration(seconds: 1));
 
-        Get.offAllNamed(Routes.shell);
+        // 5. Verificar Rol para redirección correcta
+        final userId = res.user!.id;
+        final businessData = await _supabase
+            .from('businesses')
+            .select('id')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (businessData != null) {
+          Get.offAllNamed(Routes.businessDashboard);
+        } else {
+          Get.offAllNamed(Routes.shell);
+        }
       }
     } catch (e) {
       String msg = "Error al iniciar sesión.";

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../packs/packs_controller.dart';
 import '../shell/shell_controller.dart';
@@ -40,33 +40,40 @@ class PaymentController extends GetxController {
     // Leemos el total a cobrar y preparamos el título del recibo
     totalPrice = cartController.totalCartPrice;
     int amountPacks = cartController.cartItems.length;
-    title = amountPacks == 1 ? "1 Pack seleccionado" : "$amountPacks Packs seleccionados";
+    title = amountPacks == 1
+        ? "1 Pack seleccionado"
+        : "$amountPacks Packs seleccionados";
   }
 
   // --- VALIDACIÓN Y PAGO ---
   Future<void> processPayment() async {
     if (selectedMethod.value == 'tarjeta') {
       if (cardNumberController.text.length < 19) {
-        Get.snackbar("Error", "Número de tarjeta inválido", backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Número de tarjeta inválido",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (cardExpiryController.text.length < 5) {
-        Get.snackbar("Error", "Fecha de vencimiento inválida", backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Fecha de vencimiento inválida",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (cardCvvController.text.length < 3) {
-        Get.snackbar("Error", "CVV inválido", backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "CVV inválido",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
     }
 
     if (selectedMethod.value == 'pagomovil') {
       if (selectedBank.value.isEmpty) {
-        Get.snackbar("Error", "Selecciona el banco desde el que pagaste", backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Selecciona el banco desde el que pagaste",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
       if (referenceController.text.length < 4) {
-        Get.snackbar("Error", "Número de referencia muy corto", backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Error", "Número de referencia muy corto",
+            backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
     }
@@ -80,14 +87,14 @@ class PaymentController extends GetxController {
 
       // Simulamos conexión con el banco
       await Future.delayed(const Duration(seconds: 2));
-      bool paymentSuccess = true; 
+      bool paymentSuccess = true;
 
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) throw Exception("Usuario no autenticado");
 
       String? last4;
       if (selectedMethod.value == 'tarjeta') {
-        String rawCard = cardNumberController.text.replaceAll(' ', ''); 
+        String rawCard = cardNumberController.text.replaceAll(' ', '');
         if (rawCard.length >= 4) {
           last4 = rawCard.substring(rawCard.length - 4);
         }
@@ -98,17 +105,20 @@ class PaymentController extends GetxController {
 
         // ✅ MAGIA: RECORREMOS TODOS LOS PACKS DEL CARRITO
         for (var pack in cartController.cartItems) {
-          
           // 1. Guardamos cada pago en Supabase vinculado a su negocio respectivo
           await Supabase.instance.client.from('payments').insert({
             'user_id': userId,
             'pack_id': pack.id,
             'business_id': pack.businessId,
-            'amount': pack.price, // Registramos el precio individual de este pack
+            'amount':
+                pack.price, // Registramos el precio individual de este pack
             'payment_method': selectedMethod.value,
             'status': 'success',
-            'bank_name': selectedMethod.value == 'pagomovil' ? selectedBank.value : null,
-            'reference_number': selectedMethod.value == 'pagomovil' ? referenceController.text : null,
+            'bank_name':
+                selectedMethod.value == 'pagomovil' ? selectedBank.value : null,
+            'reference_number': selectedMethod.value == 'pagomovil'
+                ? referenceController.text
+                : null,
             'card_last4': last4,
           });
 
@@ -127,26 +137,27 @@ class PaymentController extends GetxController {
         Get.offAllNamed(Routes.shell);
 
         if (Get.isRegistered<ShellController>()) {
-          Get.find<ShellController>().changeIndex(2); 
+          Get.find<ShellController>().changeIndex(2);
         }
-        
+
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.snackbar(
-            "¡Compra Exitosa! 🎉", 
-            "Tus packs han sido reservados. Busca tus códigos en la pestaña de reservas.",
+            "¡Reserva Confirmada! 🎉",
+            "Tu pago fue exitoso y el pack te está esperando.",
             backgroundColor: Colors.green,
             colorText: Colors.white,
             duration: const Duration(seconds: 5),
             snackPosition: SnackPosition.TOP,
           );
         });
-
       } else {
-        Get.snackbar("Pago Rechazado", "El banco declinó la transacción.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+        Get.snackbar("Pago Rechazado", "El banco declinó la transacción.",
+            backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
     } catch (e) {
       print("Error procesando carrito múltiple: $e");
-      Get.snackbar("Error de sistema", "Hubo un problema. Intenta de nuevo.", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error de sistema", "Hubo un problema. Intenta de nuevo.",
+          backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:io';
+import '../../data/models/pack_model.dart';
 
 class PacksController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
-  
+
   // Estado
   final isLoading = false.obs;
-  final isBusiness = false.obs; 
-  final packsList = <Map<String, dynamic>>[].obs; 
+  final isBusiness = false.obs;
+  final packsList = <PackModel>[].obs;
 
   // --- Formulario Crear Pack ---
   final titleController = TextEditingController();
@@ -18,11 +18,11 @@ class PacksController extends GetxController {
   final priceController = TextEditingController();
   final originalPriceController = TextEditingController();
   final quantityController = TextEditingController();
-  
+
   // --- AQUÍ ESTABA EL ERROR: AHORA SON REACTIVAS (Rxn) ---
   final pickupStart = Rxn<DateTime>();
   final pickupEnd = Rxn<DateTime>();
-  
+
   // Imagen
   final ImagePicker _picker = ImagePicker();
   XFile? pickedImage;
@@ -44,7 +44,7 @@ class PacksController extends GetxController {
           .select('id')
           .eq('id', userId)
           .maybeSingle();
-      
+
       isBusiness.value = (businessData != null);
     }
 
@@ -55,15 +55,25 @@ class PacksController extends GetxController {
   // 2. Traer los Packs de Supabase
   Future<void> fetchPacks() async {
     try {
-      var query = _supabase.from('packs').select('*, businesses(commercial_name, address, rif_url)');
+      var query = _supabase.from('packs').select('*, businesses(*)');
 
       if (isBusiness.value) {
         final myId = _supabase.auth.currentUser!.id;
-        final response = await query.eq('business_id', myId).order('created_at', ascending: false);
-        packsList.value = List<Map<String, dynamic>>.from(response);
+        final response = await query
+            .eq('business_id', myId)
+            .order('created_at', ascending: false);
+        packsList.assignAll((response as List<dynamic>)
+            .map<PackModel>(
+                (e) => PackModel.fromJson(e as Map<String, dynamic>))
+            .toList());
       } else {
-        final response = await query.eq('status', 'available').order('created_at', ascending: false);
-        packsList.value = List<Map<String, dynamic>>.from(response);
+        final response = await query
+            .eq('status', 'available')
+            .order('created_at', ascending: false);
+        packsList.assignAll((response as List<dynamic>)
+            .map<PackModel>(
+                (e) => PackModel.fromJson(e as Map<String, dynamic>))
+            .toList());
       }
     } catch (e) {
       Get.snackbar("Error", "No se pudieron cargar los packs: $e");
@@ -81,10 +91,25 @@ class PacksController extends GetxController {
 
   // 4. Crear Pack (Solo Business)
   Future<void> createPack() async {
-    // USAMOS .value PARA VERIFICAR
-    if (titleController.text.isEmpty || priceController.text.isEmpty || 
-        quantityController.text.isEmpty || pickupStart.value == null || pickupEnd.value == null) {
-      Get.snackbar("Faltan datos", "Por favor llena título, precio, cantidad y horarios.");
+    // Validar campos obligatorios del formulario
+    if (titleController.text.isEmpty ||
+        priceController.text.isEmpty ||
+        quantityController.text.isEmpty) {
+      Get.snackbar(
+          "Faltan datos", "Por favor llena título, precio y cantidad.");
+      return;
+    }
+
+    // Validar horarios de recogida (US 3)
+    if (pickupStart.value == null || pickupEnd.value == null) {
+      Get.snackbar("Error", "Debes definir el horario de recogida",
+          backgroundColor: Colors.orange, colorText: Colors.white);
+      return;
+    }
+
+    if (!pickupEnd.value!.isAfter(pickupStart.value!)) {
+      Get.snackbar("Error", "El horario de fin debe ser posterior al de inicio",
+          backgroundColor: Colors.orange, colorText: Colors.white);
       return;
     }
 
@@ -99,26 +124,33 @@ class PacksController extends GetxController {
       if (pickedImage != null) {
         final bytes = await pickedImage!.readAsBytes();
         final fileExt = pickedImage!.path.split('.').last;
-        final fileName = '$userId/pack_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-        
-        await _supabase.storage.from('packs').uploadBinary(
-          fileName, bytes, 
-          fileOptions: FileOptions(contentType: 'image/$fileExt', upsert: true)
-        );
-        uploadedImageUrl = _supabase.storage.from('packs').getPublicUrl(fileName);
+        final fileName =
+            '$userId/pack_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+
+        await _supabase.storage.from('packs').uploadBinary(fileName, bytes,
+            fileOptions:
+                FileOptions(contentType: 'image/$fileExt', upsert: true));
+        uploadedImageUrl =
+            _supabase.storage.from('packs').getPublicUrl(fileName);
       }
 
-      // B. Insertar Pack en BD (USAMOS .value PARA LEER LA FECHA)
+      // Aseguramos de que el año/mes/dia coincida con el *HOY* para UTC, aunque el selector
+      // de hora que tenías previamente en el UI se encargaba de mezclar `DateTime.now()` con
+      // el TimeOfDay seleccionado. Solo aseguramos la conversión a UTC en la base de datos.
       final packData = {
         'business_id': userId,
         'title': titleController.text,
         'description': descController.text,
         'price': double.parse(priceController.text),
-        'original_price': originalPriceController.text.isNotEmpty ? double.parse(originalPriceController.text) : null,
+        'original_price': originalPriceController.text.isNotEmpty
+            ? double.parse(originalPriceController.text)
+            : null,
         'quantity_total': int.parse(quantityController.text),
         'quantity_available': int.parse(quantityController.text),
-        'pickup_start': pickupStart.value!.toIso8601String(), // .value!
-        'pickup_end': pickupEnd.value!.toIso8601String(),     // .value!
+        'pickup_start':
+            pickupStart.value!.toUtc().toIso8601String(), // Convertimos a UTC
+        'pickup_end':
+            pickupEnd.value!.toUtc().toIso8601String(), // Convertimos a UTC
         'image_url': uploadedImageUrl,
         'status': 'available'
       };
@@ -132,29 +164,30 @@ class PacksController extends GetxController {
       originalPriceController.clear();
       quantityController.clear();
       pickedImage = null;
-      
+
       // RESETEAR VALORES REACTIVOS
       pickupStart.value = null;
       pickupEnd.value = null;
 
-      Get.snackbar("¡Listo!", "Pack publicado exitosamente", backgroundColor: Colors.green, colorText: Colors.white);
-      
-      fetchPacks();
+      Get.snackbar("¡Listo!", "Pack publicado exitosamente",
+          backgroundColor: Colors.green, colorText: Colors.white);
 
+      fetchPacks();
     } catch (e) {
-      Get.snackbar("Error", "No se pudo crear el pack: $e", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error", "No se pudo crear el pack: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false;
     }
   }
 
   // Helpers para Fechas (MODIFICADO PARA USAR .value)
-  void setPickupStart(DateTime dt) { 
-    pickupStart.value = dt; 
+  void setPickupStart(DateTime dt) {
+    pickupStart.value = dt;
   }
 
-  void setPickupEnd(DateTime dt) { 
-    pickupEnd.value = dt; 
+  void setPickupEnd(DateTime dt) {
+    pickupEnd.value = dt;
   }
 
   // --- MÉTODO PARA RESERVAR ---
@@ -167,26 +200,24 @@ class PacksController extends GetxController {
         Get.snackbar("Error", "Debes iniciar sesión para reservar");
         return;
       }
-      
+
       final response = await _supabase.rpc('reserve_pack', params: {
         'p_pack_id': packId,
         'p_business_id': businessId,
       });
 
       if (response['success'] == true) {
-        Get.snackbar(
-          "¡Reserva Exitosa! 🎉", 
-          "Tu pack ha sido reservado. Ve a 'Mis Órdenes' para ver el código.",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 4)
-        );
-        fetchPacks(); 
-       // Get.back();
+        Get.snackbar("¡Reserva Exitosa! 🎉",
+            "Tu pack ha sido reservado. Ve a 'Mis Órdenes' para ver el código.",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4));
+        fetchPacks();
+        // Get.back();
       } else {
-        Get.snackbar("Lo sentimos", "Este pack ya se agotó", backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar("Lo sentimos", "Este pack ya se agotó",
+            backgroundColor: Colors.red, colorText: Colors.white);
       }
-
     } catch (e) {
       Get.snackbar("Error", "Ocurrió un problema: $e");
     } finally {

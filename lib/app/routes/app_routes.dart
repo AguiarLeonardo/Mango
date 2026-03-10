@@ -21,4 +21,5 @@ abstract class Routes {
 
   static const businessDetail = '/business-detail';
   static const search = '/search';
+  static const businessDashboard = '/business-dashboard';
 }
