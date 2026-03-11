@@ -19,6 +19,7 @@ import 'package:mango/app/modules/search/search_screen.dart';
 import '../modules/cart/cart_screen.dart';
 import '../modules/business_dashboard/business_dashboard_screen.dart';
 import '../modules/business_dashboard/business_dashboard_binding.dart';
+import '../modules/impact/impact_screen.dart';
 
 class AppPages {
   static const initial = Routes.start;
@@ -64,6 +65,10 @@ class AppPages {
 
     // 🔍 SEARCH SCREEN
     GetPage(name: Routes.search, page: () => const SearchScreen()),
+    GetPage(
+      name: Routes.impact, 
+      page: () => const ImpactScreen(),
+    ),
 
     // 📊 BUSINESS DASHBOARD
     GetPage(

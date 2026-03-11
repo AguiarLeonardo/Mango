@@ -72,6 +72,14 @@ class DiscoverScreen extends StatelessWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.eco_outlined, color: AppTheme.textBlack),
+              title: const Text('Mi Impacto'),
+              onTap: () {
+                Get.back();
+                Get.toNamed(Routes.impact); 
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.help_outline, color: AppTheme.textBlack),
               title: const Text('Ayuda y Soporte'),
               onTap: () {
