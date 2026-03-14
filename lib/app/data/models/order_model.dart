@@ -2,14 +2,23 @@
 enum OrderStatus {
   pending,
   completed,
-  cancelled;
+  cancelled,
+  expiredNoShow;
 
   /// Convierte un String de la BD al enum correspondiente.
+  /// Mapea 'expired_no_show' (snake_case de Supabase) → expiredNoShow.
   static OrderStatus fromString(String value) {
+    if (value == 'expired_no_show') return OrderStatus.expiredNoShow;
     return OrderStatus.values.firstWhere(
       (e) => e.name == value,
       orElse: () => OrderStatus.pending,
     );
+  }
+
+  /// Serializa el enum a su representación en la BD.
+  String toDbString() {
+    if (this == OrderStatus.expiredNoShow) return 'expired_no_show';
+    return name;
   }
 }
 
@@ -106,7 +115,7 @@ class OrderModel {
       'pack_id': packId,
       'business_id': businessId,
       'code': code,
-      'status': status.name,
+      'status': status.toDbString(),
       'created_at': createdAt.toIso8601String(),
     };
   }

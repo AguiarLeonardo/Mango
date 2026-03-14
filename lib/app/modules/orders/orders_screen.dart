@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'orders_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/models/order_model.dart';
 
 class OrdersScreen extends StatelessWidget {
   final OrdersController controller = Get.put(OrdersController());
@@ -207,6 +208,11 @@ class OrdersScreen extends StatelessWidget {
             DateTime.now()
                 .isBefore(pickupStart.subtract(const Duration(hours: 2)));
 
+        // ✅ Tipado fuerte: parseamos el status al enum OrderStatus
+        final OrderStatus orderStatus = OrderStatus.fromString(
+          orderData['status']?.toString() ?? 'pending',
+        );
+
         return TicketCard(
           businessName: business['commercial_name'] ?? 'Tienda Local',
           packTitle: pack['title'] ?? 'Pack Reservado',
@@ -214,13 +220,10 @@ class OrdersScreen extends StatelessWidget {
           orderCode: code,
           date: DateFormat('dd MMM, HH:mm').format(date),
           isActive: isActiveTab,
+          orderStatus: orderStatus,
           canCancel: canCancel,
           onCancelTap: canCancel
-              ? () => _confirmCancelOrder(
-                  orderId,
-                  pack['pickup_end'] != null
-                      ? DateTime.parse(pack['pickup_end']).toLocal()
-                      : DateTime.now())
+              ? () => _confirmCancelOrder(orderId, pickupStart)
               : null,
           onRateTap: () =>
               _showRatingBottomSheet(Get.context!, businessId, packId),
@@ -230,7 +233,7 @@ class OrdersScreen extends StatelessWidget {
   }
 
   // ✅ NUEVA FUNCIÓN: CONFIRMAR CANCELACIÓN (US 2)
-  void _confirmCancelOrder(String orderId, DateTime pickupEnd) {
+  void _confirmCancelOrder(String orderId, DateTime pickupStart) {
     Get.defaultDialog(
       title: "Cancelar Reserva",
       titleStyle: const TextStyle(
@@ -253,7 +256,7 @@ class OrdersScreen extends StatelessWidget {
       buttonColor: Colors.redAccent,
       onConfirm: () {
         Get.back(); // Cierra el modal de confirmación
-        controller.cancelMyOrder(orderId, pickupEnd);
+        controller.cancelMyOrder(orderId, pickupStart);
       },
     );
   }
@@ -425,8 +428,9 @@ class TicketCard extends StatelessWidget {
   final String orderCode;
   final String date;
   final bool isActive;
-  final bool canCancel; // ✅ NUEVO PARAMETRO
-  final VoidCallback? onCancelTap; // ✅ NUEVA FUNCIÓN DE CANCELACIÓN
+  final OrderStatus orderStatus; // ✅ TIPADO FUERTE: enum en vez de String
+  final bool canCancel;
+  final VoidCallback? onCancelTap;
   final VoidCallback? onRateTap;
 
   const TicketCard({
@@ -437,21 +441,30 @@ class TicketCard extends StatelessWidget {
     required this.orderCode,
     required this.date,
     required this.isActive,
+    required this.orderStatus,
     this.canCancel = false,
     this.onCancelTap,
     this.onRateTap,
   });
 
+  /// Determina si esta orden fue un No-Show (no retirada a tiempo).
+  bool get _isExpiredNoShow => orderStatus == OrderStatus.expiredNoShow;
+
   @override
   Widget build(BuildContext context) {
-    final Color mainColor =
-        isActive ? AppTheme.primaryGreen : AppTheme.disabledIcon;
-    final Color textColor =
-        isActive ? AppTheme.textBlack : AppTheme.disabledIcon;
-    final Color codeColor =
-        isActive ? AppTheme.accentOrange : AppTheme.disabledIcon;
-    final Color backgroundColor =
-        isActive ? Colors.white : AppTheme.disabledBackground;
+    // ✅ Colores basados en el enum OrderStatus (type-safe)
+    final Color mainColor = _isExpiredNoShow
+        ? Colors.red.shade300
+        : (isActive ? AppTheme.primaryGreen : AppTheme.disabledIcon);
+    final Color textColor = _isExpiredNoShow
+        ? Colors.grey.shade600
+        : (isActive ? AppTheme.textBlack : AppTheme.disabledIcon);
+    final Color codeColor = _isExpiredNoShow
+        ? Colors.red.shade200
+        : (isActive ? AppTheme.accentOrange : AppTheme.disabledIcon);
+    final Color backgroundColor = _isExpiredNoShow
+        ? Colors.red.shade50
+        : (isActive ? Colors.white : AppTheme.disabledBackground);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -579,8 +592,43 @@ class TicketCard extends StatelessWidget {
                             fontSize: 13),
                       ),
 
-                    // ✅ AQUÍ APARECE EL BOTÓN DE CALIFICAR SI EL TICKET ESTÁ EN EL HISTORIAL
-                    if (!isActive && onRateTap != null) ...[
+                    // ✅ BANNER DE NO-SHOW (expired_no_show)
+                    if (_isExpiredNoShow) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.red.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded,
+                                color: Colors.red.shade700, size: 22),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Paquete expirado: No retirado a tiempo. Sin reembolso.",
+                                style: TextStyle(
+                                  color: Colors.red.shade800,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // ✅ BOTÓN DE CALIFICAR (solo para historial, NO para no-show)
+                    if (!isActive && !_isExpiredNoShow && onRateTap != null) ...[
                       const SizedBox(height: 15),
                       SizedBox(
                         width: double.infinity,

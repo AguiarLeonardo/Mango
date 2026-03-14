@@ -145,13 +145,14 @@ class OrdersController extends GetxController {
   }
 
   // ✅ CANCELAR RESERVA (US 2)
-  /// Cancela una orden si no ha pasado el límite de recogida.
-  Future<void> cancelMyOrder(String orderId, DateTime pickupEnd) async {
-    // Validación local: verificar si el horario límite ya pasó
-    if (DateTime.now().isAfter(pickupEnd)) {
+  /// Cancela una orden si faltan al menos 2 horas antes de pickupStart.
+  Future<void> cancelMyOrder(String orderId, DateTime pickupStart) async {
+    // Validación local: la cancelación debe ocurrir al menos 2h antes de pickupStart
+    final limitTime = pickupStart.subtract(const Duration(hours: 2));
+    if (DateTime.now().isAfter(limitTime)) {
       Get.snackbar(
         "No puedes cancelar",
-        "El horario límite de recogida ha pasado",
+        "Faltan menos de 2 horas o el tiempo ya pasó",
         backgroundColor: Colors.orange,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
@@ -168,20 +169,31 @@ class OrdersController extends GetxController {
         return;
       }
 
-      await _supabase.rpc('cancel_order', params: {
+      final response = await _supabase.rpc('cancel_order', params: {
         'p_order_id': orderId,
         'p_user_id': myUserId,
       });
 
-      Get.snackbar(
-        "Reserva cancelada",
-        "Se ha cancelado tu reserva y el stock ha sido devuelto",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
+      print('📦 RESPUESTA CRUDA RPC: $response');
 
-      await fetchOrders();
+      if (response != null && response['success'] == true) {
+        Get.snackbar(
+          "Reserva cancelada",
+          response['message'] ?? "Se ha cancelado tu reserva y el stock ha sido devuelto",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+        await fetchOrders();
+      } else {
+        Get.snackbar(
+          "Error",
+          response?['message'] ?? "El servidor rechazó la cancelación",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
     } catch (e) {
       Get.snackbar("Error", "No se pudo cancelar la reserva: $e",
           backgroundColor: Colors.red, colorText: Colors.white);

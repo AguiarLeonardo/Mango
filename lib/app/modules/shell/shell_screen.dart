@@ -12,7 +12,8 @@ import '../favorites/favorites_screen.dart';
 class ShellScreen extends StatelessWidget {
   ShellScreen({super.key});
 
-  final ShellController controller = Get.put(ShellController());
+  // ✅ Inyectado via ShellBinding — no usar Get.put aquí
+  final ShellController controller = Get.find<ShellController>();
 
   // 🔹 LISTA DE PÁGINAS (Reducida a 4)
   final List<Widget> pages = [

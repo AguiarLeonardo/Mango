@@ -9,6 +9,9 @@ import 'app/core/theme/app_theme.dart';
 import 'app/routes/app_pages.dart';
 import 'app/modules/auth/login/login_controller.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
@@ -19,6 +22,11 @@ class InitialBinding extends Bindings {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // INICIALIZACIÓN DE FIREBASE (Requisito para Push Notifications)
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // INICIALIZACIÓN DE SUPABASE
   await Supabase.initialize(

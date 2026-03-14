@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "28850550544",
+    "project_id": "mango-app-c7bee",
+    "storage_bucket": "mango-app-c7bee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28850550544:android:6a85aa3bb6c6fd027b5795",
+        "android_client_info": {
+          "package_name": "com.example.mango"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCupk6GNQ6AOvpebp8iISu_Bl8cnCyKgP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

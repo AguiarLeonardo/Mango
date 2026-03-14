@@ -16,6 +16,7 @@ import 'package:mango/app/modules/packs/vendedor_packs_screen.dart';
 import 'package:mango/app/modules/packs/pack_detail_screen.dart';
 import 'package:mango/app/modules/business/business_detail_screen.dart';
 import 'package:mango/app/modules/search/search_screen.dart';
+import '../modules/shell/shell_binding.dart';
 import '../modules/cart/cart_screen.dart';
 import '../modules/business_dashboard/business_dashboard_screen.dart';
 import '../modules/business_dashboard/business_dashboard_binding.dart';
@@ -45,7 +46,12 @@ class AppPages {
       name: Routes.updatePassword,
       page: () => const UpdatePasswordScreen(),
     ),
-    GetPage(name: Routes.shell, page: () => ShellScreen()),
+    // ✅ Shell con ShellBinding (inyecta ShellController, WalletRepository, WalletController)
+    GetPage(
+      name: Routes.shell,
+      page: () => ShellScreen(),
+      binding: ShellBinding(),
+    ),
     GetPage(name: Routes.vendorPacks, page: () => VendorPacksScreen()),
     GetPage(name: Routes.packDetail, page: () => const PackDetailScreen()),
 

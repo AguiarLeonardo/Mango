@@ -8,6 +8,7 @@ import '../../data/models/pack_model.dart';
 import '../../data/models/business_model.dart';
 import '../shell/shell_controller.dart';
 import '../profile/profile_screen.dart';
+import '../wallet/wallet_controller.dart';
 
 // ✅ IMPORTAMOS EL CARRITO Y LAS RUTAS
 import '../../routes/app_routes.dart';
@@ -71,6 +72,38 @@ class DiscoverScreen extends StatelessWidget {
                 Get.to(() => const ProfileScreen());
               },
             ),
+            // ✅ MI BILLETERA — Consume WalletController via Binding (Get.find)
+            Obx(() {
+              final walletCtrl = Get.find<WalletController>();
+              return ListTile(
+                leading: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: AppTheme.primaryGreen,
+                ),
+                title: const Text('Mi Billetera'),
+                trailing: walletCtrl.isLoading.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      )
+                    : Text(
+                        walletCtrl.formattedBalance,
+                        style: const TextStyle(
+                          color: AppTheme.primaryGreen,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                onTap: () {
+                  Get.back();
+                  // TODO: Navegar a pantalla de detalle de Wallet si se implementa
+                },
+              );
+            }),
             ListTile(
               leading: const Icon(Icons.eco_outlined, color: AppTheme.textBlack),
               title: const Text('Mi Impacto'),
@@ -157,11 +190,50 @@ class DiscoverScreen extends StatelessWidget {
             ),
           );
         }),
-        // ✅ ICONO DEL CARRITO ACTUALIZADO
+        // ✅ WALLET + CARRITO en el AppBar
         actions: [
+          // 💰 WIDGET REACTIVO DE WALLET (a la izquierda del carrito)
+          Obx(() {
+            final walletCtrl = Get.find<WalletController>();
+            if (walletCtrl.isLoading.value) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    walletCtrl.formattedBalance,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          // 🛒 ICONO DEL CARRITO
           Obx(() {
             final cartController = Get.put(CartController());
-            // Ahora revisamos si la lista tiene elementos
             final hasItem = cartController.cartItems.isNotEmpty;
 
             return IconButton(
@@ -176,7 +248,6 @@ class DiscoverScreen extends StatelessWidget {
                     color: hasItem ? AppTheme.accentOrange : Colors.white,
                     size: 28,
                   ),
-                  // Globito rojo con el número de elementos
                   if (hasItem)
                     Positioned(
                       right: -5,
