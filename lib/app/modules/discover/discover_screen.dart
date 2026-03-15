@@ -63,15 +63,27 @@ class DiscoverScreen extends StatelessWidget {
                 ],
               ),
             ),
+            
+            // ✅ AQUÍ ESTÁ LA MAGIA: Lógica para enviar a Empresa o Usuario
             ListTile(
               leading:
                   const Icon(Icons.person_outline, color: AppTheme.textBlack),
               title: const Text('Mi Perfil'),
               onTap: () {
-                Get.back();
-                Get.to(() => const ProfileScreen());
+                Get.back(); // Cierra el menú lateral primero
+                
+                final shellController = Get.find<ShellController>();
+                
+                if (shellController.isBusiness.value) {
+                  // Si es una EMPRESA, va a la vista nueva que creamos
+                  Get.toNamed('/edit-business-profile');
+                } else {
+                  // Si es un USUARIO NORMAL, va a la vista original
+                  Get.to(() => const ProfileScreen());
+                }
               },
             ),
+            
             // ✅ MI BILLETERA — Consume WalletController via Binding (Get.find)
             Obx(() {
               final walletCtrl = Get.find<WalletController>();
@@ -157,6 +169,7 @@ class DiscoverScreen extends StatelessWidget {
         title: Builder(builder: (context) {
           return GestureDetector(
             onTap: () {
+              // 👈 Esto abre el menú lateral donde está el botón "Mi Perfil"
               Scaffold.of(context).openDrawer();
             },
             child: Row(

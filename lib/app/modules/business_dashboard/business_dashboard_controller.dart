@@ -13,7 +13,7 @@ class BusinessDashboardController extends GetxController {
   final isLoading = false.obs;
   final businessName = ''.obs;
   final businessCategory = ''.obs;
-  final businessImageUrl = Rxn<String>();
+  final businessImageUrl = Rxn<String>(); // 👈 Aquí guardaremos el logo_url
 
   /// ID del negocio autenticado.
   String get myBusinessId => _supabase.auth.currentUser?.id ?? '';
@@ -45,7 +45,9 @@ class BusinessDashboardController extends GetxController {
         businessName.value =
             data['commercial_name']?.toString() ?? 'Mi Negocio';
         businessCategory.value = data['category']?.toString() ?? '';
-        businessImageUrl.value = data['rif_image_url']?.toString();
+        
+        // ✅ AHORA DESCARGAMOS EL LOGO EN VEZ DEL RIF
+        businessImageUrl.value = data['logo_url']?.toString(); 
       }
     } catch (e) {
       Get.snackbar(

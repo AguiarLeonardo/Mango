@@ -11,9 +11,9 @@ class DiscoverController extends GetxController {
   final RxList<PackModel> featuredPacks = <PackModel>[].obs;
   final RxList<BusinessModel> recommendedBusinesses = <BusinessModel>[].obs;
 
-  // ✅ VARIABLES PARA EL USUARIO
+  // ✅ VARIABLES PARA EL USUARIO / EMPRESA
   final RxString userName = ''.obs;
-  final RxString avatarUrl = ''.obs; // Nueva variable para la foto
+  final RxString avatarUrl = ''.obs; // 👈 Guarda la foto de perfil o el logo de la empresa
 
   @override
   void onInit() {
@@ -25,21 +25,33 @@ class DiscoverController extends GetxController {
     try {
       isLoading.value = true;
 
-      // --- 1. OBTENER DATOS DEL USUARIO (first_name y avatar_url) ---
+      // --- 1. OBTENER DATOS DEL USUARIO O EMPRESA (Nombre y Foto/Logo) ---
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
+        
+        // A) Intentamos buscar si es un USUARIO NORMAL
         final userResponse = await _supabase
             .from('users')
-            .select('first_name, avatar_url') // ✅ PEDIMOS TAMBIÉN EL AVATAR
+            .select('first_name, avatar_url')
             .eq('id', userId)
             .maybeSingle();
 
         if (userResponse != null) {
-          if (userResponse['first_name'] != null) {
-            userName.value = userResponse['first_name'];
-          }
-          if (userResponse['avatar_url'] != null) {
-            avatarUrl.value = userResponse['avatar_url']; // ✅ GUARDAMOS LA FOTO
+          // Es un usuario: asignamos nombre y avatar
+          userName.value = userResponse['first_name'] ?? 'Usuario';
+          avatarUrl.value = userResponse['avatar_url'] ?? ''; 
+        } else {
+          // B) Si no es usuario, buscamos si es una EMPRESA
+          final businessResponse = await _supabase
+              .from('businesses')
+              .select('commercial_name, logo_url') // ✅ PEDIMOS EL LOGO AQUÍ
+              .eq('id', userId)
+              .maybeSingle();
+
+          if (businessResponse != null) {
+            // Es una empresa: asignamos nombre comercial y logo
+            userName.value = businessResponse['commercial_name'] ?? 'Negocio';
+            avatarUrl.value = businessResponse['logo_url'] ?? ''; // Reutilizamos la variable de la UI
           }
         }
       }

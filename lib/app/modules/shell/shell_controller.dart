@@ -9,6 +9,9 @@ class ShellController extends GetxController {
   // 🔹 NOMBRE DE USUARIO / EMPRESA
   var userName = 'Cargando...'.obs;
 
+  // 🟢 NUEVA VARIABLE: Nos dirá si es negocio o usuario
+  var isBusiness = false.obs;
+
   final SupabaseClient _supabase = Supabase.instance.client;
 
   @override
@@ -39,6 +42,7 @@ class ShellController extends GetxController {
           .maybeSingle();
 
       if (userData != null) {
+        isBusiness.value = false; // 🟢 Es un usuario
         String fetchedName = userData['first_name'] ?? 'Usuario';
         userName.value = fetchedName.trim().isEmpty ? 'Usuario' : fetchedName;
         return;
@@ -52,6 +56,7 @@ class ShellController extends GetxController {
           .maybeSingle();
 
       if (businessData != null && businessData['commercial_name'] != null) {
+        isBusiness.value = true; // 🟢 Es una empresa
         userName.value = businessData['commercial_name'];
       } else {
         userName.value = 'Usuario';

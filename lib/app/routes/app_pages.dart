@@ -22,6 +22,9 @@ import '../modules/business_dashboard/business_dashboard_screen.dart';
 import '../modules/business_dashboard/business_dashboard_binding.dart';
 import '../modules/impact/impact_screen.dart';
 
+// ✅ IMPORTAMOS LA NUEVA PANTALLA DE PERFIL DE NEGOCIO
+import '../modules/business_profile/edit_business_profile_screen.dart';
+
 class AppPages {
   static const initial = Routes.start;
 
@@ -55,11 +58,11 @@ class AppPages {
     GetPage(name: Routes.vendorPacks, page: () => VendorPacksScreen()),
     GetPage(name: Routes.packDetail, page: () => const PackDetailScreen()),
 
-    // 🏢 DETALLE DEL NEGOCIO (¡Aquí está la magia!)
+    // 🏢 DETALLE DEL NEGOCIO
     GetPage(
       name: Routes.businessDetail,
       page: () => BusinessDetailScreen(
-        businessData: Get.arguments, // ✅ LE QUITAMOS EL "as Map..."
+        businessData: Get.arguments,
       ),
     ),
 
@@ -82,6 +85,13 @@ class AppPages {
       page: () => const BusinessDashboardScreen(),
       binding: BusinessDashboardBinding(),
       transition: Transition.fadeIn,
+    ),
+
+    // 🏢 EDITAR PERFIL DE EMPRESA (NUEVA RUTA)
+    GetPage(
+      name: '/edit-business-profile',
+      page: () => const EditBusinessProfileScreen(),
+      transition: Transition.rightToLeft, // Animación fluida estilo iOS/Android moderno
     ),
   ];
 }

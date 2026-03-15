@@ -55,51 +55,58 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
       automaticallyImplyLeading: false,
       toolbarHeight: 80, // Aspecto más premium y espacioso
       titleSpacing: 20,
-      title: Row(
-        children: [
-          _buildBusinessAvatar(),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  controller.businessName.value.isNotEmpty
-                      ? controller.businessName.value
-                      : 'Mi Negocio',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                    letterSpacing: 0.2,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (controller.businessCategory.value.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(40),
-                      borderRadius: BorderRadius.circular(8),
+      // ✅ AQUÍ ENVOLVEMOS EL TÍTULO Y LA FOTO CON EL GESTURE DETECTOR
+      title: GestureDetector(
+        onTap: () {
+          // 🚀 VIAJAMOS A LA PANTALLA DE EDICIÓN DEL NEGOCIO
+          Get.toNamed('/edit-business-profile');
+        },
+        child: Row(
+          children: [
+            _buildBusinessAvatar(),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    controller.businessName.value.isNotEmpty
+                        ? controller.businessName.value
+                        : 'Mi Negocio',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                      letterSpacing: 0.2,
                     ),
-                    child: Text(
-                      controller.businessCategory.value.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (controller.businessCategory.value.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(40),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        controller.businessCategory.value.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
-                  ),
-                ]
-              ],
+                  ]
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         // Botón de Escanear / Validar Entrega como detalle premium
