@@ -63,7 +63,7 @@ class DiscoverScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // ✅ AQUÍ ESTÁ LA MAGIA: Lógica para enviar a Empresa o Usuario
             ListTile(
               leading:
@@ -71,9 +71,9 @@ class DiscoverScreen extends StatelessWidget {
               title: const Text('Mi Perfil'),
               onTap: () {
                 Get.back(); // Cierra el menú lateral primero
-                
+
                 final shellController = Get.find<ShellController>();
-                
+
                 if (shellController.isBusiness.value) {
                   // Si es una EMPRESA, va a la vista nueva que creamos
                   Get.toNamed('/edit-business-profile');
@@ -83,7 +83,7 @@ class DiscoverScreen extends StatelessWidget {
                 }
               },
             ),
-            
+
             // ✅ MI BILLETERA — Consume WalletController via Binding (Get.find)
             Obx(() {
               final walletCtrl = Get.find<WalletController>();
@@ -117,15 +117,17 @@ class DiscoverScreen extends StatelessWidget {
               );
             }),
             ListTile(
-              leading: const Icon(Icons.eco_outlined, color: AppTheme.textBlack),
+              leading:
+                  const Icon(Icons.eco_outlined, color: AppTheme.textBlack),
               title: const Text('Mi Impacto'),
               onTap: () {
                 Get.back();
-                Get.toNamed(Routes.impact); 
+                Get.toNamed(Routes.impact);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.help_outline, color: AppTheme.textBlack),
+              leading:
+                  const Icon(Icons.help_outline, color: AppTheme.textBlack),
               title: const Text('Ayuda y Soporte'),
               onTap: () {
                 Get.back();
@@ -424,18 +426,44 @@ class DiscoverScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-                SizedBox(
-                  height: 120,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    itemCount: controller.recommendedBusinesses.length,
-                    itemBuilder: (context, index) {
-                      return _buildBusinessCard(
-                          controller.recommendedBusinesses[index]);
-                    },
-                  ),
-                ),
+                Obx(() {
+                  if (controller.isLoadingNearby.value) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30),
+                      child: Center(
+                        child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                      ),
+                    );
+                  }
+
+                  if (controller.nearbyStores.isEmpty) {
+                    final stateName = controller.locationService.currentStateName.value;
+                    final displayState = stateName.isNotEmpty ? stateName : 'tu zona';
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      child: Center(
+                        child: Text(
+                          "No hay locales a menos de 5km de ti en $displayState",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      itemCount: controller.nearbyStores.length,
+                      itemBuilder: (context, index) {
+                        return _buildNearbyStoreCard(controller.nearbyStores[index]);
+                      },
+                    ),
+                  );
+                }),
                 const SizedBox(height: 30),
               ],
             ),
@@ -533,9 +561,28 @@ class DiscoverScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBusinessCard(BusinessModel business) {
+  Widget _buildNearbyStoreCard(Map<String, dynamic> store) {
+    final String name = store['commercial_name'] ?? store['name'] ?? 'Negocio';
+    final String category = store['category'] ?? "Comida";
+    final String city = store['city'] ?? store['address'] ?? "Ciudad";
+    final num? distanceNum = store['distance_km'];
+    final String distanceStr = distanceNum != null ? "${distanceNum.toStringAsFixed(1)} km" : "";
+
     return GestureDetector(
-      onTap: () => Get.toNamed(Routes.businessDetail, arguments: business),
+      onTap: () {
+        try {
+          final business = BusinessModel(
+            id: store['id'] ?? '',
+            commercialName: name,
+            category: category,
+            city: store['city'],
+            address: store['address'] ?? '',
+          );
+          Get.toNamed(Routes.businessDetail, arguments: business);
+        } catch (e) {
+          print("Error al navegar al negocio: $e");
+        }
+      },
       child: Container(
         width: 280,
         margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -563,13 +610,14 @@ class DiscoverScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    business.commercialName,
+                    name,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 15),
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    business.category ?? "Comida",
+                    category,
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
@@ -580,10 +628,10 @@ class DiscoverScreen extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          business.city ?? business.address,
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
+                          distanceStr.isNotEmpty ? "$city • $distanceStr" : city,
+                          style: const TextStyle(color: Colors.grey, fontSize: 12),
                           maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

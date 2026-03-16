@@ -1,9 +1,11 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../core/services/location_service.dart';
 
 class ProfileController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -14,9 +16,16 @@ class ProfileController extends GetxController {
   final usernameController = TextEditingController();
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
+  final stateController = TextEditingController();
+  final cityController = TextEditingController();
+  final municipalityController = TextEditingController();
+  
   final birthdateController = TextEditingController();
   final genderController = TextEditingController();
   final emailController = TextEditingController();
+
+  // --- SERVICIOS ---
+  final LocationService locationService = Get.find<LocationService>();
 
   // --- VARIABLES DE IMAGEN ---
   var avatarUrl = ''.obs; // 👈 Guarda el link de la foto que viene de Supabase
@@ -26,6 +35,7 @@ class ProfileController extends GetxController {
   final List<String> genderOptions = ['Hombre', 'Mujer'];
 
   var isLoading = false.obs;
+  var isLoadingGPS = false.obs;
 
   @override
   void onInit() {
@@ -54,6 +64,9 @@ class ProfileController extends GetxController {
           usernameController.text = data['username'] ?? '';
           phoneController.text = data['phone'] ?? '';
           addressController.text = data['address'] ?? '';
+          stateController.text = data['state'] ?? '';
+          cityController.text = data['city'] ?? '';
+          municipalityController.text = data['municipality'] ?? '';
           birthdateController.text = data['birthdate'] ?? '';
           avatarUrl.value = data['avatar_url'] ?? ''; // 👈 Cargamos la URL de la foto
 
@@ -155,6 +168,58 @@ class ProfileController extends GetxController {
     }
   }
 
+  // --- LLENAR UBICACIÓN CON GPS ---
+  Future<void> fillLocationWithGPS() async {
+    try {
+      isLoadingGPS.value = true;
+      
+      // Intentamos obtener la ubicación fresca
+      await locationService.fetchCurrentLocation();
+      
+      final stateName = locationService.currentStateName.value;
+      final cityName = locationService.currentCityName.value;
+      final municipalityName = locationService.currentMunicipalityName.value;
+
+      bool anyFilled = false;
+
+      if (stateName.isNotEmpty) {
+        stateController.text = stateName;
+        anyFilled = true;
+      }
+      if (cityName.isNotEmpty) {
+        cityController.text = cityName;
+        anyFilled = true;
+      }
+      if (municipalityName.isNotEmpty) {
+        municipalityController.text = municipalityName;
+        anyFilled = true;
+      }
+
+      if (anyFilled) {
+        Get.snackbar(
+          "Ubicación obtenida",
+          "Se ha autocompletado tu ubicación a partir del GPS.",
+          backgroundColor: Colors.white,
+          colorText: Colors.green[800],
+        );
+      } else {
+        Get.snackbar(
+          "Aviso", 
+          "No se pudo determinar la ubicación desde las coordenadas GPS."
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error GPS", 
+        "Hubo un problema al tratar de usar el GPS: $e",
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingGPS.value = false;
+    }
+  }
+
   // GUARDAR DATOS
   Future<void> updateProfile() async {
     try {
@@ -168,6 +233,9 @@ class ProfileController extends GetxController {
         'username': usernameController.text.trim(),
         'phone': phoneController.text.trim(),
         'address': addressController.text.trim(),
+        'state': stateController.text.trim(),
+        'city': cityController.text.trim(),
+        'municipality': municipalityController.text.trim(),
         'birthdate': birthdateController.text.trim(),
         'gender': genderController.text.trim(),
       }).eq('id', user.id);

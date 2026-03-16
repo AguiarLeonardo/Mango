@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/services/location_service.dart';
+import '../../data/repositories/store_repository.dart';
+
 class SearchMyController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -10,6 +13,13 @@ class SearchMyController extends GetxController {
 
   // ✅ Lista de resultados de Negocios
   var searchResults = <Map<String, dynamic>>[].obs;
+
+  // ✅ Servicios y Repositorios
+  final LocationService locationService = Get.find<LocationService>();
+  final StoreRepository _storeRepository = StoreRepository();
+
+  // ✅ Radio de búsqueda dinámico
+  RxDouble searchRadius = 5.0.obs;
 
   // Observables para filtros
   var searchText = ''.obs;
@@ -50,26 +60,60 @@ class SearchMyController extends GetxController {
     try {
       isLoading.value = true;
 
-      // 1. Consulta directa a la tabla BUSINESSES
-      var query = _supabase.from('businesses').select('*');
+      // 1. Obtener coordenadas actuales
+      final lat = locationService.latitude.value;
+      final lon = locationService.longitude.value;
+      final state = locationService.currentStateName.value;
 
-      // 2. Filtro de Texto (Busca por el nombre comercial del negocio)
-      if (searchText.value.isNotEmpty) {
-        query = query.ilike('commercial_name', '%${searchText.value}%');
+      List<Map<String, dynamic>> data = [];
+
+      // 2. Si tenemos ubicación, buscar por cercanía con el radio actual
+      if (lat != 0.0 && lon != 0.0) {
+        data = await _storeRepository.getNearbyStores(
+          lat: lat,
+          lon: lon,
+          state: state,
+          radiusKm: searchRadius.value,
+        );
+
+        // 3. Filtrar localmente por texto y categoría
+        if (searchText.value.isNotEmpty) {
+          final queryStr = searchText.value.toLowerCase();
+          data = data.where((store) {
+            final name = (store['commercial_name'] ?? store['name'] ?? '').toString().toLowerCase();
+            return name.contains(queryStr);
+          }).toList();
+        }
+
+        if (selectedCategory.value.isNotEmpty) {
+          data = data.where((store) => store['category'] == selectedCategory.value).toList();
+        }
+      } else {
+        // Fallback: Si no hay permisos o GPS, usar búsqueda tradicional (sin filtro de distancia)
+        var query = _supabase.from('businesses').select('*');
+
+        if (searchText.value.isNotEmpty) {
+          query = query.ilike('commercial_name', '%${searchText.value}%');
+        }
+
+        if (selectedCategory.value.isNotEmpty) {
+          query = query.eq('category', selectedCategory.value);
+        }
+
+        final response = await query.order('commercial_name', ascending: true);
+        data = List<Map<String, dynamic>>.from(response);
       }
 
-      // 3. Filtro de Categoría
-      if (selectedCategory.value.isNotEmpty) {
-        query = query.eq('category', selectedCategory.value);
-      }
-
-      // Ordenamos alfabéticamente
-      final data = await query.order('commercial_name', ascending: true);
-      searchResults.value = List<Map<String, dynamic>>.from(data);
+      searchResults.value = data;
     } catch (e) {
       print("❌ Error en búsqueda de negocios: $e");
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void updateRadius(double newRadius) {
+    searchRadius.value = newRadius;
+    performSearch();
   }
 }

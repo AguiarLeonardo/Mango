@@ -49,10 +49,11 @@ class EditProfileScreen extends StatelessWidget {
                         ? NetworkImage(controller.avatarUrl.value)
                         : null,
                     child: controller.avatarUrl.value.isEmpty
-                        ? const Icon(Icons.person, size: 60, color: AppTheme.primaryGreen)
+                        ? const Icon(Icons.person,
+                            size: 60, color: AppTheme.primaryGreen)
                         : null,
                   ),
-                  
+
                   // Capa oscura de carga (si se está subiendo la foto)
                   if (controller.isUploadingAvatar.value)
                     Positioned.fill(
@@ -76,11 +77,14 @@ class EditProfileScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen, 
+                          color: AppTheme.primaryGreen,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2), // Borde blanco para resaltar
+                          border: Border.all(
+                              color: Colors.white,
+                              width: 2), // Borde blanco para resaltar
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -125,6 +129,46 @@ class EditProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // --- BOTÓN DE AUTOCOMPLETAR CON GPS ---
+              Obx(() => controller.isLoadingGPS.value
+                  ? const CircularProgressIndicator(color: AppTheme.primaryGreen)
+                  : OutlinedButton.icon(
+                      onPressed: () => controller.fillLocationWithGPS(),
+                      icon: const Icon(Icons.my_location, color: AppTheme.primaryGreen),
+                      label: const Text(
+                        "Autocompletar con mi ubicación actual",
+                        style: TextStyle(color: AppTheme.primaryGreen),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.primaryGreen),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    )),
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                label: "Estado",
+                controller: controller.stateController,
+                icon: Icons.map,
+              ),
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                label: "Municipio",
+                controller: controller.municipalityController,
+                icon: Icons.location_city_outlined,
+              ),
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                label: "Ciudad",
+                controller: controller.cityController,
+                icon: Icons.location_city,
+              ),
+              const SizedBox(height: 16),
+
               // --- CAMPO DE FECHA DE NACIMIENTO ---
               GestureDetector(
                 onTap: () => controller.pickDate(context),
@@ -140,8 +184,8 @@ class EditProfileScreen extends StatelessWidget {
 
               // --- DROPDOWN DE GÉNERO ---
               DropdownButtonFormField<String>(
-                value: controller.genderController.text.isNotEmpty 
-                    ? controller.genderController.text 
+                value: controller.genderController.text.isNotEmpty
+                    ? controller.genderController.text
                     : null,
                 items: controller.genderOptions.map((String gender) {
                   return DropdownMenuItem(
@@ -156,7 +200,8 @@ class EditProfileScreen extends StatelessWidget {
                 },
                 decoration: InputDecoration(
                   labelText: "Género",
-                  prefixIcon: const Icon(Icons.wc, color: AppTheme.primaryGreen),
+                  prefixIcon:
+                      const Icon(Icons.wc, color: AppTheme.primaryGreen),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(

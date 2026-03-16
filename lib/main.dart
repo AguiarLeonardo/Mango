@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'app/core/theme/app_theme.dart';
 import 'app/routes/app_pages.dart';
 import 'app/modules/auth/login/login_controller.dart';
+import 'app/core/services/location_service.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -33,6 +34,9 @@ Future<void> main() async {
     url: 'https://wssqfdvfcydbxncfrtmy.supabase.co',
     anonKey: 'sb_publishable_lps63HVdjyCRknnoADey7Q_jNIaBPqQ',
   );
+
+  // INYECCIÓN DE SERVICIOS GLOBALES
+  Get.put(LocationService(), permanent: true);
 
   runApp(const MyApp());
 }

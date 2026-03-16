@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/services/location_service.dart';
+
 class BusinessProfileController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -11,12 +13,18 @@ class BusinessProfileController extends GetxController {
   final categoryController = TextEditingController();
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
+  final stateController = TextEditingController();
   final cityController = TextEditingController();
+  final municipalityController = TextEditingController();
+
+  // --- SERVICIOS ---
+  final LocationService locationService = Get.find<LocationService>();
 
   // --- VARIABLES DE IMAGEN ---
   var logoUrl = ''.obs; // 👈 Guarda el link del logo de la empresa
   var isUploadingLogo = false.obs;
   var isLoading = false.obs;
+  var isLoadingGPS = false.obs;
 
   @override
   void onInit() {
@@ -42,7 +50,9 @@ class BusinessProfileController extends GetxController {
           categoryController.text = data['category'] ?? '';
           phoneController.text = data['phone'] ?? '';
           addressController.text = data['address'] ?? '';
+          stateController.text = data['state'] ?? '';
           cityController.text = data['city'] ?? '';
+          municipalityController.text = data['municipality'] ?? '';
           logoUrl.value = data['logo_url'] ?? ''; 
         }
       }
@@ -104,6 +114,41 @@ class BusinessProfileController extends GetxController {
     }
   }
 
+  // --- LLENAR UBICACIÓN CON GPS ---
+  Future<void> fillLocationWithGPS() async {
+    try {
+      isLoadingGPS.value = true;
+      
+      await locationService.fetchCurrentLocation();
+      
+      final stateName = locationService.currentStateName.value;
+      if (stateName.isNotEmpty) {
+        stateController.text = stateName;
+        // Igual que en el perfil normal, se podría sacar ciudad o municipio si el servicio de geocoding lo provee extra
+        Get.snackbar(
+          "Ubicación obtenida",
+          "Se ha autocompletado tu estado ($stateName) a partir del GPS.",
+          backgroundColor: Colors.white,
+          colorText: Colors.green[800],
+        );
+      } else {
+        Get.snackbar(
+          "Aviso", 
+          "No se pudo determinar el Estado desde las coordenadas GPS."
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error GPS", 
+        "Hubo un problema al tratar de usar el GPS: $e",
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingGPS.value = false;
+    }
+  }
+
   // GUARDAR CAMBIOS
   Future<void> updateProfile() async {
     try {
@@ -116,7 +161,9 @@ class BusinessProfileController extends GetxController {
         'category': categoryController.text.trim(),
         'phone': phoneController.text.trim(),
         'address': addressController.text.trim(),
+        'state': stateController.text.trim(),
         'city': cityController.text.trim(),
+        'municipality': municipalityController.text.trim(),
       }).eq('id', user.id);
 
       Get.back();

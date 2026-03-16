@@ -114,6 +114,39 @@ class EditBusinessProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // --- BOTÓN DE AUTOCOMPLETAR CON GPS ---
+              Obx(() => controller.isLoadingGPS.value
+                  ? const CircularProgressIndicator(color: AppTheme.primaryGreen)
+                  : OutlinedButton.icon(
+                      onPressed: () => controller.fillLocationWithGPS(),
+                      icon: const Icon(Icons.my_location, color: AppTheme.primaryGreen),
+                      label: const Text(
+                        "Autocompletar con mi ubicación actual",
+                        style: TextStyle(color: AppTheme.primaryGreen),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.primaryGreen),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    )),
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                label: "Estado",
+                controller: controller.stateController,
+                icon: Icons.map,
+              ),
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                label: "Municipio",
+                controller: controller.municipalityController,
+                icon: Icons.location_city_outlined,
+              ),
+              const SizedBox(height: 16),
+
               _buildTextField(
                 label: "Ciudad",
                 controller: controller.cityController,
