@@ -43,7 +43,7 @@ class BusinessProfileController extends GetxController {
           phoneController.text = data['phone'] ?? '';
           addressController.text = data['address'] ?? '';
           cityController.text = data['city'] ?? '';
-          logoUrl.value = data['logo_url'] ?? ''; // Asegúrate de tener esta columna en BD o usa avatar_url
+          logoUrl.value = data['logo_url'] ?? ''; 
         }
       }
     } catch (e) {
@@ -73,13 +73,15 @@ class BusinessProfileController extends GetxController {
       final fileExt = image.path.split('.').last;
       final fileName = 'logo_${user.id}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-      await _supabase.storage.from('avatars').uploadBinary(
+      // ✅ CAMBIO CLAVE 1: Subimos al nuevo bucket 'business_logos'
+      await _supabase.storage.from('business_logos').uploadBinary(
         fileName, 
         bytes,
         fileOptions: const FileOptions(upsert: true),
       );
 
-      final String publicUrl = _supabase.storage.from('avatars').getPublicUrl(fileName);
+      // ✅ CAMBIO CLAVE 2: Obtenemos el link público desde 'business_logos'
+      final String publicUrl = _supabase.storage.from('business_logos').getPublicUrl(fileName);
 
       // Guardamos en la tabla businesses
       await _supabase.from('businesses').update({'logo_url': publicUrl}).eq('id', user.id);
@@ -96,6 +98,7 @@ class BusinessProfileController extends GetxController {
     } catch (e) {
       Get.snackbar("Error", "No se pudo subir el logo: $e",
           backgroundColor: Colors.red, colorText: Colors.white);
+      print("Error detallado al subir logo: $e"); // Para ver en consola si Supabase se queja
     } finally {
       isUploadingLogo.value = false;
     }

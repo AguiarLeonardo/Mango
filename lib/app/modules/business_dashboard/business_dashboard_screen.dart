@@ -55,11 +55,14 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
       automaticallyImplyLeading: false,
       toolbarHeight: 80, // Aspecto más premium y espacioso
       titleSpacing: 20,
-      // ✅ AQUÍ ENVOLVEMOS EL TÍTULO Y LA FOTO CON EL GESTURE DETECTOR
       title: GestureDetector(
-        onTap: () {
-          // 🚀 VIAJAMOS A LA PANTALLA DE EDICIÓN DEL NEGOCIO
-          Get.toNamed('/edit-business-profile');
+        // ✅ AQUÍ ESTÁ LA MAGIA: Agregamos "async" y "await"
+        onTap: () async {
+          // 1. 🚀 VIAJAMOS A LA PANTALLA DE EDICIÓN Y ESPERAMOS
+          await Get.toNamed('/edit-business-profile');
+          
+          // 2. 🔄 AL REGRESAR, ACTUALIZAMOS LOS DATOS (Para que baje la nueva foto)
+          controller.fetchBusinessProfile();
         },
         child: Row(
           children: [
@@ -109,7 +112,6 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
         ),
       ),
       actions: [
-        // Botón de Escanear / Validar Entrega como detalle premium
         Padding(
           padding: const EdgeInsets.only(right: 12.0),
           child: _buildActionButton(
@@ -121,7 +123,7 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
       ],
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(24), // Curvatura pronunciada moderna
+          bottom: Radius.circular(24),
         ),
       ),
     );
@@ -146,6 +148,7 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
       child: CircleAvatar(
         radius: 26,
         backgroundColor: Colors.white.withAlpha(40),
+        // ✅ Si hay URL de imagen, la muestra. Si no, muestra la inicial.
         backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
             ? NetworkImage(imageUrl)
             : null,
