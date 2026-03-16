@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../support/support_screen.dart';
 import '../../core/theme/app_theme.dart';
 import 'discover_controller.dart';
@@ -84,7 +84,7 @@ class DiscoverScreen extends StatelessWidget {
               },
             ),
 
-            // ✅ MI BILLETERA — Consume WalletController via Binding (Get.find)
+            // ✅ MI BILLETERA
             Obx(() {
               final walletCtrl = Get.find<WalletController>();
               return ListTile(
@@ -112,19 +112,12 @@ class DiscoverScreen extends StatelessWidget {
                       ),
                 onTap: () {
                   Get.back();
-                  // TODO: Navegar a pantalla de detalle de Wallet si se implementa
                 },
               );
             }),
-            ListTile(
-              leading:
-                  const Icon(Icons.eco_outlined, color: AppTheme.textBlack),
-              title: const Text('Mi Impacto'),
-              onTap: () {
-                Get.back();
-                Get.toNamed(Routes.impact);
-              },
-            ),
+
+            // 👻 AQUÍ ELIMINAMOS POR COMPLETO EL BOTÓN "MI IMPACTO" 👻
+
             ListTile(
               leading:
                   const Icon(Icons.help_outline, color: AppTheme.textBlack),
@@ -163,15 +156,17 @@ class DiscoverScreen extends StatelessWidget {
           ],
         ),
       ),
+      
+      // ✅ APPBAR MODIFICADO SÓLO PARA AGREGAR EL IMPACTO
       appBar: AppBar(
         backgroundColor: AppTheme.primaryGreen,
         elevation: 0,
         automaticallyImplyLeading: false,
+        toolbarHeight: 70, // 👈 Le damos un poco más de altura para que quepa el impacto
         titleSpacing: 15,
         title: Builder(builder: (context) {
           return GestureDetector(
             onTap: () {
-              // 👈 Esto abre el menú lateral donde está el botón "Mi Perfil"
               Scaffold.of(context).openDrawer();
             },
             child: Row(
@@ -179,6 +174,7 @@ class DiscoverScreen extends StatelessWidget {
               children: [
                 Obx(() => CircleAvatar(
                       backgroundColor: Colors.white.withOpacity(0.2),
+                      radius: 22, // 👈 Ajustado ligeramente
                       backgroundImage: controller.avatarUrl.value.isNotEmpty
                           ? NetworkImage(controller.avatarUrl.value)
                           : null,
@@ -191,23 +187,61 @@ class DiscoverScreen extends StatelessWidget {
                           : null,
                     )),
                 const SizedBox(width: 12),
-                Obx(() => Text(
-                      controller.userName.value.isNotEmpty
-                          ? controller.userName.value
-                          : "Usuario",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )),
+                
+                // 👈 COLUMNA QUE CONTIENE EL NOMBRE Y EL IMPACTO
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Obx(() => Text(
+                          controller.userName.value.isNotEmpty
+                              ? controller.userName.value
+                              : "Usuario",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )),
+                        
+                    // 🌱 MINI-DASHBOARD DE IMPACTO
+                    Obx(() {
+                      if (controller.packsRescued.value > 0) {
+                        return Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white.withOpacity(0.3), width: 0.5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.eco, color: Colors.lightGreenAccent, size: 10),
+                              const SizedBox(width: 3),
+                              Text("${controller.packsRescued.value}", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              
+                              const SizedBox(width: 6),
+                              Container(width: 1, height: 10, color: Colors.white.withOpacity(0.6)),
+                              const SizedBox(width: 6),
+                              
+                              const Icon(Icons.cloud_done_outlined, color: Colors.white70, size: 10),
+                              const SizedBox(width: 3),
+                              Text("${controller.co2Avoided.value.toStringAsFixed(1)}kg", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink(); // Si no tiene packs, no muestra nada
+                    }),
+                  ],
+                ),
               ],
             ),
           );
         }),
-        // ✅ WALLET + CARRITO en el AppBar
         actions: [
-          // 💰 WIDGET REACTIVO DE WALLET (a la izquierda del carrito)
           Obx(() {
             final walletCtrl = Get.find<WalletController>();
             if (walletCtrl.isLoading.value) {
@@ -246,7 +280,6 @@ class DiscoverScreen extends StatelessWidget {
               ),
             );
           }),
-          // 🛒 ICONO DEL CARRITO
           Obx(() {
             final cartController = Get.put(CartController());
             final hasItem = cartController.cartItems.isNotEmpty;
@@ -296,6 +329,8 @@ class DiscoverScreen extends StatelessWidget {
           const SizedBox(width: 15),
         ],
       ),
+      
+      // ✅ EL CUERPO (BODY) QUEDA EXACTAMENTE COMO TÚ LO TENÍAS
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(

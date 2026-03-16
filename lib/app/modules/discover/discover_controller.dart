@@ -15,8 +15,12 @@ class DiscoverController extends GetxController {
 
   // ✅ VARIABLES PARA EL USUARIO / EMPRESA
   final RxString userName = ''.obs;
-  final RxString avatarUrl =
-      ''.obs; // 👈 Guarda la foto de perfil o el logo de la empresa
+  final RxString avatarUrl = ''.obs; 
+  final RxBool isBusiness = false.obs;
+
+  // 🌱 VARIABLES DE IMPACTO (NUEVO)
+  final RxInt packsRescued = 0.obs;
+  final RxDouble co2Avoided = 0.0.obs;
 
   // ✅ SERVICIOS Y REPOSITORIOS (Locales Cercanos)
   final LocationService locationService = Get.find<LocationService>();
@@ -30,14 +34,13 @@ class DiscoverController extends GetxController {
     super.onInit();
     fetchDiscoverData();
     
-    // Escuchar si la latitud cambia (cuando LocationService obtiene la ubicación) para volver a buscar locales
+    // Escuchar si la latitud cambia para volver a buscar locales
     ever(locationService.latitude, (_) {
       if (locationService.latitude.value != 0.0) {
         fetchNearbyStores();
       }
     });
 
-    // Llamado inicial
     fetchNearbyStores();
   }
 
@@ -70,44 +73,43 @@ class DiscoverController extends GetxController {
   Future<void> fetchDiscoverData() async {
     try {
       isLoading.value = true;
-
-      // --- 1. OBTENER DATOS DEL USUARIO O EMPRESA (Nombre y Foto/Logo) ---
       final userId = _supabase.auth.currentUser?.id;
+
+      // --- 1. OBTENER DATOS DEL USUARIO O EMPRESA ---
       if (userId != null) {
-        // A) Intentamos buscar si es un USUARIO NORMAL
-        final userResponse = await _supabase
-            .from('users')
-            .select('first_name, avatar_url')
+        final businessResponse = await _supabase
+            .from('businesses')
+            .select('commercial_name, logo_url')
             .eq('id', userId)
             .maybeSingle();
 
-        if (userResponse != null) {
-          // Es un usuario: asignamos nombre y avatar
-          userName.value = userResponse['first_name'] ?? 'Usuario';
-          avatarUrl.value = userResponse['avatar_url'] ?? '';
+        if (businessResponse != null) {
+          isBusiness.value = true; 
+          userName.value = businessResponse['commercial_name'] ?? 'Negocio';
+          avatarUrl.value = businessResponse['logo_url'] ?? ''; 
         } else {
-          // B) Si no es usuario, buscamos si es una EMPRESA
-          final businessResponse = await _supabase
-              .from('businesses')
-              .select('commercial_name, logo_url') // ✅ PEDIMOS EL LOGO AQUÍ
+          final userResponse = await _supabase
+              .from('users')
+              .select('first_name, avatar_url')
               .eq('id', userId)
               .maybeSingle();
 
-          if (businessResponse != null) {
-            // Es una empresa: asignamos nombre comercial y logo
-            userName.value = businessResponse['commercial_name'] ?? 'Negocio';
-            avatarUrl.value = businessResponse['logo_url'] ??
-                ''; // Reutilizamos la variable de la UI
+          if (userResponse != null) {
+            isBusiness.value = false; 
+            userName.value = userResponse['first_name'] ?? 'Usuario';
+            avatarUrl.value = userResponse['avatar_url'] ?? '';
           }
         }
+        
+        // 🌿 CARGAMOS EL IMPACTO DEL USUARIO O NEGOCIO
+        await loadImpactData(userId);
       }
 
       // --- 2. OBTENER PACKS REALES DE SUPABASE ---
       final packsResponse = await _supabase
           .from('packs')
           .select('*, businesses(commercial_name)')
-          .eq('is_active',
-              true) // 👈 ¡MAGIA AQUÍ! Solo trae los packs que NO están ocultos
+          .eq('is_active', true) 
           .limit(10);
 
       featuredPacks.assignAll(
@@ -127,11 +129,31 @@ class DiscoverController extends GetxController {
               ))
           .toList());
     } catch (e) {
-      Get.snackbar(
-          'Aviso', 'Hubo un problema de conexión o estás en modo de prueba.');
+      Get.snackbar('Aviso', 'Hubo un problema de conexión o estás en modo de prueba.');
       print("Error en DiscoverController: $e");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // 🌿 NUEVA FUNCIÓN QUE CALCULA EL IMPACTO PARA EL HOMESCREEN
+  Future<void> loadImpactData(String userId) async {
+    try {
+      final String searchColumn = isBusiness.value ? 'business_id' : 'user_id';
+      
+      final response = await _supabase
+          .from('orders')
+          .select('id')
+          .eq(searchColumn, userId)
+          .eq('status', 'completed'); // Solo cuenta las completadas
+
+      if (response != null) {
+        final List orders = response as List;
+        packsRescued.value = orders.length;
+        co2Avoided.value = packsRescued.value * 2.5;
+      }
+    } catch (e) {
+      print("Error cargando impacto en Discover: $e");
     }
   }
 

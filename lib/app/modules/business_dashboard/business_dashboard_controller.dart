@@ -69,17 +69,17 @@ class BusinessDashboardController extends GetxController {
     }
   }
 
-  // ✅ ─── CARGAR IMPACTO DEL NEGOCIO ───
+// ✅ ─── CARGAR IMPACTO DEL NEGOCIO ───
   Future<void> loadBusinessImpact() async {
     try {
       if (myBusinessId.isEmpty) return;
 
-      // Buscamos todas sus ventas completadas
+      // Buscamos solo las ventas exitosas
       final response = await _supabase
           .from('orders')
           .select('id, packs(price, original_price)')
           .eq('business_id', myBusinessId)
-          .neq('status', 'pending');
+          .eq('status', 'completed'); // 👈 AHORA SOLO CUENTA LOS COMPLETADOS
 
       if (response != null) {
         final List orders = response as List;
