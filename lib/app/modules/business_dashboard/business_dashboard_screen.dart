@@ -82,26 +82,59 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (controller.businessCategory.value.isNotEmpty) ...[
-                    const SizedBox(height: 3),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(40),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        controller.businessCategory.value.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                  const SizedBox(height: 5),
+                  // ✅ FILA DE CATEGORÍA E IMPACTO
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        if (controller.businessCategory.value.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(40),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              controller.businessCategory.value.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        
+                        // 🌱 MINI-DASHBOARD DE IMPACTO (Aparece si hay al menos 1 pack)
+                        if (controller.packsRescued.value > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(20),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.white.withAlpha(30), width: 0.5),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.eco, color: Colors.lightGreenAccent, size: 12),
+                                const SizedBox(width: 3),
+                                Text("${controller.packsRescued.value}", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                
+                                const SizedBox(width: 6),
+                                Container(width: 1, height: 10, color: Colors.white.withAlpha(60)),
+                                const SizedBox(width: 6),
+                                
+                                const Icon(Icons.cloud_done_outlined, color: Colors.white70, size: 12),
+                                const SizedBox(width: 3),
+                                Text("${controller.co2Avoided.value.toStringAsFixed(1)}kg", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
-                  ]
+                  )
                 ],
               ),
             ),

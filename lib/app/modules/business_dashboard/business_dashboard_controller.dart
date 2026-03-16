@@ -15,6 +15,11 @@ class BusinessDashboardController extends GetxController {
   final businessCategory = ''.obs;
   final businessImageUrl = Rxn<String>(); // 👈 Aquí guardaremos el logo_url
 
+  // ✅ ─── ESTADO DE IMPACTO ───
+  var packsRescued = 0.obs;
+  var co2Avoided = 0.0.obs;
+  var moneySaved = 0.0.obs;
+
   /// ID del negocio autenticado.
   String get myBusinessId => _supabase.auth.currentUser?.id ?? '';
 
@@ -22,6 +27,7 @@ class BusinessDashboardController extends GetxController {
   void onInit() {
     super.onInit();
     fetchBusinessProfile();
+    loadBusinessImpact(); // 👈 Cargamos el impacto en cuanto abre la pantalla
   }
 
   /// Cambia la pestaña activa del BottomNavigationBar.
@@ -60,6 +66,39 @@ class BusinessDashboardController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // ✅ ─── CARGAR IMPACTO DEL NEGOCIO ───
+  Future<void> loadBusinessImpact() async {
+    try {
+      if (myBusinessId.isEmpty) return;
+
+      // Buscamos todas sus ventas completadas
+      final response = await _supabase
+          .from('orders')
+          .select('id, packs(price, original_price)')
+          .eq('business_id', myBusinessId)
+          .neq('status', 'pending');
+
+      if (response != null) {
+        final List orders = response as List;
+        packsRescued.value = orders.length;
+        co2Avoided.value = packsRescued.value * 2.5;
+
+        double totalSaved = 0.0;
+        for (var order in orders) {
+          final pack = order['packs'];
+          if (pack != null) {
+            double original = double.tryParse(pack['original_price'].toString()) ?? 0.0;
+            double price = double.tryParse(pack['price'].toString()) ?? 0.0;
+            if (original > price) totalSaved += (original - price); 
+          }
+        }
+        moneySaved.value = totalSaved > 0 ? totalSaved : (packsRescued.value * 4.50);
+      }
+    } catch (e) {
+      print("Error cargando impacto del dashboard: $e");
     }
   }
 }
