@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 class LoginController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // --- CAMBIO: Ahora este controlador maneja ambos casos ---
+  // --- CAMBIO: Ahora este controlador maneja usuarios, empresas y correos ---
   final emailOrUserController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -25,7 +25,7 @@ class LoginController extends GetxController {
     if (emailOrUserController.text.isEmpty || passwordController.text.isEmpty) {
       Get.snackbar(
         "Datos incompletos",
-        "Por favor ingresa tu usuario/correo y contraseña",
+        "Por favor ingresa tu usuario, nombre de empresa o correo, y tu contraseña",
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -38,22 +38,37 @@ class LoginController extends GetxController {
       String inputLogin = emailOrUserController.text.trim();
       String finalEmail = inputLogin;
 
-      // 2. LÓGICA DE USUARIO vs EMAIL
-      // Si NO parece un correo, asumimos que es un nombre de usuario
+      // 2. LÓGICA DE USUARIO / EMPRESA vs EMAIL
+      // Si NO parece un correo, asumimos que es un nombre de usuario o nombre de empresa
       if (!GetUtils.isEmail(inputLogin)) {
-        // Buscamos el correo asociado a ese username en la tabla 'users'
+        
+        // --- A. Buscar primero en la tabla de USUARIOS ---
         final userData = await _supabase
             .from('users')
             .select('email')
             .eq('username', inputLogin)
             .maybeSingle();
 
-        if (userData == null) {
-          throw "El usuario '$inputLogin' no existe.";
-        }
+        if (userData != null) {
+          // Lo encontramos en usuarios
+          finalEmail = userData['email'];
+        } else {
+          // --- B. Si no está en usuarios, buscar en la tabla de EMPRESAS ---
+          // IMPORTANTE: Asegúrate de que tu columna se llame 'business_name' en la tabla 'businesses'
+          final businessData = await _supabase
+              .from('businesses')
+              .select('email')
+              .eq('commercial_name', inputLogin)
+              .maybeSingle();
 
-        // Si encontramos el usuario, usamos su email para el login
-        finalEmail = userData['email'];
+          if (businessData != null) {
+            // Lo encontramos en empresas
+            finalEmail = businessData['email'];
+          } else {
+            // Si no está ni en usuarios ni en empresas, lanzamos error
+            throw "No encontramos ninguna cuenta con el nombre '$inputLogin'.";
+          }
+        }
       }
 
       // 3. Intentar iniciar sesión en Supabase (Siempre requiere Email)
@@ -95,7 +110,7 @@ class LoginController extends GetxController {
       // Mensajes de error amigables
       if (errorStr.contains("Invalid login") || errorStr.contains("400")) {
         msg = "Credenciales incorrectas.";
-      } else if (errorStr.contains("El usuario")) {
+      } else if (errorStr.contains("No encontramos")) {
         // Mantiene el error personalizado que lanzamos arriba
         msg = errorStr;
       } else {

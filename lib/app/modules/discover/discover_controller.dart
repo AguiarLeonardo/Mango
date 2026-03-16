@@ -60,6 +60,7 @@ class DiscoverController extends GetxController {
       final packsResponse = await _supabase
           .from('packs')
           .select('*, businesses(commercial_name)')
+          .eq('is_active', true) // 👈 ¡MAGIA AQUÍ! Solo trae los packs que NO están ocultos
           .limit(10);
 
       featuredPacks.assignAll(

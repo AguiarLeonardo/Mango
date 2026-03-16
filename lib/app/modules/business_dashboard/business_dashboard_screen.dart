@@ -6,6 +6,11 @@ import 'business_dashboard_controller.dart';
 import 'business_orders_controller.dart';
 import 'business_orders_screen.dart';
 
+// ✅ IMPORTACIONES DEL DRAWER (Ajusta las rutas si te marcan error)
+import '../support/support_screen.dart';
+import '../shell/shell_controller.dart';
+import '../../routes/app_routes.dart';
+
 class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
   const BusinessDashboardScreen({super.key});
 
@@ -17,6 +22,9 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
 
     return Obx(() => Scaffold(
           backgroundColor: AppTheme.backgroundCream,
+
+          // ─── DRAWER: MENÚ LATERAL ───
+          drawer: _buildDrawer(),
 
           // ─── APP BAR: PERFIL DEL NEGOCIO ───
           appBar: _buildAppBar(),
@@ -48,18 +56,143 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
         ));
   }
 
+  // ==========================================
+  // 🍔 WIDGET DEL MENÚ LATERAL (DRAWER)
+  // ==========================================
+  Drawer _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              color: AppTheme.primaryGreen,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Obx(() => CircleAvatar(
+                      backgroundColor: Colors.white,
+                      radius: 30,
+                      backgroundImage: (controller.businessImageUrl.value != null && 
+                                        controller.businessImageUrl.value!.isNotEmpty)
+                          ? NetworkImage(controller.businessImageUrl.value!)
+                          : null,
+                      child: (controller.businessImageUrl.value == null || 
+                              controller.businessImageUrl.value!.isEmpty)
+                          ? const Icon(
+                              Icons.storefront,
+                              size: 35,
+                              color: AppTheme.primaryGreen,
+                            )
+                          : null,
+                    )),
+                const SizedBox(height: 10),
+                Obx(() => Text(
+                      controller.businessName.value.isNotEmpty
+                          ? controller.businessName.value
+                          : "Mi Negocio",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person_outline, color: AppTheme.textBlack),
+            title: const Text('Mi Perfil'),
+            onTap: () async {
+              Get.back(); // Cierra el menú
+              // Reutilizamos tu lógica de recarga
+              await Get.toNamed('/edit-business-profile');
+              controller.fetchBusinessProfile();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.eco_outlined, color: AppTheme.textBlack),
+            title: const Text('Mi Impacto'),
+            onTap: () {
+              Get.back();
+              Get.toNamed(Routes.impact); 
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.help_outline, color: AppTheme.textBlack),
+            title: const Text('Ayuda y Soporte'),
+            onTap: () {
+              Get.back();
+              Get.to(() => const SupportScreen());
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings_outlined, color: AppTheme.textBlack),
+            title: const Text('Configuración'),
+            onTap: () {
+              Get.back();
+              Get.toNamed('/settings');
+            },
+          ),
+          const Divider(),
+          // ✅ AQUI ESTÁ EL BOTÓN DE CERRAR SESIÓN MODIFICADO
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.redAccent),
+            title: const Text(
+              'Cerrar Sesión',
+              style: TextStyle(
+                  color: Colors.redAccent, fontWeight: FontWeight.bold),
+            ),
+            onTap: () async {
+              Get.back(); // Cierra el drawer primero
+              try {
+                // Ejecuta la lógica de limpiar tokens/Firebase
+                if (Get.isRegistered<ShellController>()) {
+                  await Get.find<ShellController>().signOut();
+                }
+                // Te manda al login y borra las pantallas anteriores
+                Get.offAllNamed('/login'); 
+              } catch (e) {
+                debugPrint("Error al cerrar sesión: $e");
+                // Si algo falla, igual forza la salida al login por seguridad
+                Get.offAllNamed('/login');
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // 📱 APP BAR MODIFICADO
+  // ==========================================
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: AppTheme.primaryGreen,
       elevation: 0,
       automaticallyImplyLeading: false,
       toolbarHeight: 80, // Aspecto más premium y espacioso
-      titleSpacing: 20,
-      // ✅ AQUÍ ENVOLVEMOS EL TÍTULO Y LA FOTO CON EL GESTURE DETECTOR
+      titleSpacing: 0, // Ajustado a 0 para dar espacio al icono del menú
+      
+      // ✅ BOTÓN DE HAMBURGUESA PARA ABRIR EL DRAWER
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+
       title: GestureDetector(
-        onTap: () {
-          // 🚀 VIAJAMOS A LA PANTALLA DE EDICIÓN DEL NEGOCIO
-          Get.toNamed('/edit-business-profile');
+        // ✅ AQUÍ ESTÁ LA MAGIA: Agregamos "async" y "await"
+        onTap: () async {
+          // 1. 🚀 VIAJAMOS A LA PANTALLA DE EDICIÓN Y ESPERAMOS
+          await Get.toNamed('/edit-business-profile');
+          
+          // 2. 🔄 AL REGRESAR, ACTUALIZAMOS LOS DATOS (Para que baje la nueva foto)
+          controller.fetchBusinessProfile();
         },
         child: Row(
           children: [
@@ -142,7 +275,6 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
         ),
       ),
       actions: [
-        // Botón de Escanear / Validar Entrega como detalle premium
         Padding(
           padding: const EdgeInsets.only(right: 12.0),
           child: _buildActionButton(
@@ -154,7 +286,7 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
       ],
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(24), // Curvatura pronunciada moderna
+          bottom: Radius.circular(24),
         ),
       ),
     );
@@ -179,6 +311,7 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
       child: CircleAvatar(
         radius: 26,
         backgroundColor: Colors.white.withAlpha(40),
+        // ✅ Si hay URL de imagen, la muestra. Si no, muestra la inicial.
         backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
             ? NetworkImage(imageUrl)
             : null,
