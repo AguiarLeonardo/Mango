@@ -23,6 +23,9 @@ class PackModel {
   final String? imageUrl;
   final String? businessName;
   final PackStatus status;
+  
+  // ✅ NUEVA VARIABLE: Para saber si el pack está oculto o activo
+  final bool isActive;
 
   PackModel({
     required this.id,
@@ -35,6 +38,7 @@ class PackModel {
     this.imageUrl,
     this.businessName,
     this.status = PackStatus.available,
+    this.isActive = true, // ✅ Por defecto asume que está activo
   });
 
   // 🔹 LO QUE FALTABA: copyWith
@@ -51,6 +55,7 @@ class PackModel {
     String? imageUrl,
     String? businessName,
     PackStatus? status,
+    bool? isActive, // ✅ Añadido al copyWith
   }) {
     return PackModel(
       id: id ?? this.id,
@@ -63,6 +68,7 @@ class PackModel {
       imageUrl: imageUrl ?? this.imageUrl,
       businessName: businessName ?? this.businessName,
       status: status ?? this.status,
+      isActive: isActive ?? this.isActive, // ✅ Añadido
     );
   }
 
@@ -94,6 +100,9 @@ class PackModel {
           ? json['businesses']['commercial_name']?.toString()
           : null,
       status: PackStatus.fromString(json['status']?.toString() ?? 'available'),
+      
+      // ✅ Añadido: Leemos is_active de la base de datos (si viene nulo, asumimos true)
+      isActive: json['is_active'] ?? true, 
     );
   }
 
@@ -108,6 +117,7 @@ class PackModel {
       'pickup_end': pickupEnd.toIso8601String(),
       'image_url': imageUrl,
       'status': status.name,
+      'is_active': isActive, // ✅ Añadido para cuando envíes datos a Supabase
     };
   }
 }
