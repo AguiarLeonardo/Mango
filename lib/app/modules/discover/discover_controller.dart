@@ -105,11 +105,16 @@ class DiscoverController extends GetxController {
         await loadImpactData(userId);
       }
 
+      // ✅ OBTENEMOS LA HORA ACTUAL EN UTC PARA COMPARARLA CON SUPABASE
+      final String nowIso = DateTime.now().toUtc().toIso8601String();
+
       // --- 2. OBTENER PACKS REALES DE SUPABASE ---
       final packsResponse = await _supabase
           .from('packs')
           .select('*, businesses(commercial_name)')
-          .eq('is_active', true) 
+          .eq('is_active', true) // Solo los activos
+          .gt('quantity_available', 0) // 👈 Solo si queda al menos 1
+          .gte('pickup_end', nowIso) // 👈 Solo si la hora final NO ha pasado
           .limit(10);
 
       featuredPacks.assignAll(

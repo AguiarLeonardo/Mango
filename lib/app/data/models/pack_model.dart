@@ -18,13 +18,17 @@ class PackModel {
   final String title;
   final double price;
   final int quantityAvailable;
+  
+  // ✅ NUEVA VARIABLE: Cantidad total original del pack
+  final int quantityTotal; 
+
   final DateTime pickupStart;
   final DateTime pickupEnd;
   final String? imageUrl;
   final String? businessName;
   final PackStatus status;
   
-  // ✅ NUEVA VARIABLE: Para saber si el pack está oculto o activo
+  // Para saber si el pack está oculto o activo
   final bool isActive;
 
   PackModel({
@@ -33,12 +37,13 @@ class PackModel {
     required this.title,
     required this.price,
     required this.quantityAvailable,
+    required this.quantityTotal, // ✅ Añadido al constructor
     required this.pickupStart,
     required this.pickupEnd,
     this.imageUrl,
     this.businessName,
     this.status = PackStatus.available,
-    this.isActive = true, // ✅ Por defecto asume que está activo
+    this.isActive = true, // Por defecto asume que está activo
   });
 
   // 🔹 LO QUE FALTABA: copyWith
@@ -50,12 +55,13 @@ class PackModel {
     String? title,
     double? price,
     int? quantityAvailable,
+    int? quantityTotal, // ✅ Añadido al copyWith
     DateTime? pickupStart,
     DateTime? pickupEnd,
     String? imageUrl,
     String? businessName,
     PackStatus? status,
-    bool? isActive, // ✅ Añadido al copyWith
+    bool? isActive, 
   }) {
     return PackModel(
       id: id ?? this.id,
@@ -63,12 +69,13 @@ class PackModel {
       title: title ?? this.title,
       price: price ?? this.price,
       quantityAvailable: quantityAvailable ?? this.quantityAvailable,
+      quantityTotal: quantityTotal ?? this.quantityTotal, // ✅ Añadido
       pickupStart: pickupStart ?? this.pickupStart,
       pickupEnd: pickupEnd ?? this.pickupEnd,
       imageUrl: imageUrl ?? this.imageUrl,
       businessName: businessName ?? this.businessName,
       status: status ?? this.status,
-      isActive: isActive ?? this.isActive, // ✅ Añadido
+      isActive: isActive ?? this.isActive, 
     );
   }
 
@@ -82,6 +89,9 @@ class PackModel {
 
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       quantityAvailable: (json['quantity_available'] as num?)?.toInt() ?? 0,
+      
+      // ✅ Añadido: Leemos quantity_total de la base de datos
+      quantityTotal: (json['quantity_total'] as num?)?.toInt() ?? 0,
 
       // 🔹 FIX (LUPA): Si 'pickup_start' era null, hacer null.toString() creaba
       // el string "null", lo cual no es limpio. Ahora validamos primero.
@@ -101,7 +111,7 @@ class PackModel {
           : null,
       status: PackStatus.fromString(json['status']?.toString() ?? 'available'),
       
-      // ✅ Añadido: Leemos is_active de la base de datos (si viene nulo, asumimos true)
+      // Leemos is_active de la base de datos (si viene nulo, asumimos true)
       isActive: json['is_active'] ?? true, 
     );
   }
@@ -113,11 +123,12 @@ class PackModel {
       'title': title,
       'price': price,
       'quantity_available': quantityAvailable,
+      'quantity_total': quantityTotal, // ✅ Añadido para cuando envíes datos a Supabase
       'pickup_start': pickupStart.toIso8601String(),
       'pickup_end': pickupEnd.toIso8601String(),
       'image_url': imageUrl,
       'status': status.name,
-      'is_active': isActive, // ✅ Añadido para cuando envíes datos a Supabase
+      'is_active': isActive, 
     };
   }
 }

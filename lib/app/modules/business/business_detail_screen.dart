@@ -195,7 +195,29 @@ class BusinessDetailScreen extends StatelessWidget {
                 );
               }
 
-              if (controller.availablePacks.isEmpty) {
+              // ✅ AQUÍ ESTÁ LA MAGIA DEL FILTRO: 
+              // Descartamos todo lo que esté inactivo, agotado o vencido.
+              final ahora = DateTime.now();
+              final validPacks = controller.availablePacks.where((packMap) {
+                // 1. Validar que esté activo
+                final bool isActive = packMap['is_active'] == true || packMap['is_active'] == 1;
+                
+                // 2. Validar que haya cantidad disponible
+                final int quantity = (packMap['quantity_available'] as num?)?.toInt() ?? 0;
+                
+                // 3. Validar que la hora de fin (pickup_end) no haya pasado
+                final String pickupEndStr = packMap['pickup_end']?.toString() ?? '';
+                DateTime? pickupEnd;
+                if (pickupEndStr.isNotEmpty) {
+                  pickupEnd = DateTime.tryParse(pickupEndStr)?.toLocal();
+                }
+                final bool isNotExpired = pickupEnd != null ? pickupEnd.isAfter(ahora) : false;
+
+                return isActive && quantity > 0 && isNotExpired;
+              }).toList();
+
+              // ✅ Validamos contra nuestra NUEVA lista filtrada, no la del controlador crudo
+              if (validPacks.isEmpty) {
                 return Center(
                   child: Text(
                     "No hay packs disponibles ahora.",
@@ -206,11 +228,11 @@ class BusinessDetailScreen extends StatelessWidget {
               }
 
               return ListView.builder(
-                itemCount: controller.availablePacks.length,
+                itemCount: validPacks.length, // Usamos los filtrados
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 itemBuilder: (context, index) {
-                  final packMap = controller.availablePacks[index];
+                  final packMap = validPacks[index]; // Extraemos de los filtrados
                   final title = packMap['title'] ?? 'Pack Sorpresa';
                   final price = packMap['price']?.toString() ?? '0';
 

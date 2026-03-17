@@ -11,6 +11,9 @@ import '../support/support_screen.dart';
 import '../shell/shell_controller.dart';
 import '../../routes/app_routes.dart';
 
+// 👇 NUEVA IMPORTACIÓN PARA EL HISTORIAL 👇
+import '../business_history/business_history_screen.dart'; 
+
 class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
   const BusinessDashboardScreen({super.key});
 
@@ -120,6 +123,18 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
               Get.toNamed(Routes.impact); 
             },
           ),
+          
+          // 👇 AQUÍ AGREGAMOS EL BOTÓN DEL HISTORIAL 👇
+          ListTile(
+            leading: const Icon(Icons.history, color: AppTheme.textBlack),
+            title: const Text('Historial de Ventas'),
+            onTap: () {
+              Get.back(); // Cierra el drawer
+              Get.to(() => const BusinessHistoryScreen()); // Navega al historial
+            },
+          ),
+          // 👆 FIN DEL BOTÓN DE HISTORIAL 👆
+
           ListTile(
             leading: const Icon(Icons.help_outline, color: AppTheme.textBlack),
             title: const Text('Ayuda y Soporte'),
