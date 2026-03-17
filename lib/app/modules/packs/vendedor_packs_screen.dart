@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb; // ✅ Agregado para detectar si es Web
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -200,9 +201,13 @@ class VendorPacksScreen extends StatelessWidget {
                     child: controller.pickedImage != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(15),
-                            child: Image.file(
-                                File(controller.pickedImage!.path),
-                                fit: BoxFit.cover))
+                            // ✅ CONDICIÓN AGREGADA AQUÍ PARA WEB Y MÓVIL
+                            child: kIsWeb
+                                ? Image.network(controller.pickedImage!.path,
+                                    fit: BoxFit.cover)
+                                : Image.file(File(controller.pickedImage!.path),
+                                    fit: BoxFit.cover),
+                          )
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

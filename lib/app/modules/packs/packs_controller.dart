@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,7 +20,6 @@ class PacksController extends GetxController {
   final originalPriceController = TextEditingController();
   final quantityController = TextEditingController();
 
-  // --- AQUÍ ESTABA EL ERROR: AHORA SON REACTIVAS (Rxn) ---
   final pickupStart = Rxn<DateTime>();
   final pickupEnd = Rxn<DateTime>();
 
@@ -85,13 +85,12 @@ class PacksController extends GetxController {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       pickedImage = image;
-      update(); // Actualizar UI del modal (si usas GetBuilder para la imagen)
+      update(); // Actualiza la vista previa en el modal
     }
   }
 
   // 4. Crear Pack (Solo Business)
   Future<void> createPack() async {
-    // Validar campos obligatorios del formulario
     if (titleController.text.isEmpty ||
         priceController.text.isEmpty ||
         quantityController.text.isEmpty) {
@@ -100,7 +99,6 @@ class PacksController extends GetxController {
       return;
     }
 
-    // Validar horarios de recogida (US 3)
     if (pickupStart.value == null || pickupEnd.value == null) {
       Get.snackbar("Error", "Debes definir el horario de recogida",
           backgroundColor: Colors.orange, colorText: Colors.white);
@@ -115,28 +113,32 @@ class PacksController extends GetxController {
 
     try {
       isLoading.value = true;
-      Get.back(); // Cerrar modal
+      Get.back(); // Cierra el modal de creación
 
       final userId = _supabase.auth.currentUser!.id;
       String? uploadedImageUrl;
 
-      // A. Subir imagen
+      // ✅ SUBIR IMAGEN A SUPABASE CORRECTAMENTE (Web y Móvil)
       if (pickedImage != null) {
+        // Leemos la imagen como bytes en lugar de usar File()
         final bytes = await pickedImage!.readAsBytes();
-        final fileExt = pickedImage!.path.split('.').last;
-        final fileName =
-            '$userId/pack_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        
+        // Usamos .name para obtener la extensión de forma segura en Web
+        final fileExt = pickedImage!.name.split('.').last;
+        final fileName = '$userId/pack_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-        await _supabase.storage.from('packs').uploadBinary(fileName, bytes,
-            fileOptions:
-                FileOptions(contentType: 'image/$fileExt', upsert: true));
-        uploadedImageUrl =
-            _supabase.storage.from('packs').getPublicUrl(fileName);
+        // Usamos uploadBinary en lugar de upload
+        await _supabase.storage.from('packs').uploadBinary(
+          fileName,
+          bytes,
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+        );
+        
+        // Obtener la URL pública de la imagen
+        uploadedImageUrl = _supabase.storage.from('packs').getPublicUrl(fileName);
+        print("✅ Imagen subida: $uploadedImageUrl");
       }
 
-      // Aseguramos de que el año/mes/dia coincida con el *HOY* para UTC, aunque el selector
-      // de hora que tenías previamente en el UI se encargaba de mezclar `DateTime.now()` con
-      // el TimeOfDay seleccionado. Solo aseguramos la conversión a UTC en la base de datos.
       final packData = {
         'business_id': userId,
         'title': titleController.text,
@@ -147,11 +149,9 @@ class PacksController extends GetxController {
             : null,
         'quantity_total': int.parse(quantityController.text),
         'quantity_available': int.parse(quantityController.text),
-        'pickup_start':
-            pickupStart.value!.toUtc().toIso8601String(), // Convertimos a UTC
-        'pickup_end':
-            pickupEnd.value!.toUtc().toIso8601String(), // Convertimos a UTC
-        'image_url': uploadedImageUrl,
+        'pickup_start': pickupStart.value!.toUtc().toIso8601String(),
+        'pickup_end': pickupEnd.value!.toUtc().toIso8601String(),
+        'image_url': uploadedImageUrl, // Guardamos la URL en la BD
         'status': 'available'
       };
 
@@ -164,8 +164,6 @@ class PacksController extends GetxController {
       originalPriceController.clear();
       quantityController.clear();
       pickedImage = null;
-
-      // RESETEAR VALORES REACTIVOS
       pickupStart.value = null;
       pickupEnd.value = null;
 
@@ -176,12 +174,13 @@ class PacksController extends GetxController {
     } catch (e) {
       Get.snackbar("Error", "No se pudo crear el pack: $e",
           backgroundColor: Colors.red, colorText: Colors.white);
+      print("❌ Error al crear pack o subir imagen: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Helpers para Fechas (MODIFICADO PARA USAR .value)
+  // Helpers para Fechas
   void setPickupStart(DateTime dt) {
     pickupStart.value = dt;
   }
@@ -213,7 +212,6 @@ class PacksController extends GetxController {
             colorText: Colors.white,
             duration: const Duration(seconds: 4));
         fetchPacks();
-        // Get.back();
       } else {
         Get.snackbar("Lo sentimos", "Este pack ya se agotó",
             backgroundColor: Colors.red, colorText: Colors.white);
