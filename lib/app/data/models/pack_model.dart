@@ -24,6 +24,7 @@ class PackModel {
 
   final DateTime pickupStart;
   final DateTime pickupEnd;
+  final String? description;
   final String? imageUrl;
   final String? businessName;
   final PackStatus status;
@@ -40,6 +41,7 @@ class PackModel {
     required this.quantityTotal, // ✅ Añadido al constructor
     required this.pickupStart,
     required this.pickupEnd,
+    this.description,
     this.imageUrl,
     this.businessName,
     this.status = PackStatus.available,
@@ -58,6 +60,7 @@ class PackModel {
     int? quantityTotal, // ✅ Añadido al copyWith
     DateTime? pickupStart,
     DateTime? pickupEnd,
+    String? description,
     String? imageUrl,
     String? businessName,
     PackStatus? status,
@@ -72,6 +75,7 @@ class PackModel {
       quantityTotal: quantityTotal ?? this.quantityTotal, // ✅ Añadido
       pickupStart: pickupStart ?? this.pickupStart,
       pickupEnd: pickupEnd ?? this.pickupEnd,
+      description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
       businessName: businessName ?? this.businessName,
       status: status ?? this.status,
@@ -103,6 +107,8 @@ class PackModel {
           ? DateTime.tryParse(json['pickup_end'].toString()) ?? DateTime.now()
           : DateTime.now(),
 
+      description: json['description']?.toString(),
+
       // 🔹 LUPA: Añadido .toString() para evitar casteos extraños
       imageUrl: json['image_url']?.toString(),
 
@@ -126,6 +132,7 @@ class PackModel {
       'quantity_total': quantityTotal, // ✅ Añadido para cuando envíes datos a Supabase
       'pickup_start': pickupStart.toIso8601String(),
       'pickup_end': pickupEnd.toIso8601String(),
+      'description': description,
       'image_url': imageUrl,
       'status': status.name,
       'is_active': isActive, 

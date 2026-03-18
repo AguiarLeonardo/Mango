@@ -9,6 +9,8 @@ import '../../data/models/business_model.dart';
 import '../shell/shell_controller.dart';
 import '../profile/profile_screen.dart';
 import '../wallet/wallet_controller.dart';
+import '../favorites/favorites_controller.dart';
+import 'package:intl/intl.dart';
 
 // ✅ IMPORTAMOS EL CARRITO Y LAS RUTAS
 import '../../routes/app_routes.dart';
@@ -20,6 +22,9 @@ class DiscoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DiscoverController controller = Get.put(DiscoverController());
+    final FavoritesController favController = Get.isRegistered<FavoritesController>()
+        ? Get.find<FavoritesController>()
+        : Get.put(FavoritesController());
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundCream,
@@ -112,11 +117,21 @@ class DiscoverScreen extends StatelessWidget {
                       ),
                 onTap: () {
                   Get.back();
+                  Get.toNamed(Routes.wallet);
                 },
               );
             }),
 
-            // 👻 AQUÍ ELIMINAMOS POR COMPLETO EL BOTÓN "MI IMPACTO" 👻
+            // 🌿 Historial de Impacto
+            ListTile(
+              leading:
+                  const Icon(Icons.eco, color: AppTheme.primaryGreen),
+              title: const Text('Mi Impacto'),
+              onTap: () {
+                Get.back();
+                Get.toNamed(Routes.impact);
+              },
+            ),
 
             ListTile(
               leading:
@@ -442,13 +457,13 @@ class DiscoverScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 15),
                 SizedBox(
-                  height: 230,
+                  height: 300,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 15),
                     itemCount: controller.featuredPacks.length,
                     itemBuilder: (context, index) {
-                      return _buildPackCard(controller.featuredPacks[index]);
+                      return _buildPackCard(controller.featuredPacks[index], favController);
                     },
                   ),
                 ),
@@ -456,13 +471,13 @@ class DiscoverScreen extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    "Negocios cerca de ti",
+                    "Negocios en tu zona",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                 ),
                 const SizedBox(height: 15),
                 Obx(() {
-                  if (controller.isLoadingNearby.value) {
+                  if (controller.isLoadingStores.value) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 30),
                       child: Center(
@@ -471,15 +486,16 @@ class DiscoverScreen extends StatelessWidget {
                     );
                   }
 
-                  if (controller.nearbyStores.isEmpty) {
-                    final stateName = controller.locationService.currentStateName.value;
-                    final displayState = stateName.isNotEmpty ? stateName : 'tu zona';
+                  if (controller.stateStores.isEmpty) {
+                    final displayState = controller.userState.value.isNotEmpty
+                        ? controller.userState.value
+                        : 'tu zona';
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       child: Center(
                         child: Text(
-                          "No hay locales a menos de 5km de ti en $displayState",
+                          "No hay locales registrados en $displayState",
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                         ),
@@ -492,9 +508,9 @@ class DiscoverScreen extends StatelessWidget {
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 15),
-                      itemCount: controller.nearbyStores.length,
+                      itemCount: controller.stateStores.length,
                       itemBuilder: (context, index) {
-                        return _buildNearbyStoreCard(controller.nearbyStores[index]);
+                        return _buildNearbyStoreCard(controller.stateStores[index]);
                       },
                     ),
                   );
@@ -508,7 +524,18 @@ class DiscoverScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPackCard(PackModel pack) {
+  Widget _buildPackCard(PackModel pack, FavoritesController favController) {
+    // ✅ Obtenemos el controlador para saber si es empresa
+    final DiscoverController controller = Get.find<DiscoverController>();
+
+    String timeRange;
+    try {
+      timeRange =
+          '${DateFormat('HH:mm').format(pack.pickupStart.toLocal())} - ${DateFormat('HH:mm').format(pack.pickupEnd.toLocal())}';
+    } catch (_) {
+      timeRange = 'Horario no definido';
+    }
+
     return GestureDetector(
       onTap: () => Get.toNamed('/pack-detail', arguments: pack),
       child: Container(
@@ -528,29 +555,63 @@ class DiscoverScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- IMAGEN CON BOTÓN DE FAVORITO ---
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Center(
-                  child: pack.imageUrl == null
-                      ? const Icon(Icons.fastfood,
-                          color: Colors.white, size: 50)
-                      : ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(20)),
-                          child: Image.network(
-                            pack.imageUrl!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    child: pack.imageUrl == null
+                        ? const Center(
+                            child: Icon(Icons.fastfood,
+                                color: Colors.white, size: 50))
+                        : ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(20)),
+                            child: Image.network(
+                              pack.imageUrl!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
                           ),
-                        ),
-                ),
+                  ),
+                  // ❤️ Botón de favorito — solo para usuarios, NO empresas
+                  if (!controller.isBusiness.value)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Obx(() {
+                        final isFav = favController.isPackFavorite(pack.id);
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            iconSize: 22,
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: isFav ? Colors.redAccent : Colors.white,
+                            ),
+                            onPressed: () =>
+                                favController.togglePackFavorite(pack.id),
+                          ),
+                        );
+                      }),
+                    ),
+                ],
               ),
             ),
+
+            // --- INFORMACIÓN DEL PACK ---
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -560,12 +621,41 @@ class DiscoverScreen extends StatelessWidget {
                     pack.title,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     pack.businessName ?? "Negocio",
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style:
+                        TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
-                  const SizedBox(height: 8),
+                  // 📝 Descripción (máximo 2 líneas)
+                  if (pack.description != null &&
+                      pack.description!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        pack.description!,
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 11),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  // 🕐 Rango de horario
+                  Row(
+                    children: [
+                      Icon(Icons.access_time,
+                          size: 13, color: Colors.grey.shade500),
+                      const SizedBox(width: 4),
+                      Text(
+                        timeRange,
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -600,8 +690,7 @@ class DiscoverScreen extends StatelessWidget {
     final String name = store['commercial_name'] ?? store['name'] ?? 'Negocio';
     final String category = store['category'] ?? "Comida";
     final String city = store['city'] ?? store['address'] ?? "Ciudad";
-    final num? distanceNum = store['distance_km'];
-    final String distanceStr = distanceNum != null ? "${distanceNum.toStringAsFixed(1)} km" : "";
+    final String state = store['state'] ?? '';
 
     return GestureDetector(
       onTap: () {
@@ -663,7 +752,7 @@ class DiscoverScreen extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          distanceStr.isNotEmpty ? "$city • $distanceStr" : city,
+                          state.isNotEmpty ? "$city, $state" : city,
                           style: const TextStyle(color: Colors.grey, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

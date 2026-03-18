@@ -76,80 +76,122 @@ class VendorPacksScreen extends StatelessWidget {
     });
   }
 
-  // ✅ Tarjeta de pack tipada con PackModel
+  // ✅ Tarjeta de pack tipada con PackModel (con soporte para packs ocultos)
   Widget _buildVendorPackCard(PackModel pack) {
     final String title = pack.title;
     final String price = pack.price.toStringAsFixed(2);
     final String? imageUrl = pack.imageUrl;
     final int stock = pack.quantityAvailable;
+    // ✅ Fix Legacy: Un pack se considera 'Oculto' si le falta algún campo clave
+    final bool isHidden = !pack.isActive ||
+        pack.status != PackStatus.available ||
+        pack.description == null ||
+        pack.description!.isEmpty ||
+        stock == 0;
 
-    return GestureDetector(
-      onTap: () => Get.to(() => const PackDetailScreen(), arguments: pack),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 2,
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: imageUrl != null && imageUrl.isNotEmpty
-                  ? Image.network(imageUrl,
-                      fit: BoxFit.cover, width: double.infinity)
-                  : Container(
-                      color: AppTheme.primaryGreen.withOpacity(0.1),
-                      child: const Center(
-                          child: Icon(Icons.fastfood,
-                              size: 40, color: AppTheme.primaryGreen)),
+    return Opacity(
+      opacity: isHidden ? 0.6 : 1.0,
+      child: GestureDetector(
+        onTap: () => Get.to(() => const PackDetailScreen(), arguments: pack),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          elevation: 2,
+          color: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- IMAGEN CON BADGE "OCULTO" ---
+              Expanded(
+                child: Stack(
+                  children: [
+                    // Imagen del pack
+                    SizedBox(
+                      width: double.infinity,
+                      child: imageUrl != null && imageUrl.isNotEmpty
+                          ? Image.network(imageUrl,
+                              fit: BoxFit.cover, width: double.infinity)
+                          : Container(
+                              color: AppTheme.primaryGreen.withOpacity(0.1),
+                              child: const Center(
+                                  child: Icon(Icons.fastfood,
+                                      size: 40,
+                                      color: AppTheme.primaryGreen)),
+                            ),
                     ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: AppTheme.textBlack),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("\$$price",
-                          style: const TextStyle(
-                              color: AppTheme.primaryGreen,
+                    // 🏷️ Badge "OCULTO" si está inactivo
+                    if (isHidden)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade800,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'OCULTO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              fontSize: 14)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: stock > 0
-                              ? AppTheme.accentOrange.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          stock > 0 ? "$stock stock" : "Agotado",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                stock > 0 ? AppTheme.accentOrange : Colors.red,
+                            ),
                           ),
                         ),
-                      )
-                    ],
-                  )
-                ],
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppTheme.textBlack),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("\$$price",
+                            style: const TextStyle(
+                                color: AppTheme.primaryGreen,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: stock > 0
+                                ? AppTheme.accentOrange.withOpacity(0.1)
+                                : Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            stock > 0 ? "$stock stock" : "Agotado",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  stock > 0 ? AppTheme.accentOrange : Colors.red,
+                            ),
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

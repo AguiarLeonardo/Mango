@@ -24,18 +24,23 @@ class BusinessDetailController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
+      print('🔍 [BusinessDetail] Buscando packs para businessId: $businessId');
+
+      // Traemos todos los packs del negocio.
+      // El filtrado de activos/vigentes se hace en la vista (BusinessDetailScreen).
       final data = await _supabase
           .from('packs')
           .select()
-          .eq('business_id', businessId)
-          .eq('status', 'available');
+          .eq('business_id', businessId);
 
       availablePacks.value = List<Map<String, dynamic>>.from(data);
+      print('✅ [BusinessDetail] Packs recibidos: ${availablePacks.length}');
     } catch (e) {
-      errorMessage.value = "Error al cargar ofertas: $e";
-      print("❌ Error en BusinessDetailController: $e");
+      errorMessage.value = "Error al cargar ofertas.";
+      print('❌ Error fetching packs: $e');
     } finally {
       isLoading.value = false;
     }
   }
 }
+

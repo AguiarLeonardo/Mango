@@ -55,7 +55,7 @@ class ImpactScreen extends StatelessWidget {
                     style: TextStyle(color: AppTheme.textBlack.withOpacity(0.6), fontSize: 16, height: 1.5),
                   )
                 ] else ...[
-                  // 📦 TARJETA PRINCIPAL: PACKS
+                  // 📦 TARJETA PRINCIPAL: COMIDAS SALVADAS
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(25),
@@ -69,13 +69,22 @@ class ImpactScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        Text(
-                          "$packsCount",
-                          style: const TextStyle(color: AppTheme.accentOrange, fontSize: 60, height: 1.0, fontWeight: FontWeight.w900),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              "${controller.savedMeals.value}",
+                              style: const TextStyle(color: AppTheme.primaryGreen, fontSize: 60, height: 1.0, fontWeight: FontWeight.w900),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.eco, color: AppTheme.primaryGreen, size: 40),
+                          ],
                         ),
                         const SizedBox(height: 5),
                         const Text(
-                          "Packs rescatados",
+                          "Comidas Salvadas",
                           style: TextStyle(color: AppTheme.textBlack, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],

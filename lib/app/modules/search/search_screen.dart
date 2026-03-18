@@ -36,19 +36,10 @@ class SearchScreen extends StatelessWidget {
                 prefixIcon:
                     const Icon(Icons.search, color: AppTheme.accentOrange),
                 // ✅ EMBUDO DE FILTRO A LA DERECHA (Categorías y Distancia)
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.radar, color: AppTheme.accentOrange),
-                      onPressed: () => _showRadiusBottomSheet(context, controller),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.filter_list,
-                          color: AppTheme.primaryGreen),
-                      onPressed: () => _showFilterBottomSheet(context, controller),
-                    ),
-                  ],
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.filter_list,
+                      color: AppTheme.primaryGreen),
+                  onPressed: () => _showFilterBottomSheet(context, controller),
                 ),
                 filled: true,
                 fillColor: Colors.white,
@@ -154,11 +145,7 @@ class SearchScreen extends StatelessWidget {
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
-                                          businessMap['distance_km'] != null 
-                                              ? "${(businessMap['distance_km'] as num).toStringAsFixed(1)} km"
-                                              : (businessMap['city'] ??
-                                                  businessMap['address'] ??
-                                                  'Ubicación desconocida'),
+                                          _buildLocationLabel(businessMap),
                                           style: const TextStyle(
                                               color: Colors.grey, fontSize: 12),
                                           maxLines: 1,
@@ -292,56 +279,14 @@ class SearchScreen extends StatelessWidget {
     );
   }
 
-  // ✅ WIDGET DEL BOTTOM SHEET PARA EL FILTRO DE RADIO (DISTANCIA)
-  void _showRadiusBottomSheet(
-      BuildContext context, SearchMyController controller) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Ajusta altura al contenido
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: Text(
-                  "Radio de Búsqueda",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 30),
-              Obx(() => Column(
-                children: [
-                  Slider(
-                    value: controller.searchRadius.value,
-                    min: 1.0,
-                    max: 10.0,
-                    divisions: 9,
-                    activeColor: AppTheme.accentOrange,
-                    inactiveColor: Colors.grey.shade300,
-                    label: '${controller.searchRadius.value.toInt()} km',
-                    onChanged: (val) {
-                      controller.updateRadius(val);
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Mostrando locales a menos de ${controller.searchRadius.value.toInt()} km',
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                ],
-              )),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
+  /// Construye la etiqueta de ubicación para un negocio (ciudad, estado).
+  String _buildLocationLabel(Map<String, dynamic> businessMap) {
+    final city = businessMap['city']?.toString() ?? '';
+    final state = businessMap['state']?.toString() ?? '';
+    if (city.isNotEmpty && state.isNotEmpty) return '$city, $state';
+    if (city.isNotEmpty) return city;
+    if (state.isNotEmpty) return state;
+    return businessMap['address']?.toString() ?? 'Ubicación desconocida';
   }
 
   Widget _buildEmptyState() {

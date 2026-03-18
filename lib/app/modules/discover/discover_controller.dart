@@ -18,55 +18,103 @@ class DiscoverController extends GetxController {
   final RxString avatarUrl = ''.obs; 
   final RxBool isBusiness = false.obs;
 
-  // 🌱 VARIABLES DE IMPACTO (NUEVO)
+  // 🌱 VARIABLES DE IMPACTO
   final RxInt packsRescued = 0.obs;
   final RxDouble co2Avoided = 0.0.obs;
 
-  // ✅ SERVICIOS Y REPOSITORIOS (Locales Cercanos)
+  // ✅ SERVICIOS Y REPOSITORIOS (Locales por Estado)
   final LocationService locationService = Get.find<LocationService>();
   final StoreRepository _storeRepository = StoreRepository();
 
-  final RxList<Map<String, dynamic>> nearbyStores = <Map<String, dynamic>>[].obs;
-  final RxBool isLoadingNearby = true.obs;
+  final RxList<Map<String, dynamic>> stateStores = <Map<String, dynamic>>[].obs;
+  final RxBool isLoadingStores = true.obs;
+
+  // Estado del usuario (se obtiene del perfil o GPS)
+  final RxString userState = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchDiscoverData();
     
-    // Escuchar si la latitud cambia para volver a buscar locales
-    ever(locationService.latitude, (_) {
-      if (locationService.latitude.value != 0.0) {
-        fetchNearbyStores();
+    // Escuchar cuando se detecte el estado por GPS para cargar locales
+    ever(locationService.currentStateName, (_) {
+      if (locationService.currentStateName.value.isNotEmpty && userState.value.isEmpty) {
+        userState.value = locationService.currentStateName.value;
+        fetchStoresByState();
       }
     });
 
-    fetchNearbyStores();
+    _loadUserState();
   }
 
-  Future<void> fetchNearbyStores() async {
+  /// Carga el estado del usuario desde su perfil en Supabase.
+  /// Si no tiene estado guardado, usa el del GPS (LocationService).
+  Future<void> _loadUserState() async {
     try {
-      isLoadingNearby.value = true;
-      final lat = locationService.latitude.value;
-      final lon = locationService.longitude.value;
-      final state = locationService.currentStateName.value;
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
 
-      if (lat != 0.0 && lon != 0.0) {
-        final result = await _storeRepository.getNearbyStores(
-          lat: lat,
-          lon: lon,
-          state: state,
-          radiusKm: 5.0,
-        );
-        nearbyStores.assignAll(result);
-      } else {
-        nearbyStores.clear();
+      // Intentar obtener estado del perfil del usuario
+      final userData = await _supabase
+          .from('users')
+          .select('state')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (userData != null && userData['state'] != null && (userData['state'] as String).trim().isNotEmpty) {
+        userState.value = userData['state'];
+        fetchStoresByState();
+        return;
+      }
+
+      // Intentar obtener estado del perfil de empresa
+      final bizData = await _supabase
+          .from('businesses')
+          .select('state')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (bizData != null && bizData['state'] != null && (bizData['state'] as String).trim().isNotEmpty) {
+        userState.value = bizData['state'];
+        fetchStoresByState();
+        return;
+      }
+
+      // Fallback: usar el estado del GPS si ya está disponible
+      if (locationService.currentStateName.value.isNotEmpty) {
+        userState.value = locationService.currentStateName.value;
+        fetchStoresByState();
       }
     } catch (e) {
-      print("Error obteniendo locales cercanos: $e");
-      nearbyStores.clear();
+      print("Error cargando estado del usuario: $e");
+      // Fallback al GPS
+      if (locationService.currentStateName.value.isNotEmpty) {
+        userState.value = locationService.currentStateName.value;
+        fetchStoresByState();
+      }
+    }
+  }
+
+  /// Busca locales filtrados por el estado del usuario.
+  Future<void> fetchStoresByState() async {
+    try {
+      isLoadingStores.value = true;
+      final state = userState.value;
+
+      if (state.isNotEmpty) {
+        final result = await _storeRepository.getStoresByState(
+          userState: state,
+        );
+        stateStores.assignAll(result);
+      } else {
+        stateStores.clear();
+      }
+    } catch (e) {
+      print("Error obteniendo locales por estado: $e");
+      stateStores.clear();
     } finally {
-      isLoadingNearby.value = false;
+      isLoadingStores.value = false;
     }
   }
 
@@ -117,8 +165,13 @@ class DiscoverController extends GetxController {
           .gte('pickup_end', nowIso) // 👈 Solo si la hora final NO ha pasado
           .limit(10);
 
+      // 🔍 DEBUG: Packs que llegaron de Supabase (ya filtrados por la query)
+      print('📦 [Discover] Packs recibidos de Supabase: ${packsResponse.length}');
+
       featuredPacks.assignAll(
           packsResponse.map((json) => PackModel.fromJson(json)).toList());
+
+      print('✅ [Discover] Packs asignados a featuredPacks: ${featuredPacks.length}');
 
       // --- 3. OBTENER NEGOCIOS REALES DE SUPABASE ---
       final businessesResponse =
@@ -141,7 +194,7 @@ class DiscoverController extends GetxController {
     }
   }
 
-  // 🌿 NUEVA FUNCIÓN QUE CALCULA EL IMPACTO PARA EL HOMESCREEN
+  // 🌿 FUNCIÓN QUE CALCULA EL IMPACTO PARA EL HOMESCREEN
   Future<void> loadImpactData(String userId) async {
     try {
       final String searchColumn = isBusiness.value ? 'business_id' : 'user_id';
@@ -164,6 +217,6 @@ class DiscoverController extends GetxController {
 
   Future<void> refreshData() async {
     await fetchDiscoverData();
-    await fetchNearbyStores();
+    await fetchStoresByState();
   }
 }

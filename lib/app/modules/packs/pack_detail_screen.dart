@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/pack_model.dart';
 import '../cart/cart_controller.dart';
+import '../favorites/favorites_controller.dart';
 import 'pack_detail_controller.dart'; 
 
 class PackDetailScreen extends StatelessWidget {
@@ -14,6 +15,9 @@ class PackDetailScreen extends StatelessWidget {
     
     // Inyectamos el controlador (que ahora tiene las variables reactivas)
     final PackDetailController controller = Get.put(PackDetailController());
+    final FavoritesController favController = Get.isRegistered<FavoritesController>()
+        ? Get.find<FavoritesController>()
+        : Get.put(FavoritesController());
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchReviews(pack.id);
@@ -34,6 +38,27 @@ class PackDetailScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppTheme.textBlack),
+        actions: [
+          // ❤️ Botón de favorito — solo visible para usuarios, NO para empresas
+          Obx(() {
+            if (controller.isOwner.value) return const SizedBox.shrink();
+            final isFav = favController.isPackFavorite(pack.id);
+            return Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(
+                  isFav ? Icons.favorite : Icons.favorite_border,
+                  color: isFav ? Colors.redAccent : Colors.white,
+                ),
+                onPressed: () => favController.togglePackFavorite(pack.id),
+              ),
+            );
+          }),
+        ],
       ),
       extendBodyBehindAppBar: true,
 
@@ -191,7 +216,23 @@ class PackDetailScreen extends StatelessWidget {
                           }),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+
+                      // 📝 Descripción del pack
+                      if (pack.description != null && pack.description!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Text(
+                            pack.description!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(height: 8),
 
                       // Disponibilidad
                       Container(

@@ -21,6 +21,7 @@ import '../modules/cart/cart_screen.dart';
 import '../modules/business_dashboard/business_dashboard_screen.dart';
 import '../modules/business_dashboard/business_dashboard_binding.dart';
 import '../modules/impact/impact_screen.dart';
+import '../modules/wallet/wallet_screen.dart';
 
 // ✅ IMPORTAMOS LA NUEVA PANTALLA DE PERFIL DE NEGOCIO
 import '../modules/business_profile/edit_business_profile_screen.dart';
@@ -91,7 +92,14 @@ class AppPages {
     GetPage(
       name: '/edit-business-profile',
       page: () => const EditBusinessProfileScreen(),
-      transition: Transition.rightToLeft, // Animación fluida estilo iOS/Android moderno
+      transition: Transition.rightToLeft,
+    ),
+
+    // 💰 MI BILLETERA
+    GetPage(
+      name: Routes.wallet,
+      page: () => const WalletScreen(),
+      transition: Transition.rightToLeft,
     ),
   ];
 }

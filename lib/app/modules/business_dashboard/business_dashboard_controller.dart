@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,6 +20,7 @@ class BusinessDashboardController extends GetxController {
   var packsRescued = 0.obs;
   var co2Avoided = 0.0.obs;
   var moneySaved = 0.0.obs;
+  var savedMeals = 0.obs; // ✅ NUEVO: Contador directo de comidas salvadas
 
   /// ID del negocio autenticado.
   String get myBusinessId => _supabase.auth.currentUser?.id ?? '';
@@ -74,31 +76,24 @@ class BusinessDashboardController extends GetxController {
     try {
       if (myBusinessId.isEmpty) return;
 
-      // Buscamos solo las ventas exitosas
-      final response = await _supabase
+      // ✅ NUEVA LÓGICA: Consultamos solo el COUNT de comidas salvadas (optimizada)
+      final countResponse = await _supabase
           .from('orders')
-          .select('id, packs(price, original_price)')
+          .select('id')
           .eq('business_id', myBusinessId)
-          .eq('status', 'completed'); // 👈 AHORA SOLO CUENTA LOS COMPLETADOS
+          .eq('status', 'completed')
+          .count(CountOption.exact); // 👈 Pide a Supabase el número exacto, sin traer filas
 
-      if (response != null) {
-        final List orders = response as List;
-        packsRescued.value = orders.length;
-        co2Avoided.value = packsRescued.value * 2.5;
+      final int completedOrdersCount = countResponse.count;
+      
+      packsRescued.value = completedOrdersCount;
+      savedMeals.value = completedOrdersCount; // Variable específica de comidas salvadas
 
-        double totalSaved = 0.0;
-        for (var order in orders) {
-          final pack = order['packs'];
-          if (pack != null) {
-            double original = double.tryParse(pack['original_price'].toString()) ?? 0.0;
-            double price = double.tryParse(pack['price'].toString()) ?? 0.0;
-            if (original > price) totalSaved += (original - price); 
-          }
-        }
-        moneySaved.value = totalSaved > 0 ? totalSaved : (packsRescued.value * 4.50);
-      }
+      co2Avoided.value = packsRescued.value * 2.5;
+      moneySaved.value = packsRescued.value * 4.50; // Promedio estadístico en impacto
+      
     } catch (e) {
-      print("Error cargando impacto del dashboard: $e");
+      debugPrint("Error cargando impacto del dashboard: $e");
     }
   }
 }

@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../favorites/favorites_controller.dart';
 import '../business/business_controller.dart';
+import '../shell/shell_controller.dart';
 import '../../data/models/pack_model.dart';
 // ✅ IMPORTAMOS EL MODELO DEL NEGOCIO
 import '../../data/models/business_model.dart';
+import 'package:intl/intl.dart';
 
 class BusinessDetailScreen extends StatelessWidget {
   // ✅ 1. CAMBIAMOS A DYNAMIC PARA QUE ACEPTE AMBOS TIPOS (Map o BusinessModel)
@@ -53,6 +55,9 @@ class BusinessDetailScreen extends StatelessWidget {
             ? Get.find<FavoritesController>()
             : Get.put(FavoritesController());
 
+    // ✅ Para saber si el usuario actual es un negocio
+    final ShellController shellController = Get.find<ShellController>();
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundCream,
       appBar: AppBar(
@@ -65,7 +70,9 @@ class BusinessDetailScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
         actions: [
+          // ❤️ Favorito del negocio — solo visible para usuarios, NO para empresas
           Obx(() {
+            if (shellController.isBusiness.value) return const SizedBox.shrink();
             final isFav = favController.isBusinessFavorite(businessId);
             return IconButton(
               icon: Icon(
@@ -195,6 +202,9 @@ class BusinessDetailScreen extends StatelessWidget {
                 );
               }
 
+              // 🔍 DEBUG: Packs totales recibidos
+              print('📦 [BusinessDetail UI] Packs totales recibidos: ${controller.availablePacks.length}');
+
               // ✅ AQUÍ ESTÁ LA MAGIA DEL FILTRO: 
               // Descartamos todo lo que esté inactivo, agotado o vencido.
               final ahora = DateTime.now();
@@ -216,6 +226,9 @@ class BusinessDetailScreen extends StatelessWidget {
                 return isActive && quantity > 0 && isNotExpired;
               }).toList();
 
+              // 🔍 DEBUG: Packs que pasaron el filtro
+              print('✅ [BusinessDetail UI] Packs que pasaron el filtro: ${validPacks.length}');
+
               // ✅ Validamos contra nuestra NUEVA lista filtrada, no la del controlador crudo
               if (validPacks.isEmpty) {
                 return Center(
@@ -228,36 +241,176 @@ class BusinessDetailScreen extends StatelessWidget {
               }
 
               return ListView.builder(
-                itemCount: validPacks.length, // Usamos los filtrados
+                itemCount: validPacks.length,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 itemBuilder: (context, index) {
-                  final packMap = validPacks[index]; // Extraemos de los filtrados
-                  final title = packMap['title'] ?? 'Pack Sorpresa';
-                  final price = packMap['price']?.toString() ?? '0';
+                  final packMap = validPacks[index];
+                  final packModel = PackModel.fromJson({
+                    ...packMap,
+                    'businesses': {'commercial_name': name},
+                  });
 
-                  return Card(
-                    color: Colors.white,
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      title: Text(title,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text("\$$price",
-                          style: const TextStyle(
-                              color: AppTheme.primaryGreen,
-                              fontWeight: FontWeight.w600)),
-                      trailing: const Icon(Icons.arrow_forward_ios,
-                          size: 16, color: AppTheme.disabledIcon),
-                      onTap: () {
-                        // Inyectamos manualmente el nombre del negocio al pack
-                        packMap['businesses'] = {'commercial_name': name};
-                        final packModel = PackModel.fromJson(packMap);
-                        Get.toNamed('/pack-detail', arguments: packModel);
-                      },
+                  String timeRange;
+                  try {
+                    timeRange =
+                        '${DateFormat('HH:mm').format(packModel.pickupStart.toLocal())} - ${DateFormat('HH:mm').format(packModel.pickupEnd.toLocal())}';
+                  } catch (_) {
+                    timeRange = 'Horario no definido';
+                  }
+
+                  return GestureDetector(
+                    onTap: () {
+                      Get.toNamed('/pack-detail', arguments: packModel);
+                    },
+                    child: Card(
+                      color: Colors.white,
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // --- IMAGEN CON BOTÓN DE FAVORITO ---
+                          SizedBox(
+                            height: 140,
+                            width: double.infinity,
+                            child: Stack(
+                              children: [
+                                packModel.imageUrl != null &&
+                                        packModel.imageUrl!.isNotEmpty
+                                    ? Image.network(
+                                        packModel.imageUrl!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: 140,
+                                      )
+                                    : Container(
+                                        color: AppTheme.primaryGreen
+                                            .withOpacity(0.1),
+                                        child: const Center(
+                                          child: Icon(Icons.fastfood,
+                                              size: 40,
+                                              color: AppTheme.primaryGreen),
+                                        ),
+                                      ),
+                                // ❤️ Botón de favorito — solo visible para usuarios
+                                if (!shellController.isBusiness.value)
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: Obx(() {
+                                      final isFav = favController
+                                          .isPackFavorite(packModel.id);
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.3),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: IconButton(
+                                          iconSize: 22,
+                                          padding: const EdgeInsets.all(6),
+                                          constraints: const BoxConstraints(),
+                                          icon: Icon(
+                                            isFav
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color: isFav
+                                                ? Colors.redAccent
+                                                : Colors.white,
+                                          ),
+                                          onPressed: () => favController
+                                              .togglePackFavorite(packModel.id),
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                              ],
+                            ),
+                          ),
+
+                          // --- CONTENIDO DE LA TARJETA ---
+                          Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Título y precio
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        packModel.title,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "\$${packModel.price.toStringAsFixed(2)}",
+                                      style: const TextStyle(
+                                        color: AppTheme.primaryGreen,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                // 📝 Descripción
+                                if (packModel.description != null &&
+                                    packModel.description!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Text(
+                                      packModel.description!,
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 12),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                const SizedBox(height: 8),
+
+                                // 🕐 Horario de recolección
+                                Row(
+                                  children: [
+                                    Icon(Icons.access_time,
+                                        size: 14,
+                                        color: Colors.grey.shade500),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      timeRange,
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 12),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      "${packModel.quantityAvailable} disp.",
+                                      style: const TextStyle(
+                                        color: AppTheme.accentOrange,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },

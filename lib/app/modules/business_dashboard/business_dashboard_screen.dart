@@ -255,8 +255,8 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
                             ),
                           ),
                         
-                        // 🌱 MINI-DASHBOARD DE IMPACTO (Aparece si hay al menos 1 pack)
-                        if (controller.packsRescued.value > 0)
+                        // 🌱 MINI-DASHBOARD DE IMPACTO (Aparece si hay al menos 1 comida salvada)
+                        if (controller.savedMeals.value > 0)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
@@ -268,7 +268,7 @@ class BusinessDashboardScreen extends GetView<BusinessDashboardController> {
                               children: [
                                 const Icon(Icons.eco, color: Colors.lightGreenAccent, size: 12),
                                 const SizedBox(width: 3),
-                                Text("${controller.packsRescued.value}", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                Text("${controller.savedMeals.value}", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                                 
                                 const SizedBox(width: 6),
                                 Container(width: 1, height: 10, color: Colors.white.withAlpha(60)),

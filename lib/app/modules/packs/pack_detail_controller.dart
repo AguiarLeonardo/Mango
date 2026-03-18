@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Asegúrate de importar tu PackModel aquí
 // import '../../data/models/pack_model.dart'; 
+import 'packs_controller.dart';
 
 class PackDetailController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -82,79 +83,127 @@ class PackDetailController extends GetxController {
     }
   }
 
-  // ✅ FUNCIÓN PARA OCULTAR MODIFICADA (Soft Delete)
+  // ✅ FUNCIÓN PARA OCULTAR (Soft Delete) — A prueba de balas
   Future<void> hidePack(String packId) async {
-    try {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
 
-      // 1. Actualizamos en Supabase
+    bool success = false;
+
+    try {
       await _supabase
           .from('packs')
-          .update({'is_active': false}) // ✅ Nombre correcto de tu columna
+          .update({'is_active': false})
           .eq('id', packId);
 
-      // 2. ✅ ACTUALIZAMOS LA VARIABLE REACTIVA LOCAL
-      isActive.value = false; 
+      isActive.value = false;
 
-      Get.back(); // Cierra el indicador de carga
+      // Refresco seguro del panel del vendedor
+      if (Get.isRegistered<PacksController>()) {
+        Get.find<PacksController>().fetchPacks();
+      } else {
+        print('PacksController no está activo en memoria, ignorando refresco');
+      }
 
-      Get.snackbar(
-        "Éxito",
-        "El pack ha sido ocultado correctamente",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      success = true;
 
     } catch (e) {
-      Get.back(); // Cierra el indicador de carga
-      print("Error ocultando el pack: $e");
-      Get.snackbar(
-        "Error",
-        "No se pudo ocultar el pack",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      print('🔴 ERROR EN HIDE PACK: $e');
+    } finally {
+      // ✅ CIERRE INCONDICIONAL — destruimos el diálogo agresivamente
+      _forceCloseDialog();
+    }
+
+    // Mostramos feedback DESPUÉS de cerrar el diálogo para evitar colisión de overlays
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (success) {
+      Get.snackbar("Éxito", "El pack ha sido ocultado correctamente",
+          backgroundColor: Colors.orange, colorText: Colors.white);
+    } else {
+      Get.snackbar("Error", "No se pudo ocultar el pack",
+          backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
-  // ✅ NUEVA FUNCIÓN PARA VOLVER A ACTIVAR
+  // ✅ SUPER-ACTUALIZACIÓN — Repara campos legacy al activar el pack
   Future<void> reactivatePack(String packId) async {
-    try {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
 
-      // 1. Actualizamos en Supabase a true
+    bool success = false;
+
+    try {
+      final pack = Get.arguments;
+
+      final int currentStock = pack?.quantityAvailable ?? 0;
+      final String currentDesc = pack?.description ?? '';
+
+      final Map<String, dynamic> updateData = {
+        'is_active': true,
+        'status': 'available',
+        'quantity_available': currentStock > 0 ? currentStock : 1,
+        'description': currentDesc.isNotEmpty
+            ? currentDesc
+            : 'Delicioso pack sorpresa para rescatar',
+      };
+
+      print('🔧 [ReactivatePack] packId: $packId');
+      print('🔧 [ReactivatePack] Datos a enviar: $updateData');
+
       await _supabase
           .from('packs')
-          .update({'is_active': true}) // ✅ Nombre correcto de tu columna
+          .update(updateData)
           .eq('id', packId);
 
-      // 2. ✅ ACTUALIZAMOS LA VARIABLE REACTIVA LOCAL
-      isActive.value = true; 
+      print('✅ [ReactivatePack] Supabase update exitoso');
 
-      Get.back(); // Cierra el indicador de carga
+      isActive.value = true;
 
-      Get.snackbar(
-        "Éxito",
-        "El pack ha sido activado nuevamente",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      // Refresco seguro del panel del vendedor
+      if (Get.isRegistered<PacksController>()) {
+        Get.find<PacksController>().fetchPacks();
+      } else {
+        print('PacksController no está activo en memoria, ignorando refresco');
+      }
+
+      success = true;
 
     } catch (e) {
-      Get.back(); // Cierra el indicador de carga
-      print("Error activando el pack: $e");
-      Get.snackbar(
-        "Error",
-        "No se pudo activar el pack",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      print('🔴 ERROR FATAL EN REACTIVATE: $e');
+    } finally {
+      // ✅ CIERRE INCONDICIONAL — destruimos el diálogo agresivamente
+      _forceCloseDialog();
+    }
+
+    // Mostramos feedback DESPUÉS de cerrar el diálogo
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (success) {
+      Get.snackbar("Éxito", "El pack ha sido activado y reparado correctamente",
+          backgroundColor: Colors.green, colorText: Colors.white);
+    } else {
+      Get.snackbar("Error", "Hubo un problema al activar el pack",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  /// Cierra el diálogo de carga de forma agresiva e incondicional.
+  void _forceCloseDialog() {
+    try {
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      } else {
+        // Fallback: forzar pop del overlay vía Navigator nativo
+        final ctx = Get.overlayContext;
+        if (ctx != null) {
+          Navigator.of(ctx, rootNavigator: true).pop();
+        }
+      }
+    } catch (e) {
+      print('⚠️ [_forceCloseDialog] No se pudo cerrar el diálogo: $e');
     }
   }
 

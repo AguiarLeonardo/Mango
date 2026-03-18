@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/repositories/wallet_repository.dart';
 
@@ -15,22 +16,30 @@ class WalletController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxString currency = 'USD'.obs;
 
+  // Lista reactiva de movimientos (historial)
+  final RxList<Map<String, dynamic>> transactions =
+      <Map<String, dynamic>>[].obs;
+
   @override
   void onInit() {
     super.onInit();
-    fetchWalletBalance();
+    fetchWalletData();
   }
 
-  /// Obtiene el saldo de la billetera desde el repositorio.
-  Future<void> fetchWalletBalance() async {
+  /// Obtiene saldo + transacciones de Supabase.
+  Future<void> fetchWalletData() async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
 
+      // 1. Saldo
       final wallet = await _repository.fetchWallet();
-
       balance.value = wallet.balance;
       currency.value = wallet.currency;
+
+      // 2. Historial de transacciones
+      final txList = await _repository.fetchTransactions();
+      transactions.assignAll(txList);
     } on WalletException catch (e) {
       errorMessage.value = e.message;
     } catch (e) {
@@ -43,4 +52,26 @@ class WalletController extends GetxController {
   /// Formatea el saldo como string para mostrar en la UI.
   /// Ej: "$15.50"
   String get formattedBalance => '\$${balance.value.toStringAsFixed(2)}';
+
+  /// Recargar saldo (Próximamente)
+  void topUp() {
+    Get.snackbar(
+      'Próximamente',
+      'La función de recarga estará disponible pronto.',
+      backgroundColor: Colors.orange,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  /// Retirar saldo (Próximamente)
+  void withdraw() {
+    Get.snackbar(
+      'Próximamente',
+      'La función de retiro estará disponible pronto.',
+      backgroundColor: Colors.orange,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
 }
