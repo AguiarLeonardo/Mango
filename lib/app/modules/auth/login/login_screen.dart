@@ -73,7 +73,7 @@ class LoginScreen extends GetView<LoginController> {
                       
                       const SizedBox(height: 10),
 
-                      // Checkbox y Olvidaste contraseña
+                      // Checkbox y Olvidaste contraseña (ARREGLADO PARA PANTALLAS PEQUEÑAS)
                       Row(
                         children: [
                           Obx(() => SizedBox(
@@ -86,13 +86,26 @@ class LoginScreen extends GetView<LoginController> {
                             ),
                           )),
                           const SizedBox(width: 8),
-                          const Text("Recordarme", style: TextStyle(color: AppTheme.textBlack, fontSize: 14)),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () => _showForgotPasswordDialog(context, controller),
-                            child: const Text(
-                              "¿Olvidaste la contraseña?",
-                              style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13),
+                          // Usamos Expanded para que "Recordarme" ocupe el espacio disponible
+                          // pero sin empujar al otro widget fuera de la pantalla.
+                          const Expanded(
+                            child: Text(
+                              "Recordarme", 
+                              style: TextStyle(color: AppTheme.textBlack, fontSize: 14),
+                              overflow: TextOverflow.ellipsis, // Si no cabe, pone puntos suspensivos
+                            ),
+                          ),
+                          // Usamos Flexible o FittedBox para proteger este texto
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () => _showForgotPasswordDialog(context, controller),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown, // Escala el texto si es necesario
+                                child: Text(
+                                  "¿Olvidaste la contraseña?",
+                                  style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ),
                             ),
                           )
                         ],
