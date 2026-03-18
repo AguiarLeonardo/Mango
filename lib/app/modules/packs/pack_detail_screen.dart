@@ -9,11 +9,19 @@ import 'pack_detail_controller.dart';
 class PackDetailScreen extends StatelessWidget {
   const PackDetailScreen({super.key});
 
+  // Función auxiliar para formatear la hora (ej: 18:30)
+  String _formatTime(DateTime? dt) {
+    if (dt == null) return "--:--";
+    // Pasamos a local por si viene en UTC de la base de datos
+    final localDt = dt.toLocal();
+    final hour = localDt.hour.toString().padLeft(2, '0');
+    final minute = localDt.minute.toString().padLeft(2, '0');
+    return "$hour:$minute";
+  }
+
   @override
   Widget build(BuildContext context) {
     final PackModel pack = Get.arguments as PackModel;
-    
-    // Inyectamos el controlador (que ahora tiene las variables reactivas)
     final PackDetailController controller = Get.put(PackDetailController());
     final FavoritesController favController = Get.isRegistered<FavoritesController>()
         ? Get.find<FavoritesController>()
@@ -23,7 +31,6 @@ class PackDetailScreen extends StatelessWidget {
       controller.fetchReviews(pack.id);
     });
 
-    // ✅ Definimos el filtro para poner la imagen en escala de grises
     const ColorFilter greyscale = ColorFilter.matrix(<double>[
       0.2126, 0.7152, 0.0722, 0, 0,
       0.2126, 0.7152, 0.0722, 0, 0,
@@ -33,13 +40,11 @@ class PackDetailScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppTheme.textBlack),
         actions: [
-          // ❤️ Botón de favorito — solo visible para usuarios, NO para empresas
           Obx(() {
             if (controller.isOwner.value) return const SizedBox.shrink();
             final isFav = favController.isPackFavorite(pack.id);
@@ -62,7 +67,6 @@ class PackDetailScreen extends StatelessWidget {
       ),
       extendBodyBehindAppBar: true,
 
-      // ✅ BOTONERA INFERIOR TOTALMENTE DINÁMICA
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -75,12 +79,9 @@ class PackDetailScreen extends StatelessWidget {
           width: double.infinity,
           height: 55,
           child: Obx(() {
-            // Obtenemos el estado actual de forma reactiva
             final bool active = controller.isActive.value;
 
-            // --- CASO 1: ES EL DUEÑO DE LA EMPRESA ---
             if (controller.isOwner.value) {
-              // Si está activo, mostramos botón NARANJA de ocultar
               if (active) {
                 return ElevatedButton(
                   onPressed: () => controller.confirmHide(pack.id),
@@ -90,9 +91,7 @@ class PackDetailScreen extends StatelessWidget {
                   ),
                   child: const Text("OCULTAR PACK", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 );
-              } 
-              // Si está inactivo, mostramos botón VERDE de volver a activar
-              else {
+              } else {
                 return ElevatedButton(
                   onPressed: () => controller.confirmReactivate(pack.id),
                   style: ElevatedButton.styleFrom(
@@ -102,10 +101,7 @@ class PackDetailScreen extends StatelessWidget {
                   child: const Text("VOLVER A ACTIVAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 );
               }
-            } 
-            // --- CASO 2: ES UN USUARIO NORMAL ---
-            else {
-              // Si está activo, mostramos botón VERDE de reservar normal
+            } else {
               if (active) {
                 return ElevatedButton(
                   onPressed: () {
@@ -118,11 +114,9 @@ class PackDetailScreen extends StatelessWidget {
                   ),
                   child: const Text("RESERVAR PACK", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 );
-              } 
-              // Si está inactivo, deshabilitamos el botón y cambiamos texto
-              else {
+              } else {
                 return ElevatedButton(
-                  onPressed: null, // ✅ null deshabilita el botón automáticamente
+                  onPressed: null,
                   style: ElevatedButton.styleFrom(
                     disabledBackgroundColor: Colors.grey.shade300,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -135,38 +129,31 @@ class PackDetailScreen extends StatelessWidget {
         ),
       ),
 
-      // ✅ CUERPO DE LA PANTALLA ENVUELTO EN OBX PARA REACCIONAR A CAMBIOS
       body: Obx(() {
         final bool active = controller.isActive.value;
         
-        // Usamos Opacity para "apagar" un poco toda la pantalla si está inactivo
         return Opacity(
-          opacity: active ? 1.0 : 0.5, // 👈 50% de opacidad si está inactivo
+          opacity: active ? 1.0 : 0.5,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- IMAGEN GRANDE ---
+                // --- IMAGEN ---
                 Container(
                   height: 300,
                   width: double.infinity,
                   color: Colors.grey.shade300,
                   child: pack.imageUrl == null
                       ? const Icon(Icons.fastfood, size: 80, color: Colors.white)
-                      // ✅ Aplicamos el filtro de escala de grises dinámicamente
                       : ColorFiltered(
                           colorFilter: active ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply) : greyscale,
                           child: Image.network(pack.imageUrl!, fit: BoxFit.cover),
                         ),
                 ),
 
-                // --- DETALLES DEL PACK ---
+                // --- CONTENIDO ---
                 Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -184,7 +171,7 @@ class PackDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // Nombre del negocio Y CALIFICACIÓN PROMEDIO ⭐
+                      // Negocio y Rating
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -192,116 +179,102 @@ class PackDetailScreen extends StatelessWidget {
                             pack.businessName ?? 'Negocio no especificado',
                             style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                           ),
-                          
                           Obx(() {
-                            if (controller.isLoadingReviews.value) {
-                              return const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accentOrange));
-                            }
+                            if (controller.isLoadingReviews.value) return const SizedBox.shrink();
                             if (controller.totalReviews.value == 0) return const SizedBox.shrink();
-                            
                             return Row(
                               children: [
                                 const Icon(Icons.star_rounded, color: Colors.amber, size: 22),
                                 const SizedBox(width: 4),
-                                Text(
-                                  controller.averageRating.value.toStringAsFixed(1),
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                Text(
-                                  " (${controller.totalReviews.value})",
-                                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                                ),
+                                Text(controller.averageRating.value.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                               ],
                             );
                           }),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      
+                      const Divider(height: 40),
 
-                      // 📝 Descripción del pack
-                      if (pack.description != null && pack.description!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Text(
-                            pack.description!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                              height: 1.5,
-                            ),
-                          ),
+                      // 🕒 NUEVA SECCIÓN: HORARIO DE RECOGIDA
+                      const Text("Horario de recogida", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.1)),
                         ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.access_time_filled, color: AppTheme.primaryGreen),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Hoy de ${_formatTime(pack.pickupStart)} a ${_formatTime(pack.pickupEnd)}",
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textBlack),
+                                ),
+                                const Text(
+                                  "Presenta tu código al llegar al local",
+                                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 25),
 
-                      // Disponibilidad
+                      // 📝 DESCRIPCIÓN REFORZADA
+                      const Text("¿Qué incluye este pack?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      Text(
+                        (pack.description != null && pack.description!.isNotEmpty)
+                            ? pack.description!
+                            : "Este establecimiento aún no ha añadido una descripción detallada, ¡pero seguro que te sorprenderá!",
+                        style: TextStyle(fontSize: 15, color: Colors.grey.shade700, height: 1.5),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      // Cantidad disponible
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(color: AppTheme.accentOrange.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                        child: Text("Solo quedan ${pack.quantityAvailable} packs",
+                        child: Text("Solo quedan ${pack.quantityAvailable} unidades",
                             style: const TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.bold)),
                       ),
 
-                      const SizedBox(height: 35),
+                      const SizedBox(height: 40),
                       
-                      // --- SECCIÓN DE RESEÑAS ---
-                      const Text("Reseñas de este pack", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      // --- RESEÑAS ---
+                      const Text("Reseñas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 15),
 
                       Obx(() {
-                        if (controller.isLoadingReviews.value) {
-                          return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
-                        }
+                        if (controller.isLoadingReviews.value) return const Center(child: CircularProgressIndicator());
                         if (controller.reviewsList.isEmpty) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              child: Text("Aún no hay reseñas. ¡Sé el primero en calificarlo al comprarlo! ⭐",
-                                  textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade500)),
-                            ),
-                          );
+                          return Text("Sin reseñas todavía.", style: TextStyle(color: Colors.grey.shade500));
                         }
-
-                        // Lista de comentarios
                         return ListView.builder(
                           padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(), // Evita conflicto de scroll
+                          physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                           itemCount: controller.reviewsList.length,
                           itemBuilder: (context, index) {
                             final review = controller.reviewsList[index];
-                            final int rating = review['rating'] ?? 5;
-                            final String comment = review['comment'] ?? '';
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                color: AppTheme.backgroundCream.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: Colors.grey.shade200),
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Row(
+                                children: List.generate(5, (star) => Icon(
+                                  star < (review['rating'] ?? 0) ? Icons.star : Icons.star_border,
+                                  color: Colors.amber, size: 16,
+                                )),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: List.generate(5, (starIndex) {
-                                      return Icon(
-                                        starIndex < rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                                        color: Colors.amber,
-                                        size: 20,
-                                      );
-                                    }),
-                                  ),
-                                  if (comment.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "\"$comment\"",
-                                      style: TextStyle(color: Colors.grey.shade700, fontStyle: FontStyle.italic),
-                                    ),
-                                  ]
-                                ],
-                              ),
+                              subtitle: Text(review['comment'] ?? ''),
                             );
                           },
                         );

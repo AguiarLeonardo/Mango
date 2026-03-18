@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Asegúrate de importar tu PackModel aquí
+// Asegúrate de importar tu PackModel aquí si lo necesitas
 // import '../../data/models/pack_model.dart'; 
 import 'packs_controller.dart';
 
@@ -127,7 +127,7 @@ class PackDetailController extends GetxController {
     }
   }
 
-  // ✅ SUPER-ACTUALIZACIÓN — Repara campos legacy al activar el pack
+  // ✅ FUNCIÓN CORREGIDA — Solo activa el pack, sin alterar otros datos
   Future<void> reactivatePack(String packId) async {
     Get.dialog(
       const Center(child: CircularProgressIndicator()),
@@ -137,22 +137,14 @@ class PackDetailController extends GetxController {
     bool success = false;
 
     try {
-      final pack = Get.arguments;
-
-      final int currentStock = pack?.quantityAvailable ?? 0;
-      final String currentDesc = pack?.description ?? '';
-
+      // Solo enviamos los campos estrictamente necesarios para activar.
+      // CERO alteraciones a la descripción o al stock.
       final Map<String, dynamic> updateData = {
         'is_active': true,
         'status': 'available',
-        'quantity_available': currentStock > 0 ? currentStock : 1,
-        'description': currentDesc.isNotEmpty
-            ? currentDesc
-            : 'Delicioso pack sorpresa para rescatar',
       };
 
-      print('🔧 [ReactivatePack] packId: $packId');
-      print('🔧 [ReactivatePack] Datos a enviar: $updateData');
+      print('🔧 [ReactivatePack] Activando packId: $packId');
 
       await _supabase
           .from('packs')
@@ -182,7 +174,7 @@ class PackDetailController extends GetxController {
     // Mostramos feedback DESPUÉS de cerrar el diálogo
     await Future.delayed(const Duration(milliseconds: 200));
     if (success) {
-      Get.snackbar("Éxito", "El pack ha sido activado y reparado correctamente",
+      Get.snackbar("Éxito", "El pack ha sido activado correctamente",
           backgroundColor: Colors.green, colorText: Colors.white);
     } else {
       Get.snackbar("Error", "Hubo un problema al activar el pack",
