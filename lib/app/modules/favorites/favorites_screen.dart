@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 import 'favorites_controller.dart';
 import '../packs/pack_detail_screen.dart';
 import '../business/business_detail_screen.dart';
-import '../../core/theme/app_theme.dart'; // Importante para la consistencia
+import '../../core/theme/app_theme.dart'; 
+
+// ✅ IMPORTANTE: Asegúrate de que esta ruta apunte correctamente a tu modelo
+import '../../data/models/pack_model.dart'; 
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -18,7 +21,7 @@ class FavoritesScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppTheme.backgroundCream, // Fondo unificado
+        backgroundColor: AppTheme.backgroundCream, 
         appBar: AppBar(
           title: const Text(
             "Mis Favoritos",
@@ -27,11 +30,11 @@ class FavoritesScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: Colors.transparent, // AppBar limpia
+          backgroundColor: Colors.transparent, 
           elevation: 0,
           centerTitle: true,
           bottom: const TabBar(
-            indicatorColor: AppTheme.accentOrange, // Naranja de tu marca
+            indicatorColor: AppTheme.accentOrange, 
             indicatorWeight: 3,
             labelColor: AppTheme.primaryGreen,
             unselectedLabelColor: Colors.grey,
@@ -104,7 +107,14 @@ class FavoritesScreen extends StatelessWidget {
           iconColor: AppTheme.accentOrange,
           onTap: () {
             if (pack.isNotEmpty) {
-              Get.to(() => const PackDetailScreen(), arguments: pack);
+              // ✅ CORRECCIÓN: Convertimos el JSON crudo a un PackModel antes de enviarlo
+              try {
+                final packModel = PackModel.fromJson(pack);
+                Get.to(() => const PackDetailScreen(), arguments: packModel);
+              } catch (e) {
+                print("Error convirtiendo PackModel en Favoritos: $e");
+                Get.snackbar("Error", "No se pudieron cargar los detalles del pack");
+              }
             }
           },
           onRemove: () => controller.togglePackFavorite(packId),
@@ -147,6 +157,7 @@ class FavoritesScreen extends StatelessWidget {
           ),
           onTap: () {
             if (business.isNotEmpty) {
+              // Si BusinessDetailScreen también necesita un modelo, habría que hacer lo mismo aquí
               Get.to(() => BusinessDetailScreen(businessData: business));
             }
           },
