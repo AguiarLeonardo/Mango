@@ -4,8 +4,6 @@ import 'favorites_controller.dart';
 import '../packs/pack_detail_screen.dart';
 import '../business/business_detail_screen.dart';
 import '../../core/theme/app_theme.dart'; 
-
-// ✅ IMPORTANTE: Asegúrate de que esta ruta apunte correctamente a tu modelo
 import '../../data/models/pack_model.dart'; 
 
 class FavoritesScreen extends StatelessWidget {
@@ -100,20 +98,40 @@ class FavoritesScreen extends StatelessWidget {
         final title = pack['title'] ?? 'Pack';
         final price = pack['price']?.toString() ?? '0';
 
+        // ✅ NUEVO: Intentamos parsear a PackModel aquí para saber si expiró
+        PackModel? packModel;
+        bool isExpired = false;
+        try {
+          if (pack.isNotEmpty) {
+            packModel = PackModel.fromJson(pack);
+            isExpired = packModel.pickupEnd.isBefore(DateTime.now());
+          }
+        } catch (e) {
+          print("Error convirtiendo PackModel para verificar expiración: $e");
+        }
+
         return _buildFavoriteCard(
           title: title,
-          subtitle: "$price Bs",
+          subtitle: isExpired ? "Paquete no disponible" : "$price Bs",
           icon: Icons.fastfood,
-          iconColor: AppTheme.accentOrange,
+          iconColor: isExpired ? Colors.grey : AppTheme.accentOrange,
+          isExpired: isExpired, // Pasamos la variable a la tarjeta
           onTap: () {
-            if (pack.isNotEmpty) {
-              // ✅ CORRECCIÓN: Convertimos el JSON crudo a un PackModel antes de enviarlo
-              try {
-                final packModel = PackModel.fromJson(pack);
+            if (packModel != null) {
+              // ✅ Si expiró, mostramos anuncio y NO vamos al detalle
+              if (isExpired) {
+                Get.snackbar(
+                  "Pack no disponible",
+                  "El tiempo de venta para este paquete ha terminado.",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.grey.shade900,
+                  colorText: Colors.white,
+                  margin: const EdgeInsets.all(15),
+                  duration: const Duration(seconds: 3),
+                );
+              } else {
+                // Si no expiró, vamos a la pantalla
                 Get.to(() => const PackDetailScreen(), arguments: packModel);
-              } catch (e) {
-                print("Error convirtiendo PackModel en Favoritos: $e");
-                Get.snackbar("Error", "No se pudieron cargar los detalles del pack");
               }
             }
           },
@@ -145,6 +163,7 @@ class FavoritesScreen extends StatelessWidget {
         return _buildFavoriteCard(
           title: name,
           subtitle: category,
+          isExpired: false, // Los negocios no expiran de esta forma
           leadingWidget: CircleAvatar(
             backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
             child: Text(
@@ -157,7 +176,6 @@ class FavoritesScreen extends StatelessWidget {
           ),
           onTap: () {
             if (business.isNotEmpty) {
-              // Si BusinessDetailScreen también necesita un modelo, habría que hacer lo mismo aquí
               Get.to(() => BusinessDetailScreen(businessData: business));
             }
           },
@@ -169,6 +187,7 @@ class FavoritesScreen extends StatelessWidget {
 
   // --- WIDGETS REUTILIZABLES ---
 
+  // ✅ Añadido el parámetro isExpired con valor por defecto false
   Widget _buildFavoriteCard({
     required String title,
     required String subtitle,
@@ -177,8 +196,10 @@ class FavoritesScreen extends StatelessWidget {
     Widget? leadingWidget,
     required VoidCallback onTap,
     required VoidCallback onRemove,
+    bool isExpired = false, 
   }) {
-    return Card(
+    // Si está expirado, armamos la tarjeta con filtro y menor opacidad
+    Widget cardContent = Card(
       elevation: 1,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -195,19 +216,43 @@ class FavoritesScreen extends StatelessWidget {
             ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: AppTheme.textBlack,
+            color: isExpired ? Colors.grey.shade700 : AppTheme.textBlack,
           ),
         ),
-        subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
+        subtitle: Text(
+          subtitle, 
+          style: TextStyle(
+            color: isExpired ? Colors.red.shade400 : Colors.grey.shade600,
+            fontWeight: isExpired ? FontWeight.bold : FontWeight.normal
+          )
+        ),
         trailing: IconButton(
-          icon: const Icon(Icons.favorite, color: Colors.redAccent),
+          icon: Icon(Icons.favorite, color: isExpired ? Colors.grey : Colors.redAccent),
           onPressed: onRemove,
         ),
         onTap: onTap,
       ),
     );
+
+    // Si expiró, envolvemos en ColorFiltered para el tono gris
+    if (isExpired) {
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0,      0,      0,      1, 0,
+        ]),
+        child: Opacity(
+          opacity: 0.6,
+          child: cardContent,
+        ),
+      );
+    }
+
+    return cardContent;
   }
 
   Widget _buildEmptyState(String message, IconData icon) {
