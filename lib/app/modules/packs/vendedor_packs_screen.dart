@@ -76,12 +76,13 @@ class VendorPacksScreen extends StatelessWidget {
     });
   }
 
-  // ✅ Tarjeta de pack tipada con PackModel (con soporte para packs ocultos)
+  // ✅ Tarjeta de pack tipada con PackModel (con soporte para packs ocultos y VENCIDOS)
   Widget _buildVendorPackCard(PackModel pack) {
     final String title = pack.title;
     final String price = pack.price.toStringAsFixed(2);
     final String? imageUrl = pack.imageUrl;
     final int stock = pack.quantityAvailable;
+    
     // ✅ Fix Legacy: Un pack se considera 'Oculto' si le falta algún campo clave
     final bool isHidden = !pack.isActive ||
         pack.status != PackStatus.available ||
@@ -89,20 +90,24 @@ class VendorPacksScreen extends StatelessWidget {
         pack.description!.isEmpty ||
         stock == 0;
 
-    return Opacity(
-      opacity: isHidden ? 0.6 : 1.0,
+    // ✅ NUEVO: Determinar si el pack está vencido comparando con la hora actual
+    // Asumiendo que pickupEnd define el límite de compra.
+    final bool isExpired = pack.pickupEnd.isBefore(DateTime.now());
+
+    // Construimos el contenido de la tarjeta
+    Widget cardContent = Opacity(
+      opacity: isHidden || isExpired ? 0.6 : 1.0,
       child: GestureDetector(
         onTap: () => Get.to(() => const PackDetailScreen(), arguments: pack),
         child: Card(
           clipBehavior: Clip.antiAlias,
           elevation: 2,
           color: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- IMAGEN CON BADGE "OCULTO" ---
+              // --- IMAGEN CON BADGES ---
               Expanded(
                 child: Stack(
                   children: [
@@ -110,37 +115,25 @@ class VendorPacksScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: imageUrl != null && imageUrl.isNotEmpty
-                          ? Image.network(imageUrl,
-                              fit: BoxFit.cover, width: double.infinity)
+                          ? Image.network(imageUrl, fit: BoxFit.cover, width: double.infinity)
                           : Container(
                               color: AppTheme.primaryGreen.withOpacity(0.1),
                               child: const Center(
                                   child: Icon(Icons.fastfood,
-                                      size: 40,
-                                      color: AppTheme.primaryGreen)),
+                                      size: 40, color: AppTheme.primaryGreen)),
                             ),
                     ),
-                    // 🏷️ Badge "OCULTO" si está inactivo
-                    if (isHidden)
+                    // 🏷️ Badge "VENCIDO" (Prioridad sobre oculto)
+                    if (isExpired)
                       Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade800,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'OCULTO',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        top: 8, left: 8,
+                        child: _buildBadge('VENCIDO', Colors.grey.shade800),
+                      )
+                    // 🏷️ Badge "OCULTO"
+                    else if (isHidden)
+                      Positioned(
+                        top: 8, left: 8,
+                        child: _buildBadge('OCULTO', Colors.red.shade800),
                       ),
                   ],
                 ),
@@ -151,37 +144,26 @@ class VendorPacksScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: AppTheme.textBlack),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textBlack),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("\$$price",
-                            style: const TextStyle(
-                                color: AppTheme.primaryGreen,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14)),
+                            style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
-                            color: stock > 0
-                                ? AppTheme.accentOrange.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
+                            color: stock > 0 ? AppTheme.accentOrange.withOpacity(0.1) : Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             stock > 0 ? "$stock stock" : "Agotado",
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  stock > 0 ? AppTheme.accentOrange : Colors.red,
+                              fontSize: 10, 
+                              fontWeight: FontWeight.bold, 
+                              color: stock > 0 ? AppTheme.accentOrange : Colors.red
                             ),
                           ),
                         )
@@ -193,6 +175,34 @@ class VendorPacksScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+
+    // Si está vencido, le aplicamos un filtro que quita toda la saturación (lo vuelve gris)
+    if (isExpired) {
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0,      0,      0,      1, 0,
+        ]),
+        child: cardContent,
+      );
+    }
+
+    // Si no está vencido, devolvemos la tarjeta normal
+    return cardContent;
+  }
+
+  // ✅ Helper para hacer los badges de la imagen más limpios
+  Widget _buildBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -255,12 +265,10 @@ class VendorPacksScreen extends StatelessWidget {
                             children: [
                               Icon(Icons.add_a_photo,
                                   size: 40,
-                                  color:
-                                      AppTheme.disabledIcon.withOpacity(0.6)),
+                                  color: AppTheme.disabledIcon.withOpacity(0.6)),
                               const SizedBox(height: 10),
                               Text("Toca para agregar foto",
-                                  style:
-                                      TextStyle(color: Colors.grey.shade600)),
+                                  style: TextStyle(color: Colors.grey.shade600)),
                             ],
                           ),
                   ),

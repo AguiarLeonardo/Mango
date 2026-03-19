@@ -31,6 +31,9 @@ class PackDetailScreen extends StatelessWidget {
       controller.fetchReviews(pack.id);
     });
 
+    // ✅ NUEVO: Determinamos si el paquete ya expiró
+    final bool isExpired = pack.pickupEnd.isBefore(DateTime.now());
+
     const ColorFilter greyscale = ColorFilter.matrix(<double>[
       0.2126, 0.7152, 0.0722, 0, 0,
       0.2126, 0.7152, 0.0722, 0, 0,
@@ -81,28 +84,68 @@ class PackDetailScreen extends StatelessWidget {
           child: Obx(() {
             final bool active = controller.isActive.value;
 
+            // --- LÓGICA PARA EL DUEÑO DEL NEGOCIO ---
             if (controller.isOwner.value) {
-              if (active) {
+              return ElevatedButton(
+                onPressed: () {
+                  // ✅ Si está vencido, mostramos la alerta y no hacemos nada más
+                  if (isExpired) {
+                    Get.snackbar(
+                      "Paquete Vencido",
+                      "El tiempo de compra ha culminado. Ya no puedes modificar el estado de este paquete.",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.grey.shade900,
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(15),
+                      duration: const Duration(seconds: 4),
+                    );
+                    return; // Salimos de la función
+                  }
+
+                  // Si NO está vencido, ejecutamos la acción normal
+                  if (active) {
+                    controller.confirmHide(pack.id);
+                  } else {
+                    controller.confirmReactivate(pack.id);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  // ✅ Si está vencido, el botón se vuelve gris
+                  backgroundColor: isExpired 
+                      ? Colors.grey.shade300 
+                      : (active ? Colors.orange : Colors.green),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+                child: Text(
+                  // ✅ Cambiamos el texto si está vencido
+                  isExpired 
+                      ? "PAQUETE VENCIDO" 
+                      : (active ? "OCULTAR PACK" : "VOLVER A ACTIVAR"), 
+                  style: TextStyle(
+                    // ✅ Texto más oscuro si el botón es gris para que se lea bien
+                    color: isExpired ? Colors.grey.shade700 : Colors.white, 
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 16
+                  )
+                ),
+              );
+            } 
+            // --- LÓGICA PARA EL CLIENTE ---
+            else {
+              // Si el paquete ya expiró o no está activo, no puede comprarlo
+              if (!active || isExpired) {
                 return ElevatedButton(
-                  onPressed: () => controller.confirmHide(pack.id),
+                  onPressed: null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    disabledBackgroundColor: Colors.grey.shade300,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   ),
-                  child: const Text("OCULTAR PACK", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(
+                    isExpired ? "TIEMPO AGOTADO" : "PACK NO DISPONIBLE", 
+                    style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 16)
+                  ),
                 );
               } else {
-                return ElevatedButton(
-                  onPressed: () => controller.confirmReactivate(pack.id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  ),
-                  child: const Text("VOLVER A ACTIVAR", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                );
-              }
-            } else {
-              if (active) {
                 return ElevatedButton(
                   onPressed: () {
                     final cartController = Get.put(CartController());
@@ -114,15 +157,6 @@ class PackDetailScreen extends StatelessWidget {
                   ),
                   child: const Text("RESERVAR PACK", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 );
-              } else {
-                return ElevatedButton(
-                  onPressed: null,
-                  style: ElevatedButton.styleFrom(
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  ),
-                  child: Text("PACK NO DISPONIBLE", style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 16)),
-                );
               }
             }
           }),
@@ -133,7 +167,8 @@ class PackDetailScreen extends StatelessWidget {
         final bool active = controller.isActive.value;
         
         return Opacity(
-          opacity: active ? 1.0 : 0.5,
+          // ✅ Bajamos la opacidad también si está vencido
+          opacity: (active && !isExpired) ? 1.0 : 0.6,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +181,10 @@ class PackDetailScreen extends StatelessWidget {
                   child: pack.imageUrl == null
                       ? const Icon(Icons.fastfood, size: 80, color: Colors.white)
                       : ColorFiltered(
-                          colorFilter: active ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply) : greyscale,
+                          // ✅ Aplicamos filtro gris si no está activo o si está vencido
+                          colorFilter: (active && !isExpired) 
+                              ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply) 
+                              : greyscale,
                           child: Image.network(pack.imageUrl!, fit: BoxFit.cover),
                         ),
                 ),
@@ -195,7 +233,7 @@ class PackDetailScreen extends StatelessWidget {
                       
                       const Divider(height: 40),
 
-                      // 🕒 NUEVA SECCIÓN: HORARIO DE RECOGIDA
+                      // 🕒 SECCIÓN: HORARIO DE RECOGIDA
                       const Text("Horario de recogida", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
                       Container(
