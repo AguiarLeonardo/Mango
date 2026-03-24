@@ -749,12 +749,14 @@ class DiscoverScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         try {
+          final String? logoUrl = store['logo_url'] ?? store['profileUrl'] ?? store['image_url'];
           final business = BusinessModel(
             id: store['id'] ?? '',
             commercialName: name,
             category: category,
             city: store['city'],
             address: store['address'] ?? '',
+            logoUrl: logoUrl,
           );
           Get.toNamed(Routes.businessDetail, arguments: business);
         } catch (e) {
@@ -772,14 +774,34 @@ class DiscoverScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.storefront,
-                  color: AppTheme.primaryGreen, size: 25),
+            Builder(
+              builder: (context) {
+                final String? logoUrl = store['logo_url'] ?? store['profileUrl'] ?? store['image_url'];
+
+                if (logoUrl != null && logoUrl.isNotEmpty) {
+                  return CircleAvatar(
+                    radius: 22.5,
+                    backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
+                    child: ClipOval(
+                      child: Image.network(
+                        logoUrl,
+                        width: 45,
+                        height: 45,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.storefront, color: AppTheme.primaryGreen, size: 25);
+                        },
+                      ),
+                    ),
+                  );
+                }
+
+                return CircleAvatar(
+                  radius: 22.5,
+                  backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
+                  child: const Icon(Icons.storefront, color: AppTheme.primaryGreen, size: 25),
+                );
+              },
             ),
             const SizedBox(width: 15),
             Expanded(

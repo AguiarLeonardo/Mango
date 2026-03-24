@@ -18,6 +18,7 @@ class BusinessModel {
   bool acceptedTerms;
   String? rifImagePath; // Ruta local del archivo
   String? rifUrl;       // URL remota (después de subir a Supabase)
+  String? logoUrl;      // ✅ URL del Logo del negocio
 
   BusinessModel({
     this.id = '', // ✅ 2. LO AGREGAMOS AL CONSTRUCTOR
@@ -36,6 +37,7 @@ class BusinessModel {
     this.acceptedTerms = false,
     this.rifImagePath,
     this.rifUrl,
+    this.logoUrl,
   });
 
   /// Prepara los datos para enviarlos a la tabla 'businesses' de Supabase
