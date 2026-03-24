@@ -535,7 +535,7 @@ class DiscoverScreen extends StatelessWidget {
                       itemCount: controller.stateStores.length,
                       itemBuilder: (context, index) {
                         return _buildNearbyStoreCard(
-                            controller.stateStores[index]);
+                            context, controller.stateStores[index]);
                       },
                     ),
                   );
@@ -740,7 +740,7 @@ class DiscoverScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNearbyStoreCard(Map<String, dynamic> store) {
+  Widget _buildNearbyStoreCard(BuildContext context, Map<String, dynamic> store) {
     final String name = store['commercial_name'] ?? store['name'] ?? 'Negocio';
     final String category = store['category'] ?? "Comida";
     final String city = store['city'] ?? store['address'] ?? "Ciudad";
@@ -764,9 +764,9 @@ class DiscoverScreen extends StatelessWidget {
         }
       },
       child: Container(
-        width: 280,
+        width: MediaQuery.of(context).size.width - 46,
         margin: const EdgeInsets.symmetric(horizontal: 8),
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -780,16 +780,16 @@ class DiscoverScreen extends StatelessWidget {
 
                 if (logoUrl != null && logoUrl.isNotEmpty) {
                   return CircleAvatar(
-                    radius: 22.5,
+                    radius: 30,
                     backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
                     child: ClipOval(
                       child: Image.network(
                         logoUrl,
-                        width: 45,
-                        height: 45,
+                        width: 60,
+                        height: 60,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.storefront, color: AppTheme.primaryGreen, size: 25);
+                          return const Icon(Icons.storefront, color: AppTheme.primaryGreen, size: 35);
                         },
                       ),
                     ),
@@ -797,13 +797,13 @@ class DiscoverScreen extends StatelessWidget {
                 }
 
                 return CircleAvatar(
-                  radius: 22.5,
+                  radius: 30,
                   backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
-                  child: const Icon(Icons.storefront, color: AppTheme.primaryGreen, size: 25),
+                  child: const Icon(Icons.storefront, color: AppTheme.primaryGreen, size: 35),
                 );
               },
             ),
-            const SizedBox(width: 15),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -812,25 +812,26 @@ class DiscoverScreen extends StatelessWidget {
                   Text(
                     name,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15),
+                        fontWeight: FontWeight.bold, fontSize: 18),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     category,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       const Icon(Icons.location_on,
-                          size: 12, color: AppTheme.primaryGreen),
+                          size: 14, color: AppTheme.primaryGreen),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           state.isNotEmpty ? "$city, $state" : city,
                           style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
+                              const TextStyle(color: Colors.grey, fontSize: 14),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
