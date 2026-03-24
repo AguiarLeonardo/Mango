@@ -7,6 +7,7 @@ import '../shell/shell_controller.dart';
 import '../../routes/app_routes.dart';
 import '../orders/orders_controller.dart';
 import '../cart/cart_controller.dart';
+import '../../core/services/network_service.dart';
 
 class PaymentController extends GetxController {
   final isLoading = false.obs;
@@ -85,12 +86,57 @@ class PaymentController extends GetxController {
     try {
       isLoading.value = true;
 
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) throw Exception("Usuario no autenticado");
+
+      // ─── GUARD OFFLINE ───────────────────────────────────────
+      final networkService = Get.find<NetworkService>();
+      if (!networkService.isOnline.value) {
+        // Preparar datos para resguardo local
+        String? last4;
+        if (selectedMethod.value == 'tarjeta') {
+          String rawCard = cardNumberController.text.replaceAll(' ', '');
+          if (rawCard.length >= 4) {
+            last4 = rawCard.substring(rawCard.length - 4);
+          }
+        }
+
+        final paymentData = {
+          'userId': userId,
+          'packs': cartController.cartItems.map((p) => p.toJson()).toList(),
+          'paymentMethod': selectedMethod.value,
+          'bankName': selectedMethod.value == 'pagomovil'
+              ? selectedBank.value
+              : null,
+          'referenceNumber': selectedMethod.value == 'pagomovil'
+              ? referenceController.text
+              : null,
+          'cardLast4': last4,
+          'totalPrice': totalPrice,
+        };
+
+        networkService.savePendingPayment(paymentData);
+
+        Get.snackbar(
+          'Falla de conectividad',
+          'tu pago será resguardado',
+          backgroundColor: Colors.orange.shade800,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 5),
+          icon: const Icon(Icons.cloud_off, color: Colors.white, size: 28),
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+        );
+
+        isLoading.value = false;
+        return;
+      }
+      // ─── FIN GUARD OFFLINE ───────────────────────────────────
+
       // Simulamos conexión con el banco
       await Future.delayed(const Duration(seconds: 2));
       bool paymentSuccess = true;
-
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) throw Exception("Usuario no autenticado");
 
       String? last4;
       if (selectedMethod.value == 'tarjeta') {

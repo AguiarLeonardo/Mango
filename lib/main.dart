@@ -9,6 +9,8 @@ import 'app/core/theme/app_theme.dart';
 import 'app/routes/app_pages.dart';
 import 'app/modules/auth/login/login_controller.dart';
 import 'app/core/services/location_service.dart';
+import 'app/core/services/network_service.dart';
+import 'package:get_storage/get_storage.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -35,8 +37,12 @@ Future<void> main() async {
     anonKey: 'sb_publishable_lps63HVdjyCRknnoADey7Q_jNIaBPqQ',
   );
 
+  // INICIALIZACIÓN DE ALMACENAMIENTO LOCAL
+  await GetStorage.init();
+
   // INYECCIÓN DE SERVICIOS GLOBALES
   Get.put(LocationService(), permanent: true);
+  Get.put(NetworkService(), permanent: true);
 
   runApp(const MyApp());
 }

@@ -122,27 +122,30 @@ class PacksController extends GetxController {
       if (pickedImage != null) {
         // Leemos la imagen como bytes en lugar de usar File()
         final bytes = await pickedImage!.readAsBytes();
-        
+
         // Usamos .name para obtener la extensión de forma segura en Web
         final fileExt = pickedImage!.name.split('.').last;
-        final fileName = '$userId/pack_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final fileName =
+            '$userId/pack_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
         // Usamos uploadBinary en lugar de upload
         await _supabase.storage.from('packs').uploadBinary(
-          fileName,
-          bytes,
-          fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
-        );
-        
+              fileName,
+              bytes,
+              fileOptions:
+                  const FileOptions(cacheControl: '3600', upsert: true),
+            );
+
         // Obtener la URL pública de la imagen
-        uploadedImageUrl = _supabase.storage.from('packs').getPublicUrl(fileName);
+        uploadedImageUrl =
+            _supabase.storage.from('packs').getPublicUrl(fileName);
         print("✅ Imagen subida: $uploadedImageUrl");
       }
 
       final packData = {
         'business_id': userId,
         'title': titleController.text,
-        'description': descController.text,
+        'description': descController.text.trim().isEmpty ? null : descController.text.trim(),
         'price': double.parse(priceController.text),
         'original_price': originalPriceController.text.isNotEmpty
             ? double.parse(originalPriceController.text)
@@ -152,7 +155,8 @@ class PacksController extends GetxController {
         'pickup_start': pickupStart.value!.toUtc().toIso8601String(),
         'pickup_end': pickupEnd.value!.toUtc().toIso8601String(),
         'image_url': uploadedImageUrl, // Guardamos la URL en la BD
-        'status': 'available'
+        'status': 'available',
+        'is_active': true,
       };
 
       await _supabase.from('packs').insert(packData);

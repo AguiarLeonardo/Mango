@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 // ✅ IMPORTAMOS EL CARRITO Y LAS RUTAS
 import '../../routes/app_routes.dart';
 import '../cart/cart_controller.dart';
+import '../../core/services/network_service.dart';
 
 class DiscoverScreen extends StatelessWidget {
   const DiscoverScreen({super.key});
@@ -22,9 +23,10 @@ class DiscoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DiscoverController controller = Get.put(DiscoverController());
-    final FavoritesController favController = Get.isRegistered<FavoritesController>()
-        ? Get.find<FavoritesController>()
-        : Get.put(FavoritesController());
+    final FavoritesController favController =
+        Get.isRegistered<FavoritesController>()
+            ? Get.find<FavoritesController>()
+            : Get.put(FavoritesController());
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundCream,
@@ -124,8 +126,7 @@ class DiscoverScreen extends StatelessWidget {
 
             // 🌿 Historial de Impacto
             ListTile(
-              leading:
-                  const Icon(Icons.eco, color: AppTheme.primaryGreen),
+              leading: const Icon(Icons.eco, color: AppTheme.primaryGreen),
               title: const Text('Mi Impacto'),
               onTap: () {
                 Get.back();
@@ -171,13 +172,14 @@ class DiscoverScreen extends StatelessWidget {
           ],
         ),
       ),
-      
+
       // ✅ APPBAR MODIFICADO SÓLO PARA AGREGAR EL IMPACTO
       appBar: AppBar(
         backgroundColor: AppTheme.primaryGreen,
         elevation: 0,
         automaticallyImplyLeading: false,
-        toolbarHeight: 70, // 👈 Le damos un poco más de altura para que quepa el impacto
+        toolbarHeight:
+            70, // 👈 Le damos un poco más de altura para que quepa el impacto
         titleSpacing: 15,
         title: Builder(builder: (context) {
           return GestureDetector(
@@ -202,55 +204,75 @@ class DiscoverScreen extends StatelessWidget {
                           : null,
                     )),
                 const SizedBox(width: 12),
-                
+
                 // 👈 COLUMNA QUE CONTIENE EL NOMBRE Y EL IMPACTO
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Obx(() => Text(
-                          controller.userName.value.isNotEmpty
-                              ? controller.userName.value
-                              : "Usuario",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )),
-                        
-                    // 🌱 MINI-DASHBOARD DE IMPACTO
-                    Obx(() {
-                      if (controller.packsRescued.value > 0) {
-                        return Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.white.withOpacity(0.3), width: 0.5),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.eco, color: Colors.lightGreenAccent, size: 10),
-                              const SizedBox(width: 3),
-                              Text("${controller.packsRescued.value}", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                              
-                              const SizedBox(width: 6),
-                              Container(width: 1, height: 10, color: Colors.white.withOpacity(0.6)),
-                              const SizedBox(width: 6),
-                              
-                              const Icon(Icons.cloud_done_outlined, color: Colors.white70, size: 10),
-                              const SizedBox(width: 3),
-                              Text("${controller.co2Avoided.value.toStringAsFixed(1)}kg", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink(); // Si no tiene packs, no muestra nada
-                    }),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Obx(() => Text(
+                            controller.userName.value.isNotEmpty
+                                ? controller.userName.value
+                                : "Usuario",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )),
+
+                      // 🌱 MINI-DASHBOARD DE IMPACTO
+                      Obx(() {
+                        if (controller.packsRescued.value > 0) {
+                          return Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 0.5),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.eco,
+                                    color: Colors.lightGreenAccent, size: 10),
+                                const SizedBox(width: 3),
+                                Text("${controller.packsRescued.value}",
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(width: 6),
+                                Container(
+                                    width: 1,
+                                    height: 10,
+                                    color: Colors.white.withOpacity(0.6)),
+                                const SizedBox(width: 6),
+                                const Icon(Icons.cloud_done_outlined,
+                                    color: Colors.white70, size: 10),
+                                const SizedBox(width: 3),
+                                Text(
+                                    "${controller.co2Avoided.value.toStringAsFixed(1)}kg",
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          );
+                        }
+                        return const SizedBox
+                            .shrink(); // Si no tiene packs, no muestra nada
+                      }),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -303,18 +325,23 @@ class DiscoverScreen extends StatelessWidget {
               onPressed: () {
                 Get.toNamed(Routes.cart);
               },
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(
+                minWidth: 48,
+                minHeight: 48,
+              ),
               icon: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Icon(
                     Icons.shopping_cart_outlined,
                     color: hasItem ? AppTheme.accentOrange : Colors.white,
-                    size: 28,
+                    size: 34,
                   ),
                   if (hasItem)
                     Positioned(
-                      right: -5,
-                      top: -5,
+                      right: -6,
+                      top: -6,
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
@@ -322,15 +349,15 @@ class DiscoverScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
+                          minWidth: 20,
+                          minHeight: 20,
                         ),
                         child: Center(
                           child: Text(
                             '${cartController.cartItems.length}',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -344,7 +371,7 @@ class DiscoverScreen extends StatelessWidget {
           const SizedBox(width: 15),
         ],
       ),
-      
+
       // ✅ EL CUERPO (BODY) QUEDA EXACTAMENTE COMO TÚ LO TENÍAS
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -378,22 +405,36 @@ class DiscoverScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      RichText(
-                        text: const TextSpan(
-                          text: "Descubre ",
-                          style: TextStyle(
-                            color: AppTheme.textBlack,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 28,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: "packs hoy",
-                              style: TextStyle(color: AppTheme.primaryGreen),
+                      Obx(() {
+                        final isOnline = Get.find<NetworkService>().isOnline.value;
+                        if (isOnline) {
+                          return RichText(
+                            text: const TextSpan(
+                              text: "Descubre ",
+                              style: TextStyle(
+                                color: AppTheme.textBlack,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: "packs hoy",
+                                  style: TextStyle(color: AppTheme.primaryGreen),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          );
+                        } else {
+                          return const Text(
+                            "Sin conexión a internet",
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
+                            ),
+                          );
+                        }
+                      }),
                     ],
                   ),
                 ),
@@ -451,26 +492,6 @@ class DiscoverScreen extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    "Packs recomendados",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                SizedBox(
-                  height: 300,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    itemCount: controller.featuredPacks.length,
-                    itemBuilder: (context, index) {
-                      return _buildPackCard(controller.featuredPacks[index], favController);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 30),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
                     "Negocios en tu zona",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
@@ -481,7 +502,8 @@ class DiscoverScreen extends StatelessWidget {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 30),
                       child: Center(
-                        child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                        child: CircularProgressIndicator(
+                            color: AppTheme.primaryGreen),
                       ),
                     );
                   }
@@ -492,12 +514,14 @@ class DiscoverScreen extends StatelessWidget {
                         : 'tu zona';
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 20),
                       child: Center(
                         child: Text(
                           "No hay locales registrados en $displayState",
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                          style: TextStyle(
+                              color: Colors.grey.shade600, fontSize: 14),
                         ),
                       ),
                     );
@@ -510,11 +534,31 @@ class DiscoverScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       itemCount: controller.stateStores.length,
                       itemBuilder: (context, index) {
-                        return _buildNearbyStoreCard(controller.stateStores[index]);
+                        return _buildNearbyStoreCard(
+                            controller.stateStores[index]);
                       },
                     ),
                   );
                 }),
+                const SizedBox(height: 30),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    "Packs recomendados",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  itemCount: controller.featuredPacks.length,
+                  itemBuilder: (context, index) {
+                    return _buildPackCard(
+                        controller.featuredPacks[index], favController);
+                  },
+                ),
                 const SizedBox(height: 30),
               ],
             ),
@@ -539,53 +583,55 @@ class DiscoverScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () => Get.toNamed('/pack-detail', arguments: pack),
       child: Container(
-        width: 200,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- IMAGEN CON BOTÓN DE FAVORITO ---
-            Expanded(
+            SizedBox(
+              width: 120,
+              height: 130,
               child: Stack(
                 children: [
                   Container(
-                    width: double.infinity,
+                    width: 120,
+                    height: 130,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(20)),
+                      borderRadius: const BorderRadius.horizontal(
+                          left: Radius.circular(16)),
                     ),
                     child: pack.imageUrl == null
                         ? const Center(
                             child: Icon(Icons.fastfood,
-                                color: Colors.white, size: 50))
+                                color: Colors.white, size: 40))
                         : ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(20)),
+                            borderRadius: const BorderRadius.horizontal(
+                                left: Radius.circular(16)),
                             child: Image.network(
                               pack.imageUrl!,
                               fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
+                              width: 120,
+                              height: 130,
                             ),
                           ),
                   ),
                   // ❤️ Botón de favorito — solo para usuarios, NO empresas
                   if (!controller.isBusiness.value)
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: 6,
+                      right: 6,
                       child: Obx(() {
                         final isFav = favController.isPackFavorite(pack.id);
                         return Container(
@@ -594,8 +640,8 @@ class DiscoverScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
-                            iconSize: 22,
-                            padding: const EdgeInsets.all(6),
+                            iconSize: 18,
+                            padding: const EdgeInsets.all(5),
                             constraints: const BoxConstraints(),
                             icon: Icon(
                               isFav ? Icons.favorite : Icons.favorite_border,
@@ -612,72 +658,80 @@ class DiscoverScreen extends StatelessWidget {
             ),
 
             // --- INFORMACIÓN DEL PACK ---
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pack.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    pack.businessName ?? "Negocio",
-                    style:
-                        TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                  ),
-                  // 📝 Descripción (máximo 2 líneas)
-                  if (pack.description != null &&
-                      pack.description!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        pack.description!,
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 11),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+            Expanded(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      pack.title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  const SizedBox(height: 6),
-                  // 🕐 Rango de horario
-                  Row(
-                    children: [
-                      Icon(Icons.access_time,
-                          size: 13, color: Colors.grey.shade500),
-                      const SizedBox(width: 4),
-                      Text(
-                        timeRange,
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "\$${pack.price.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          color: AppTheme.primaryGreen,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                    const SizedBox(height: 2),
+                    Text(
+                      pack.businessName ?? "Negocio",
+                      style:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    // 📝 Descripción (máximo 1 línea)
+                    if (pack.description != null &&
+                        pack.description!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          pack.description!,
+                          style: TextStyle(
+                              color: Colors.grey.shade500, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Text(
-                        "${pack.quantityAvailable} disp.",
-                        style: const TextStyle(
-                          color: AppTheme.accentOrange,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    // 🕐 Rango de horario
+                    Row(
+                      children: [
+                        Icon(Icons.access_time,
+                            size: 12, color: Colors.grey.shade500),
+                        const SizedBox(width: 3),
+                        Text(
+                          timeRange,
+                          style: TextStyle(
+                              color: Colors.grey.shade500, fontSize: 11),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "\$${pack.price.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            color: AppTheme.primaryGreen,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        Text(
+                          "${pack.quantityAvailable} disp.",
+                          style: const TextStyle(
+                            color: AppTheme.accentOrange,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -753,7 +807,8 @@ class DiscoverScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           state.isNotEmpty ? "$city, $state" : city,
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

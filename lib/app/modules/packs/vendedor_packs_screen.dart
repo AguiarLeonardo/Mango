@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb; // ✅ Agregado para detectar si es Web
+import 'package:flutter/foundation.dart'
+    show kIsWeb; // ✅ Agregado para detectar si es Web
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -82,12 +83,10 @@ class VendorPacksScreen extends StatelessWidget {
     final String price = pack.price.toStringAsFixed(2);
     final String? imageUrl = pack.imageUrl;
     final int stock = pack.quantityAvailable;
-    
+
     // ✅ Fix Legacy: Un pack se considera 'Oculto' si le falta algún campo clave
     final bool isHidden = !pack.isActive ||
         pack.status != PackStatus.available ||
-        pack.description == null ||
-        pack.description!.isEmpty ||
         stock == 0;
 
     // ✅ NUEVO: Determinar si el pack está vencido comparando con la hora actual
@@ -103,7 +102,8 @@ class VendorPacksScreen extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           elevation: 2,
           color: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -115,7 +115,8 @@ class VendorPacksScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: imageUrl != null && imageUrl.isNotEmpty
-                          ? Image.network(imageUrl, fit: BoxFit.cover, width: double.infinity)
+                          ? Image.network(imageUrl,
+                              fit: BoxFit.cover, width: double.infinity)
                           : Container(
                               color: AppTheme.primaryGreen.withOpacity(0.1),
                               child: const Center(
@@ -126,13 +127,15 @@ class VendorPacksScreen extends StatelessWidget {
                     // 🏷️ Badge "VENCIDO" (Prioridad sobre oculto)
                     if (isExpired)
                       Positioned(
-                        top: 8, left: 8,
+                        top: 8,
+                        left: 8,
                         child: _buildBadge('VENCIDO', Colors.grey.shade800),
                       )
                     // 🏷️ Badge "OCULTO"
                     else if (isHidden)
                       Positioned(
-                        top: 8, left: 8,
+                        top: 8,
+                        left: 8,
                         child: _buildBadge('OCULTO', Colors.red.shade800),
                       ),
                   ],
@@ -144,27 +147,38 @@ class VendorPacksScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textBlack),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppTheme.textBlack),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("\$$price",
-                            style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+                            style: const TextStyle(
+                                color: AppTheme.primaryGreen,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14)),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
-                            color: stock > 0 ? AppTheme.accentOrange.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                            color: stock > 0
+                                ? AppTheme.accentOrange.withOpacity(0.1)
+                                : Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             stock > 0 ? "$stock stock" : "Agotado",
                             style: TextStyle(
-                              fontSize: 10, 
-                              fontWeight: FontWeight.bold, 
-                              color: stock > 0 ? AppTheme.accentOrange : Colors.red
-                            ),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: stock > 0
+                                    ? AppTheme.accentOrange
+                                    : Colors.red),
                           ),
                         )
                       ],
@@ -182,10 +196,26 @@ class VendorPacksScreen extends StatelessWidget {
     if (isExpired) {
       return ColorFiltered(
         colorFilter: const ColorFilter.matrix(<double>[
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0,      0,      0,      1, 0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
         ]),
         child: cardContent,
       );
@@ -199,10 +229,12 @@ class VendorPacksScreen extends StatelessWidget {
   Widget _buildBadge(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+      decoration:
+          BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+            color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -265,10 +297,12 @@ class VendorPacksScreen extends StatelessWidget {
                             children: [
                               Icon(Icons.add_a_photo,
                                   size: 40,
-                                  color: AppTheme.disabledIcon.withOpacity(0.6)),
+                                  color:
+                                      AppTheme.disabledIcon.withOpacity(0.6)),
                               const SizedBox(height: 10),
                               Text("Toca para agregar foto",
-                                  style: TextStyle(color: Colors.grey.shade600)),
+                                  style:
+                                      TextStyle(color: Colors.grey.shade600)),
                             ],
                           ),
                   ),
